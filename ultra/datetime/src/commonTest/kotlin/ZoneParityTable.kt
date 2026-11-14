@@ -84,6 +84,8 @@ internal object ZoneParityTable {
         StartOfDayCase("Pacific/Apia", "2011-12-31", 1325239200L, "2011-12-31T00:00"), // the day after the skipped day
         StartOfDayCase("America/Toronto", "1919-03-31", -1601753400L, "1919-03-31T00:30"), // midnight strictly inside the gap (23:30 to 00:30) -> end of gap
         StartOfDayCase("Australia/Lord_Howe", "2022-10-02", 1664631000L, "2022-10-02T00:00"), // 30-minute gap, not at midnight
+        // overlap at midnight -> its first occurrence
+        StartOfDayCase("America/Havana", "2022-11-06", 1667707200L, "2022-11-06T00:00"),
     )
 
     val plusCases = listOf(

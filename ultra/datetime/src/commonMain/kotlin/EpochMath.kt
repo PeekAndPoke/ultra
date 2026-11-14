@@ -1,9 +1,7 @@
 package io.peekandpoke.ultra.datetime
 
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.number
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
@@ -72,15 +70,6 @@ internal object EpochMath {
                 local.hour * 3_600 + local.minute * 60 + local.second
     }
 
-    /** The epoch seconds of the start of [date] read as UTC; see [epochSeconds] for the precision. */
-    fun epochSeconds(date: LocalDate): Double {
-        if (abs(date.year) > MAX_EXACT_YEAR) {
-            return date.atStartOfDayIn(TimeZone.UTC).epochSeconds.toDouble()
-        }
-
-        return epochDays(date.year, date.month.number, date.day) * SECONDS_PER_DAY
-    }
-
     /** The instant of [local] read with [offsetSeconds], i.e. `local − offset`, exactly. */
     fun instant(local: LocalDateTime, offsetSeconds: Int): Instant {
         if (abs(local.year) > MAX_EXACT_YEAR) {
@@ -88,15 +77,6 @@ internal object EpochMath {
         }
 
         return Instant.fromEpochSeconds((epochSeconds(local) - offsetSeconds).toLong(), local.nanosecond)
-    }
-
-    /** The instant of the start of [date] read with [offsetSeconds], exactly. */
-    fun instant(date: LocalDate, offsetSeconds: Int): Instant {
-        if (abs(date.year) > MAX_EXACT_YEAR) {
-            return date.atStartOfDayIn(TimeZone.UTC).minus(offsetSeconds.seconds)
-        }
-
-        return Instant.fromEpochSeconds((epochSeconds(date) - offsetSeconds).toLong(), 0)
     }
 
     // days from civil, http://howardhinnant.github.io/date_algorithms.html

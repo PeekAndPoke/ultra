@@ -112,6 +112,8 @@ class MpLocalTimeEndOfDaySpec : StringSpec({
         val range = MpLocalDate.of(2024, 3, 30).toRange(MpLocalTimeSlot.of(MpLocalTime.Noon, endOfDay), berlin)
 
         range.to shouldBe MpLocalDate.of(2024, 3, 31).atStartOfDay(berlin)
+        // both sides come from the same function since 3b-2: pin the instant itself (midnight is still +01:00)
+        range.to.toInstant() shouldBe MpInstant.parse("2024-03-30T23:00:00Z")
     }
 
     "DateTimeRangeConverter.fromHourToHour(_, 24) ends at the start of the next day" {

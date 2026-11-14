@@ -100,6 +100,13 @@ class MpLocalTimeSlotCodecSpec : StringSpec({
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigDecimal("1e30")))?.isInfinite shouldBe true
         // 1e19 wraps negative through toLong(); -18446744073709551611 has +5 as its low 64 bits
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigDecimal("1e19")))?.isInfinite shouldBe true
+        // -1e19 has positive low 64 bits: without the lower arm it would be an infinite slot
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigDecimal("-1e19")))?.isEmpty shouldBe true
+        // in range: the value itself, a fraction cut to whole milliseconds
+        val decimal = BigDecimal("14400000.9")
+        val integer = BigInteger.valueOf(14_400_000)
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 79_200_000L, "duration" to decimal)) shouldBe night
+        codec.awake<MpLocalTimeSlot>(mapOf("from" to 79_200_000L, "duration" to integer)) shouldBe night
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to BigInteger("-18446744073709551611")))
             ?.isEmpty shouldBe true
         codec.awake<MpLocalTimeSlot>(mapOf("from" to 0L, "duration" to -1e30))?.isEmpty shouldBe true

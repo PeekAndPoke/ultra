@@ -119,6 +119,10 @@ class MpLocalTimeSlotOnDateSpec : StringSpec({
         val range = last.toRange(slot(22, 0, 4.hours), MpTimezone.UTC)
 
         range.from.toInstant() shouldBe last.atTime(t(22), MpTimezone.UTC).toInstant()
+        // 999 999 999-12-31T22:00Z, by days-from-civil (checked independently, 2026-11-14)
+        range.from.toInstant().value.epochSeconds shouldBe 31_556_889_832_773_600L
+        // the open end lies before this start, so the range is empty at the start
+        range.to.toInstant() shouldBe range.from.toInstant()
         range.hasEnd shouldBe false
         last.toRange(slot(22, 0, 2.hours), MpTimezone.UTC).hasEnd shouldBe false
     }

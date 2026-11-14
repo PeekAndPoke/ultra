@@ -326,8 +326,9 @@ data class MpLocalTimeSlot private constructor(
  * - A start or end that falls into a skipped hour moves to the first existing time, the transition: 02:30 in a 02:00
  *   to 03:00 gap is 03:00. (`MpZonedDateTime.of` and `MpLocalDate.atTime` move it by the length of the gap, to 03:30.)
  * - A time in a repeated hour takes its first occurrence.
- * - So the end never lies before the start; the only exception is the open end (an infinite slot on a date after it),
- *   which gives an empty range at the start. An empty slot gives an empty range at its start.
+ * - So the end never lies before the start; the only exception is the open end (on a date after it, or past the last
+ *   date the platform holds), which gives an empty range at the start. An empty slot gives an empty range at its
+ *   start.
  */
 internal fun MpLocalTimeSlot.onDate(date: MpLocalDate, timezone: MpTimezone): MpZonedDateTimeRange {
     val start = firstExistingTime(date, from, timezone)

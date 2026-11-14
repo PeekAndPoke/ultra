@@ -309,7 +309,8 @@ Verdict NOT CLEAN; the MAJOR (`numDaysInMonth`) and the sentinel items are recor
 ## Batch 3b-2: plan as built (the slot redesign)
 
 Built on `wt/datetime` on top of 3b-1, after the maintainer's decisions of 2026-11-14 (master: "Batch 3b: decisions of
-the maintainer"). Not merged, not reviewed.
+the maintainer"). **Status: 3b-2: BUILT, gate closed: round 1 NOT CLEAN (1 MAJOR), delta 2 CLEAN, delta 3 CLEAN; not
+merged, held with 3b-1 for the maintainer's word on the sentinel constants.**
 
 - **`MpLocalTimeSlot` is a start and a duration:** `data class MpLocalTimeSlot private constructor(from, duration)`
   with `@ConsistentCopyVisibility`. Created by `of(from, duration)`, `of(from, to)`, `ofSecondsOfDay(from, to)` and
@@ -335,14 +336,16 @@ the maintainer"). Not merged, not reviewed.
   `endDayOffset` days later.
   - A start or end in a skipped hour moves to the first existing time, the transition (round 1: 02:30 in a 02:00 to
     03:00 gap is 03:00, as agreed with the maintainer; `atTime` / `MpZonedDateTime.of` keep moving by the gap length,
-    03:30). New `TimezoneEngine.toInstantOrTransition`, used only here. A time in a repeated hour takes its first
-    occurrence.
+    03:30). New `TimezoneEngine.toInstantOrTransition`; since round 2 `startOfDay` delegates to it too, so every
+    `atStartOfDay` runs through it (same results, proven by trace and the untouched start-of-day tests). A time in a
+    repeated hour takes its first occurrence.
   - So the end never lies before the start. On a skipped date (Apia 2011-12-30) every slot ending that day is empty at
     the next day's start; the 3a pins of Nuuk and Apia are now empty at the transition, no longer inverted.
   - An infinite slot, and a finite end the platform cannot resolve (JS dates end at 8.64e15 ms; round 1), end at the
     range's open end, decided in ONE private function (`endOnDate`, today `MpZonedDateTime.Doomsday`), so it follows
-    whatever the sentinel decision (ULTRA-00343, analysis of 2026-11-14) is. An infinite slot on a date after the open
-    end gives an empty range at the start: the only end-before-start case left.
+    whatever the sentinel decision (ULTRA-00343, analysis of 2026-11-14) is. The open end lying before the start (a
+    date after it, or an end past the last date the platform holds, round 2) gives an empty range at the start: the
+    only end-before-start case left.
 - **`splitWithGaps(duration, gap)`:** walks the slot's own length from `from` (overnight and longer than a day work),
   returns a `ComputedList`; `maxSlots` and its exception are gone. An infinite slot gives `Int.MAX_VALUE` parts, or one
   part for an infinite gap (round 1: the count was an artefact of `Long.MAX_VALUE / step`); an infinite part fits only
@@ -581,6 +584,24 @@ nothing; each item was settled by a test first.
 | F3 covering merge with `>=` | 1 |
 | D1 no catch for `DateTimeArithmeticException` | 1 |
 
+## Review record 3b-2: delta round 3 (reviewer-fable-xhigh)
+
+**Verdict:** CLEAN: 0 CRITICAL, 0 MAJOR, 7 MINOR. Both item-7 equivalences proven by trace; the catch in `endOnDate`
+as narrow as it can be; every round-2 FIXED entry holds; every changelog sentence true. The reviewer ran nothing;
+each item below was settled by a run. Close-out only: test rows, texts and dead code, no behaviour change.
+
+| # | Finding | Outcome |
+|---|---|---|
+| M1 | the lower `BigDecimal` arm unpinned | FIXED: `BigDecimal("-1e19")` is empty (positive low 64 bits without the arm); mutant C1 red |
+| M2 | the value of the in-range arms unpinned | FIXED: `BigDecimal("14400000.9")` and `BigInteger.valueOf(14_400_000)` give `night`; mutants C2 (`BigDecimal` else -> 0) and C3 (`BigInteger` -> 0) red |
+| M3 | `EpochMath.epochSeconds(LocalDate)` and `instant(LocalDate, Int)` dead since the delegation | CONFIRMED by search (all source sets, all modules: only `EpochMathSpec` called the `LocalDate` overload; `EpochMath` is internal): both deleted with the imports `atStartOfDayIn` and `LocalDate`; `EpochMathSpec` uses `instant(LocalDateTime(date, LocalTime(0, 0)), offset)`; compile sweep clean |
+| M4 | the last-date row pinned no end and no literal | FIXED: `to == from` (empty at the start) and the start as epoch second 31 556 889 832 773 600, recomputed independently (days-from-civil) and asserted on JVM, JS and native |
+| M5 | `MpLocalTimeEndOfDaySpec` compared two values from the same function | FIXED: the instant 2024-03-30T23:00Z pinned |
+| M6 | texts: "used only here"; "Not merged, not reviewed"; the only end-before-start case | FIXED in this ticket and the KDoc of `onDate` ("on a date after it, or past the last date the platform holds") |
+| M7 | no start-of-day case with an overlap at midnight | FIXED: `StartOfDayCase("America/Havana", "2022-11-06", 1667707200L, "2022-11-06T00:00")`, recomputed independently (Python zoneinfo, fold 0 at -04:00); `ZoneParityJvmSpec` agrees with java.time; green on all three |
+| withdrawn | two observations of the reviewer | WITHDRAWN by the reviewer |
+| counts | after round 3 (2026-11-14, `--rerun`, XML) | datetime JVM 2855 / 0, JS 2197 / 0, native 2189 / 0 (`ZoneParitySpec` 55 on all three, `ZoneParityJvmSpec` 4); slumber 1268 / 0 (`MpLocalTimeSlotCodecSpec` 9); codegen 326 / 0; compile sweep 0 `e:`; mutants C1, C2, C3 red (1 each) |
+
 ## Left out, for one follow-up ticket
 
 - `MpLocalTime.jvm` drops the milliseconds (`Max.jvm` = 23:59:59).
@@ -598,3 +619,5 @@ nothing; each item was settled by a test first.
   (the slot redesign) built on `wt/datetime` on top of it, tests first; not reviewed, not merged.
 - 2026-11-14: 3b-2 round 1 NOT CLEAN (1 MAJOR: the gap rule), all findings handled; awaiting the delta review.
 - 2026-11-14: 3b-2 delta round 2 CLEAN; its MINORs, mutants and texts handled; a short delta review before the merge.
+- 2026-11-14: 3b-2 delta round 3 CLEAN; close-out applied. Gate closed; 3b-2 held with 3b-1 for the maintainer's word on
+  the sentinel constants.
