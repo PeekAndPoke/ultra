@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -25,6 +26,8 @@ import kotlin.time.Duration.Companion.seconds
 class FastCacheLoopResilienceSpec : StringSpec() {
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "a throwing eviction handler does not kill the processing loop" {
             val cache = fastCache<String, String>(loopDelay = 20.milliseconds) {
                 maxEntries(1)
@@ -74,6 +77,23 @@ class FastCacheLoopResilienceSpec : StringSpec() {
             }
 
             keepReachable(cache)
+        }
+
+        "the loop survives starting before the constructor has finished" {
+            // Dispatchers.Unconfined runs the loop's first pass inside the constructor, before the rest
+            // of the cache is initialized - what a pass on another thread can do at any time. A field
+            // initialized after the loop's launch was still null there, and the loop died for good.
+            val scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+            val cache = fastCache<String, String>(scope = scope, loopDelay = 20.milliseconds) {
+                maxEntries(1)
+            }
+
+            cache.put("a", "1")
+            cache.put("b", "2")
+
+            eventually(3.seconds) { cache.size shouldBe 1 }
+
+            scope.cancel()
         }
 
         "a behaviour throwing a CancellationException does not end the loop" {
@@ -186,6 +206,8 @@ private class NotAnException : Throwable("not an exception")
 class FastCacheConfigValidationSpec : StringSpec() {
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "maxEntries rejects a non-positive limit instead of coercing it to 1" {
             // Previously maxEntries(0) - written meaning "disable" - silently became a 1-entry cache
             shouldThrow<IllegalArgumentException> {
@@ -330,6 +352,8 @@ class FastCacheConfigValidationSpec : StringSpec() {
 class FastCacheBuilderIsolationSpec : StringSpec() {
 
     init {
+        timeout = TEST_TIMEOUT_MS
+
         "adding a behaviour after build() does not affect the built cache" {
             val builder = FastCache.Builder<String, String>(loopDelay = 20.milliseconds)
             builder.maxEntries(10)
