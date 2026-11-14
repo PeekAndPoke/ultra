@@ -16,6 +16,11 @@ Confirmed on JVM and JS; pinned as a known defect in `ListMutatorKnownDefectsSpe
 `wt/mutator`). The cause sits outside ULTRA-00234: the generated code (`mutator/ksp/src/main/kotlin/MutatorCodeBlocks.kt:134`)
 and `ObjectMutator`'s snapshot by identity.
 
+**Same root, traced by the round-3 implementation reviewer of ULTRA-00234, not yet confirmed by a test:** the
+generated getter builds a new list mutator on every access (`MutatorCodeBlocks.kt:132-134`), so row tracking does not
+reach across two accesses. `held = book.addresses[0]`; `book.addresses.removeAt(0)`; `held.street = "X"`: the write
+goes into the first mutator's own copy and the removed row comes back. Verify first, then fix with claim H.
+
 ## Decide before implementing
 
 - What `commit()` means for child mutators handed out before it: do they stay live (and report into the parent), or
