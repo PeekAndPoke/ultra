@@ -1,6 +1,6 @@
 # ULTRA-00344: Kontainer: overrides at create run eagerly again (ULTRA-00333 reverted)
 
-> **Status (2026-11-14): BUILT** on `wt/kontainer`, not merged; a strict gate follows.
+> **Status (2026-11-14): BUILT** on `wt/kontainer`, not merged: gate round 1 CLEAN, a delta review follows.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 > **Plan:** ULTRA-00316 (close the open epics from the foundation upwards)
@@ -136,6 +136,111 @@ tests came in (a throwing lambda fails `clone`; a refused override never runs). 
   ULTRA-00332, ULTRA-00336 (both entries), ULTRA-00337.
 - One sentence could be added to ULTRA-00332: no override lambda runs before a refusal at `clone`. In 0.118.0 a
   refused clone ran the parent's override lambdas first and then failed with `ServiceNotFound`.
+
+## Gate round 1 (strict, reviewer-fable-xhigh, all three charters)
+
+**Verdict:** CLEAN, with no CRITICAL, no MAJOR and 8 MINOR.
+- The revert is complete.
+- The three decided checks come first.
+- Each lambda runs once per kontainer.
+- The exception propagates unwrapped.
+- No partial state remains.
+
+The reviewer ran nothing; every item was tested first. One item changed production code (one line, plus a KDoc
+sentence), so a short delta review follows. Commit `e8bf9a5e`.
+
+### Findings and outcomes
+
+1. **M1, the ambiguity refusal came after earlier lambdas had run.** Survived its test: with
+   `create { with { ...; Other() }; with { Inner() } }` (`Inner : Outer`, both dynamic), `Other`'s lambda ran and
+   then `ServiceAmbiguous` was thrown. The same happened at `clone`, where the parent's lambda ran again.
+   - Both new tests were RED (1 run, and 2 at clone).
+   - Fixed: `createChecked` resolves every override's base type after the dynamics check and before `instantiate`.
+     The exception type and message are unchanged (pinned literally).
+   - `ServiceNotFound` from the lookup cannot be reached there: the dynamics checker and the lookup read the same set,
+     so a key that passes the checker has at least one base type.
+   - Order when several refusals apply to one call:
+     1. validation, which at `create` runs even before the override block
+     2. the built-in check (the first built-in key)
+     3. the dynamics check (all unexpected keys, named together)
+     4. the ambiguity check (the first ambiguous key)
+
+     No override lambda runs before any of them.
+2. **M2, the lambda before the base-type lookup.**
+   - The ambiguity tests count runs in the ambiguous lambda and in an earlier valid one: both 0.
+   - G2 (swap lookup and lambda in the factory): SURVIVED. It is equivalent now, since the pre-check refuses any
+     ambiguous key before the factory runs.
+   - G1 (pre-check removed): RED, 2.
+   - G3 (both together, two files, run by hand with the same backup and `cmp` protocol): RED, 2.
+3. **M5, the order of the lambdas.** Pinned:
+   - at create, the order of the first `with` per service
+   - a second `with` for the same class replaces the lambda in place, and the first never runs
+   - at clone, the parent's order first, a clone override for a parent's key at that key's position, new keys last
+
+   G4 (reversed order): RED, 2. G5 (a replaced lambda also run): RED, 1.
+4. **M3, two overrides for one service under different classes.** Pinned as CURRENT BEHAVIOUR, unchanged: with
+   `dynamic(Base)` and `create { with(Base::class) { First() }; with(Derived::class) { Derived() } }`, both lambdas
+   run, the later wins, and `First()` is built for nothing. A question for the maintainer:
+   - keep only the last override per service before running
+   - refuse two overrides for one service
+   - leave it as it is
+5. **M4, the public `ServiceProviderFactory(...)` constructor** runs the override lambdas without the checks, and
+   `newKontainer` runs them again for the kontainer it returns. Unchanged. One KDoc sentence on the class says so, and
+   a CURRENT BEHAVIOUR pin records it: 1 run at create, 2 after the constructor, 3 after `newKontainer`. A question
+   for the maintainer: make the constructor internal?
+6. **M6 and M7:** the stale comment "ULTRA-00333: overrides are lazy." is deleted; master's comment "ULTRA-00332:
+   clone runs the same check as create." is restored above its test.
+7. **The changelog advice**, corrected below.
+8. **M8**, the stale line in ULTRA-00338: the coordinator's, at the merge.
+
+### Mutation runs, round 1 (failed / 565)
+
+| # | Mutant | Result |
+|---|---|---|
+| G1 | Base-type pre-check removed | RED, 2 |
+| G2 | Lambda before the base-type lookup in the factory | SURVIVED, equivalent (the pre-check comes first) |
+| G3 | G1 and G2 together | RED, 2 |
+| G4 | Override lambdas run in reverse order | RED, 2 |
+| G5 | A replaced lambda also run | RED, 1 |
+
+### Counts after round 1 (XML, `--rerun`, 0 failures)
+
+| Suite | Tests |
+|---|---|
+| `:ultra:kontainer:test` | 565 (561 before; 4 new tests) |
+| `:ultra:log:jvmTest` | 74 |
+| `:ultra:vault:jvmTest` | 287 |
+| `:funktor:insights:jvmTest` | 118 |
+| `:funktor:cluster:jvmTest` | 162 |
+| `:funktor:all:jvmTest` | 289 |
+| `:funktor:core:jvmTest` | 775 |
+| `:funktor:rest:jvmTest` | 124 |
+| `:funktor:auth:jvmTest` | 322 |
+| `:funktor:messaging:jvmTest` | 67 |
+| `:funktor:logging:jvmTest` | 14 |
+| `:funktor:codegen:test` | 104 |
+| `:funktor:saas:jvmTest` | 50 |
+| `:funktor-demo:server:test` | 52 |
+
+The repo-wide compile sweep is green (459 tasks, 0 errors).
+
+### Changelog advice (replaces the advice above)
+
+- **Goes:** the whole ULTRA-00333 entry.
+- **Still true against 0.118.0, as worded:** ULTRA-00319, ULTRA-00327, ULTRA-00332, both ULTRA-00336 entries,
+  ULTRA-00337.
+- **The refusals at `create` and `clone`:**
+  - the remembered validation result (`KontainerInconsistent`)
+  - the built-in check (`KontainerInconsistent`)
+  - the dynamics check (`KontainerInconsistent`)
+  - the ambiguity check (`ServiceAmbiguous`)
+  - `ServiceNotFound` from the lookup, unreachable after the dynamics check
+
+  With round 1's fix, no override lambda runs before any of them, at `create` or at `clone`. A lambda that throws is
+  not a refusal; it fails with its own exception.
+- **So the ULTRA-00332 entry can take this sentence**, true for every refusal: "No override lambda runs before a
+  refusal, at `create` or at `clone`. In 0.118.0 a refused clone ran the parent's override lambdas first, and an
+  override matching two dynamics was refused only after the lambdas listed before it had run."
 
 ## History
 
