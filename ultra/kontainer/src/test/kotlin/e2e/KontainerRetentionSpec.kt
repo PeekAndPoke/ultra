@@ -3,7 +3,14 @@ package io.peekandpoke.ultra.kontainer.e2e
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
+import io.peekandpoke.ultra.kontainer.InjectionContext
 import io.peekandpoke.ultra.kontainer.KontainerBlueprint
+import io.peekandpoke.ultra.kontainer.ServiceDefinition
+import io.peekandpoke.ultra.kontainer.ServiceKind
+import io.peekandpoke.ultra.kontainer.ServiceProducer
+import io.peekandpoke.ultra.kontainer.ServiceProvider
+import io.peekandpoke.ultra.kontainer.ServiceType
 import io.peekandpoke.ultra.kontainer.kontainer
 import java.lang.ref.WeakReference
 
@@ -52,6 +59,22 @@ class KontainerRetentionSpec : StringSpec({
             value.clearsWithinBoundedGc() shouldBe true
         }
     }
+
+    "An override provider keeps only the value after its first use, not the lambda" {
+
+        val (provider, captured) = overrideProviderCapturingMarker()
+        val kontainer = kontainer { }.create()
+
+        val first = provider.provide(kontainer, InjectionContext.kontainerRoot)
+
+        withClue("the marker captured by the lambda must be collectable while the provider is held") {
+            captured.clearsWithinBoundedGc() shouldBe true
+        }
+
+        withClue("the value stays") {
+            provider.provide(kontainer, InjectionContext.kontainerRoot) shouldBeSameInstanceAs first
+        }
+    }
 })
 
 /** Creates a kontainer whose override captures a marker, never requests it, and keeps nothing but a weak reference. */
@@ -71,4 +94,22 @@ private fun createWithUsedOverride(blueprint: KontainerBlueprint): Pair<WeakRefe
     val value = kontainer.get(RetainedDyn::class)
 
     return WeakReference(marker) to WeakReference<Any>(value)
+}
+
+/** An override provider whose lambda captures a marker; only the provider and a weak reference leave this function. */
+private fun overrideProviderCapturingMarker(): Pair<ServiceProvider, WeakReference<Any>> {
+    val marker = Any()
+
+    val provider = ServiceProvider.Provider.forOverride(
+        definition = ServiceDefinition(
+            serviceCls = RetainedDyn::class,
+            type = ServiceType.Singleton,
+            kind = ServiceKind.Dynamic,
+            producer = ServiceProducer.forInstance(RetainedDyn(null)),
+            overwrites = null,
+        ),
+        create = { RetainedDyn(marker.hashCode()) },
+    ).provide()
+
+    return provider to WeakReference(marker)
 }
