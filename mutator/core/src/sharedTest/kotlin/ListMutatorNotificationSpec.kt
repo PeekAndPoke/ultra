@@ -18,6 +18,24 @@ class ListMutatorNotificationsSpec : StringSpec({
         notified shouldBe 1
     }
 
+    "add(index, element) should notify" {
+        val list = listOf(Address("A", "C", "Z"), Address("C", "C", "Z"))
+        val mutator = list.mutator()
+        var notified = 0
+        var seen: List<Address>? = null
+        mutator.onChange {
+            notified++
+            seen = it.toList()
+        }
+
+        mutator.add(1, Address("B", "C", "Z"))
+
+        val expected = listOf(Address("A", "C", "Z"), Address("B", "C", "Z"), Address("C", "C", "Z"))
+        mutator.get() shouldBe expected
+        notified shouldBe 1
+        seen shouldBe expected
+    }
+
     "remove() existing element should notify" {
         val b = Address("B", "C", "Z")
         val list = listOf(Address("A", "C", "Z"), b)
