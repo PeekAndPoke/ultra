@@ -556,6 +556,26 @@ class ValidationCharacterizationSpec : StringSpec({
         }
     }
 
+    "An ambiguous injection on a cycle through another service is reported as ambiguous, and hidden errors show" {
+
+        val error = shouldThrow<KontainerInconsistent> {
+            kontainer {
+                singleton(AmbiguousOnCycle::class)
+                singleton(CycleBackToA::class)
+                singleton(OtherI::class)
+            }.create()
+        }
+
+        assertSoftly {
+            error.message shouldContain "Parameter 'i' is ambiguous. The following services collide: " +
+                    "io.peekandpoke.ultra.kontainer.e2e.characterization.CycleBackToA, " +
+                    "io.peekandpoke.ultra.kontainer.e2e.characterization.OtherI"
+            error.message shouldContain "Parameter 'missing' misses a dependency to " +
+                    "io.peekandpoke.ultra.kontainer.e2e.characterization.NeverRegistered"
+            error.message shouldNotContain "Circular dependency"
+        }
+    }
+
     "A real self-cycle, the owner the only candidate, stays a cycle" {
 
         shouldThrow<KontainerInconsistent> {
@@ -588,6 +608,12 @@ class LookupCycleTwo(val one: LookupCycleOne)
 
 class ListCycleOne(val all: List<ListCycleTwo>)
 class ListCycleTwo(val one: ListCycleOne)
+
+interface CycleI
+class NeverRegistered
+class AmbiguousOnCycle(val i: CycleI, val missing: NeverRegistered)
+class CycleBackToA(val a: AmbiguousOnCycle) : CycleI
+class OtherI : CycleI
 
 abstract class Part
 class PartOwner(val all: List<Part>)
