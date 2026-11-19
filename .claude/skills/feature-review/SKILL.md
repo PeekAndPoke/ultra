@@ -49,8 +49,8 @@ Run the loop from `.claude/skills/review-loop/` with the three charters below â€
 rounds two-phase, findings carried in a ledger, only CRITICAL/MAJOR looping, safety valve at 2 rounds.
 
 All three run in parallel, spawned by review-loop's **effort ladder**: a standard gate's levels are
-`reviewer-opus-high`, `reviewer-fable-medium`, `reviewer-fable-xhigh`; a strict one's (a ticket marked
-security-critical) are `reviewer-fable-medium`, `reviewer-fable-high`, `reviewer-fable-xhigh`. The level follows
+`reviewer-opus-high`, `reviewer-fable-medium`, `reviewer-fable-high`; a strict one's (a ticket marked
+security-critical) are `reviewer-fable-medium`, `reviewer-fable-high`, `reviewer-fable-high`. The level follows
 the findings and is shared by all three charters. This is correctness-critical verification; do not downgrade them to save tokens without
 saying so in the brief. Ask each the SURPLUS question too. Tell each: cite `path/File.kt:line`, give a
 concrete failure scenario, "NO FINDINGS" is valid, do not pad, and do NOT spawn sub-agents. Give each

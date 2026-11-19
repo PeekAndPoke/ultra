@@ -36,7 +36,7 @@ can do its task well.
 | Frontier reasoning | inherit (omit `model`) | architecture judgment, deep cross-cutting analysis the coordinator can't decompose further |
 
 **Review rounds do not use this table** — they follow the effort ladder in `/review-loop`
-(`reviewer-opus-high`, `reviewer-fable-medium`, `reviewer-fable-high`, `reviewer-fable-xhigh`; a gate's tier says
+(`reviewer-opus-high`, `reviewer-fable-medium`, `reviewer-fable-high`; a gate's tier says
 which three it uses). Security and domain review is correctness-critical: never `sonnet`.
 
 **Fable reviews on rungs 2 to 4, alone** (maintainer, 2026-11-13; the "no Fable in reviews" rule of 2026-10-25 is
@@ -50,14 +50,14 @@ workers stay on the table above.
 | Mechanical / bulk stages      | `low`                                                                                            |
 | Standard work                 | omit (inherit session effort)                                                                    |
 | Hardest verify / judge stages | `high` or `xhigh`                                                                                |
-| Review levels 1, 2, 3         | `high`, `xhigh`, `max` via the `reviewer-*` agent definitions (the level follows the findings) |
+| Review levels 1, 2, 3         | pinned in the `reviewer-*` agent definitions: `opus` high, `fable` medium, `fable` high (the level follows the findings) |
 
 ## Where the dials live
 
 - **Agent tool**: set the `model` parameter per call. There is no per-call effort override —
   effort comes from the agent definition. `fork`-type agents always inherit the parent model;
   don't set `model` on them. Effort for reviewers is pinned in `.claude/agents/reviewer-opus-high.md`,
-  `reviewer-fable-medium.md`, `reviewer-fable-high.md` and `reviewer-fable-xhigh.md`.
+  `reviewer-fable-medium.md` and `reviewer-fable-high.md`.
 - **Workflow `agent()`**: set both `model` and `effort` in the opts, per stage.
 - **Custom agents** (`.claude/agents/*.md`): can pin model/effort in frontmatter; prefer that
   for agents whose task type never varies.
