@@ -35,6 +35,11 @@ rule, never content). There is nothing for you to do about them; they say how to
     normalize:truncated              Only the first 200,000 characters were read: "not found" can mean "further
                                      down".
     any flag with "redirected"       The fetch ended at another address: check `final_host`.
+    schema_check:quotes_dropped, schema_check:quote_cut
+                                     The answer came with more than three quotes, or a quote of more than 300
+                                     characters; the surplus was dropped, the long one cut. The answer stands,
+                                     but it rests on more of the page than the quotes show: a question that asks
+                                     for a list does this. Ask for the items one by one where you build on them.
     lint:, detonate:, list_instructions:, card_gate: flags
                                      The page held text that reads like instructions to a reader, or a check was
                                      not sure. What was found was cut or judged harmless, so the result was let
@@ -45,13 +50,22 @@ Research: a brief instead of a question. A researcher on the other side searches
 follows links, and hands back finding cards. It takes minutes, not seconds.
 
     webq.py research --brief-file tmp/brief.txt          # or --brief "..."
+    webq.py research --brief-file tmp/brief.txt --url https://example.org/a.pdf --url https://example.org/b
     webq.py get <id>                                     # read the result later
+
+    --url     a page the researcher is to read, at most eight, each checked like `ask --url`. The researcher
+              cannot open an address on its own: a URL written into the brief's text is only words. Pages you
+              know go here; the brief says what to find out. Named pages are read first and count against
+              the budget of pages.
 
     {"status": "released", "mode": "research",
      "cards": [{"id": "c1", "claim": "...", "quotes": ["...", "..."], "confidence": "high",
                 "source": "https://...", "title": "...", "page": "<id>-p3", "final_host": "...", "kind": "pdf",
                 "flags": []}],
      "searches": ["the phrases that were searched for"],
+     "named": [{"ref": "u1", "url": "https://...", "status": "read", "page": "<id>-p1"},
+               {"ref": "u2", "url": "https://...", "status": "blocked", "stage": "fetch", "rules": ["http_403"]},
+               {"ref": "u3", "url": "https://...", "status": "not_read"}],
      "stats": {"ended": "done", "searches": 4, "pages_read": 9, "pages_withheld": 0, "cards_recorded": 14, ...}}
 
 A card is a claim in the researcher's words, one or two quotes that stand word for word on the page, and
@@ -60,6 +74,9 @@ has none). That is provenance, not truth: a page can be wrong, and the researche
 Read the claim against its quotes: what the quotes do not carry is the researcher's reading, and software is
 built on your report. For every number or condition you rely on that is not in a quote, follow up on the
 card's page with `ask --item <page>`. You write the report.
+`named` says what became of each page you named: `read` (its `page` works with `ask --item`, also when no card
+came from it), `blocked` (stage and rule words as for a question, no content) or `not_read` (the researcher
+did not get to it: ask about it with `ask --url`).
 The brief leaves your repo and its searches leave the machine: put nothing confidential into it (no
 unpublished plans, no names, no code). The maintainer sees every brief. At most 4,000 characters.
 
@@ -68,9 +85,9 @@ Other outcomes, and what to do:
     blocked, fetch:url_holds_encoded_data, url_holds_a_secret_shape, url_host_spells_data, url_query_too_long
                                      The URL you named looks like it carries data. Name the page plainly, or
                                      use --search. Nothing left the machine.
-    blocked, schema_check:schema_too_many_quotes (or another schema_ word)
-                                     The answer did not fit the shape; a question that asks for a list often
-                                     does this. Ask for one thing.
+    blocked, schema_check:schema_answer_too_long (or another schema_ word)
+                                     The answer did not fit the shape; a question that asks for a list or a
+                                     summary often does this. Ask for one thing.
     blocked, normalize:empty_page    The page had nothing to read for us: a bot check, a page a browser builds
                                      with JavaScript, a scanned PDF. It did not say "no".
     blocked, fetch:http_403 (or another status), fetch:timeout, fetch:fetch_failed
@@ -91,7 +108,7 @@ import sys
 import time
 
 HOME = os.environ.get("WEBQ_HOME", "/opt/dev/web-quarantine")
-MAX_QUESTION, MAX_URL, MAX_SEARCH, MAX_BRIEF = 500, 400, 200, 4000
+MAX_QUESTION, MAX_URL, MAX_SEARCH, MAX_BRIEF, MAX_NAMED = 500, 400, 200, 4000, 8
 
 
 def who():
@@ -154,6 +171,8 @@ def main(argv=None):
     text = res.add_mutually_exclusive_group(required=True)
     text.add_argument("--brief", help="the brief, at most 4,000 characters, nothing confidential")
     text.add_argument("--brief-file", help="a file that holds the brief")
+    res.add_argument("--url", action="append", default=[], metavar="URL",
+                     help="a page the researcher is to read; may be given up to eight times")
     res.add_argument("--wait", type=int, default=1500, help="seconds to wait for the result (default 1500)")
     get = sub.add_parser("get", help="read the result of an earlier request")
     get.add_argument("id")
@@ -168,7 +187,11 @@ def main(argv=None):
         if not brief.strip() or len(brief) > MAX_BRIEF:
             print(f"the brief may have {MAX_BRIEF} characters, and it may not be empty", file=sys.stderr)
             return 2
-        request = {"mode": "research", "brief": brief}
+        if len(args.url) > MAX_NAMED or any(not u.strip() or len(u) > MAX_URL for u in args.url):
+            print(f"--url may be given {MAX_NAMED} times, each with at most {MAX_URL} characters and not empty",
+                  file=sys.stderr)
+            return 2
+        request = {"mode": "research", "brief": brief, **({"urls": args.url} if args.url else {})}
     else:
         way = "url" if args.url else "search" if args.search else "item"
         value = getattr(args, way)
