@@ -104,3 +104,7 @@ Counts: see ULTRA-00345, Gate round 1.
 - 2026-11-14: built by track D (`cfd272ab`), not merged; a strict gate follows.
 - 2026-11-14: strict gate round 1 CLEAN; close-out by track D, not merged.
 - 2026-11-14: DONE.
+- 2026-11-23: after the release of 0.119.0, on the maintainer's word ("yes make newKontainer internal"):
+  `ServiceProviderFactory.newKontainer` is internal too; only `Kontainer.clone` calls it.
+  `ServiceProviderFactoryVisibilitySpec` pins it (RED with `expected:<INTERNAL> but was:<PUBLIC>` before the
+  change). kontainer 581, insights 118, funktor:all 289, cluster 162, all green.

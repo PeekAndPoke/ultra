@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Breaking changes
+
+- `ultra/kontainer`: `ServiceProviderFactory.newKontainer` is internal; a new kontainer comes from `create` or
+  `Kontainer.clone`. Since 0.119.0 nothing outside the module could build the overrides it takes (ULTRA-00346).
+
 ## 0.119.0
 
 ### Breaking changes
