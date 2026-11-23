@@ -316,6 +316,13 @@
 
 ### Fixes
 
+- `kraft/addons/pdfjs`: `PagedPdfViewer` and `ScrollingPdfViewer` destroy their document when they unmount, which
+  ends its pdf.js worker. Before, every visit to a page with a viewer left a worker running for the life of the tab. A
+  second document loaded for the same viewer is destroyed instead of leaked. A `State.doc` handed to `onChange` cannot
+  be used after unmount. `PDFDocumentProxy.destroy()` is declared (ULTRA-00349).
+- `kraft/addons/signaturepad` and `kraft/semanticui`: `SignaturePad` removes its window `resize` and `endStroke`
+  listeners on unmount, and the old `SelectFieldComponent` its document `mousedown` listener. Each removal passed a new
+  `::x` reference and so removed nothing: after unmount a resize still called the pad's `onChange` (ULTRA-00350).
 - `kraft/addons/threejs`: `ThreeJsComponent` gives up its WebGL context when it unmounts (`renderer.dispose()`, then
   `renderer.forceContextLoss()`). Before, every visit to a page with a `ThreeJs` left a live context behind until the
   canvas was collected; after a handful, the browser dropped the oldest ("Too many active WebGL contexts"), or the
