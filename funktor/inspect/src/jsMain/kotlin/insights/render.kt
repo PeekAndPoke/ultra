@@ -215,7 +215,12 @@ internal fun FlowContent.problem(text: String) {
 
 /** The page's style element; CSS only, constant. */
 internal fun FlowContent.insightsStyles() {
-    style { +INSIGHTS_CSS }
+    style {
+        // kotlinx.html deprecates text in <style> for string output, where it would be escaped. Preact sets it as a
+        // text node, which the browser reads as CSS unescaped; and these pages have no `unsafe { }` (see above)
+        @Suppress("DEPRECATION")
+        +INSIGHTS_CSS
+    }
 }
 
 /** Grey text, for placeholders and secondary detail. */
