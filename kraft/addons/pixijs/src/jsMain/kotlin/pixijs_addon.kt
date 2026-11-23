@@ -41,7 +41,10 @@ class PixiJsAddon internal constructor(
         return js("Reflect").construct(ctor, args).unsafeCast<T>()
     }
 
-    /** Creates a new, uninitialized [Application]. Call `.init(options).await()` before use. */
+    /**
+     * Creates a new, uninitialized [Application]. Call `.init(options).await()` before use, and [Application.destroy] when
+     * the page that owns it unmounts: it frees the WebGL context, of which a browser allows only a few live ones.
+     */
     fun createApplication(): Application {
         @Suppress("UnusedVariable", "unused")
         val ctor = pixiModule.Application

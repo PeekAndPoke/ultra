@@ -171,7 +171,12 @@ external class WebGLRenderer(parameters: WebGLRendererParameters = definedExtern
     val shadowMap: ShadowMap
 
     fun render(scene: Scene, camera: Camera)
+
+    /** Frees programs, render lists and properties; the WebGL context itself stays until [forceContextLoss]. */
     fun dispose()
+
+    /** Gives up the WebGL context now, instead of when the canvas is collected (browsers allow only a few live ones). */
+    fun forceContextLoss()
 }
 
 /** A renderer's shadow maps. */

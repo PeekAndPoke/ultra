@@ -316,6 +316,10 @@
 
 ### Fixes
 
+- `kraft/addons/threejs`: `ThreeJsComponent` gives up its WebGL context when it unmounts (`renderer.dispose()`, then
+  `renderer.forceContextLoss()`). Before, every visit to a page with a `ThreeJs` left a live context behind until the
+  canvas was collected; after a handful, the browser dropped the oldest ("Too many active WebGL contexts"), or the
+  current page's. `WebGLRenderer.forceContextLoss()` is declared. Requested by Klang (ULTRA-00348).
 - `ultra/datetime`: `MpLocalDate.numDaysInMonth` and `getDatesInMonth` come from the calendar. They went through a
   date range clamped to Genesis / Doomsday and returned wrong counts (and lost dates) for months before -10000-01 and
   from 10000-01 on (ULTRA-00341).

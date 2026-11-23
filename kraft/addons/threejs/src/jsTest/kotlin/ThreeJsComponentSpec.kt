@@ -39,25 +39,45 @@ private class ComponentClock : FrameClock {
 private class FakeThree {
     var draws = 0
 
+    /** What the renderers were asked to do besides drawing, in order: "dispose", "forceContextLoss". */
+    val teardown = mutableListOf<String>()
+
     val module: dynamic = js("({})")
 
     init {
         val onDraw = { draws++ }
+        val onTeardown = { call: String -> teardown.add(call); Unit }
 
         module.Scene = js("(function () { return function Scene() {}; })")()
         module.PerspectiveCamera = js("(function () { return function Camera() { this.position = { x: 0, y: 0, z: 0 }; }; })")()
         module.WebGLRenderer = js(
-            "(function (onDraw) { function R(p) {} " +
+            "(function (onDraw, onTeardown) { function R(p) {} " +
                 "R.prototype.setPixelRatio = function () {}; R.prototype.setSize = function () {}; " +
                 "R.prototype.setClearColor = function () {}; R.prototype.render = function () { onDraw(); }; " +
-                "R.prototype.dispose = function () {}; return R; })"
-        )(onDraw)
+                "R.prototype.dispose = function () { onTeardown('dispose'); }; " +
+                "R.prototype.forceContextLoss = function () { onTeardown('forceContextLoss'); }; return R; })"
+        )(onDraw, onTeardown)
     }
 }
 
 @Suppress("TestFunctionName")
 private fun Tag.PausableScene(paused: StreamSource<Stream<Boolean>>, clock: FrameClock) =
     comp(PausableScene.Props(paused, clock)) { PausableScene(it) }
+
+@Suppress("TestFunctionName")
+private fun Tag.ToggledScene(shown: StreamSource<Boolean>, clock: FrameClock) =
+    comp(ToggledScene.Props(shown, clock)) { ToggledScene(it) }
+
+/** Renders a ThreeJs while [Props.shown] holds true: false unmounts it, true mounts a new one. */
+private class ToggledScene(ctx: Ctx<Props>) : Component<ToggledScene.Props>(ctx) {
+    data class Props(val shown: StreamSource<Boolean>, val clock: FrameClock)
+
+    private val shown by subscribingTo(props.shown)
+
+    override fun VDom.render() {
+        if (shown) ThreeJs(onReady = {}, clock = props.clock, width = 100, height = 100)
+    }
+}
 
 @Suppress("TestFunctionName")
 private fun Tag.ClockedScene(clock: StreamSource<FrameClock>) = comp(ClockedScene.Props(clock)) { ClockedScene(it) }
@@ -84,7 +104,7 @@ private class PausableScene(ctx: Ctx<Props>) : Component<PausableScene.Props>(ct
     }
 }
 
-/** `ThreeJs(paused = ...)` mounted (ULTRA-00270): the component follows its paused stream, also a new one. */
+/** `ThreeJs` mounted: it follows its paused stream, also a new one (ULTRA-00270), and gives up its context (ULTRA-00348). */
 class ThreeJsComponentSpec : StringSpec({
 
     suspend fun withScene(paused: StreamSource<Stream<Boolean>>, test: suspend (FakeThree, ComponentClock) -> Unit) {
@@ -162,6 +182,29 @@ class ThreeJsComponentSpec : StringSpec({
             second.requests shouldBe 1
             second.frame()
             three.draws shouldBe 2
+        }
+    }
+
+    "unmounted, the component disposes its renderer and gives up the WebGL context, on every visit (ULTRA-00348)" {
+        val three = FakeThree()
+        val shown = StreamSource(true)
+        val clock = ComponentClock()
+
+        TestBed.preact(
+            appSetup = { addons { register(key = threeJsAddonKey, name = "threejs-fake") { ThreeJsAddon(three.module) } } },
+            view = { ToggledScene(shown, clock) },
+        ) {
+            eventually { three.draws shouldBe 1 }
+            three.teardown shouldBe emptyList()
+
+            shown(false)
+            eventually { three.teardown shouldBe listOf("dispose", "forceContextLoss") }
+
+            // Entered again: a new renderer, and its context is given up as well
+            shown(true)
+            eventually { three.draws shouldBe 2 }
+            shown(false)
+            eventually { three.teardown shouldBe listOf("dispose", "forceContextLoss", "dispose", "forceContextLoss") }
         }
     }
 })
