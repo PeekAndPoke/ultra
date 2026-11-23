@@ -8,6 +8,8 @@ The notes are also on the docs site: <https://peekandpoke.io/release-notes/>.
 
 ## Releases
 
+- [0.119.0](0.119.0.md), 2026-11-23: Kontainer validation and override rules; datetime time slots as start plus
+  duration, 24:00, exact zoned values; cache, mutator and Kraft addon leak fixes.
 - [0.118.0](0.118.0.md), 2026-11-13: Funktor auth security fixes and email-first sign-up; the depot as its own
   library with data subjects, encryption and erasure; Streams fixes; no CDNs in the Kraft addons.
 - [0.117.0](0.117.0.md), 2026-10-31: Kraft drag and drop, leave guards and wake lock; Streams `sampled` and one
