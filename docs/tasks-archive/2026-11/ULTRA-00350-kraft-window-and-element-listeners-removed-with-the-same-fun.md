@@ -1,6 +1,6 @@
 # ULTRA-00350: Kraft: window and element listeners removed with the same function reference (signaturepad, select field, examples)
 
-> **Status (2026-11-23): IN PROGRESS.**
+> **Status (2026-11-23): DONE.** Built on master (`1d8e5c96`, the `jsObject` import in `191925af`). Gate: round 1 (with ULTRA-00349) no CRITICAL or MAJOR for this ticket.
 >
 > **Part of:** ULTRA-00258 (Epic: Kraft addons)
 
@@ -45,3 +45,5 @@ and passes it to both calls:
 
 - 2026-11-23: filed on the maintainer's word and built on master.
 - 2026-11-23: IN PROGRESS.
+- 2026-11-23: done; gate closed.
+- 2026-11-23: DONE.

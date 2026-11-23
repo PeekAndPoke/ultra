@@ -1,6 +1,6 @@
 # ULTRA-00349: Kraft pdfjs: the viewers destroy their document on unmount, so no PDF worker is left behind
 
-> **Status (2026-11-23): IN PROGRESS.**
+> **Status (2026-11-23): DONE.** Built on master (`a13f615b`, `191925af` and the round 2 close-out). Gate: round 1 NOT CLEAN (1 MAJOR, fixed), delta round 2 CLEAN.
 >
 > **Part of:** ULTRA-00258 (Epic: Kraft addons)
 
@@ -28,8 +28,9 @@ So every visit to a page with a viewer left a worker thread running, holding its
   `State.doc` handed to `onChange` cannot be used after unmount.
 - A load that fails or is given up destroys its loading task (`PdfJs.load`, only around the wait): pdf.js keeps the
   worker of a rejected task otherwise (a bad URL, a 404, a password PDF).
-- Work cut off by an unmount stops quietly: the render functions return once released, `visitGuarded` logs nothing
-  then, and `ScrollingPdfViewer` no longer waits forever for canvases that will not come.
+- Work cut off by an unmount stops quietly: every render function returns once released, the first job of
+  `PagedPdfViewer` swallows an error only once released, `visitGuarded` logs nothing then, and `ScrollingPdfViewer`
+  no longer waits forever for canvases that will not come. Not tested: these quiet paths.
 - Declared: `PDFDocumentProxy.destroy()` and `loadingTask`, `PDFDocumentLoadingTask.destroyed`.
 - Defensive: a second document, should the loader ever produce one, is destroyed. Today it loads once: neither
   viewer reloads, and neither follows a new `src` prop (older behaviour, not changed here).
@@ -42,7 +43,8 @@ So every visit to a page with a viewer left a worker thread running, holding its
   not destroying a second document: RED (`expected:<["second"]> but was:<[]>`); the documents offered from the
   viewer's subscription instead of the loader (the round 1 MAJOR): RED (`expected:<1> but was:<0>`); a failed load not
   destroying its task: RED (`expected:<1> but was:<0>`). Each restored byte-identical (`cmp`).
-- Counts (XML, `--rerun`): `:kraft:addons:pdfjs:jsBrowserTest` 10, 0 failures.
+- Counts (XML, `--rerun`): `:kraft:addons:pdfjs:jsBrowserTest` 9 tests (3 in `PdfJsSpec`, 6 in
+  `PdfViewerLifecycleSpec`), 0 failures.
 - Not changed: the stray `console.log(it)` in `ScrollingPdfViewer`'s loader callback.
 
 ## Review record
@@ -58,6 +60,17 @@ m4 a fully qualified `jsObject` in the Breakout example: FIXED (ULTRA-00350); m5
 FIXED here, same leak; m6 `ScrollingPdfViewer` waiting forever after unmount (older): FIXED here. ULTRA-00350 and the
 ULTRA-00348 delta: no CRITICAL or MAJOR. A delta review follows, one level up.
 
+### Round 2 (2026-11-23, level 2, `reviewer-fable-medium`, delta of `191925af`)
+
+**CLEAN**, 5 MINOR, all applied without a further review (no behaviour change of the goal; read by the coordinator):
+the late-arrival test could go green on the ordinary unmount path (it threw in a swallowed place): it now records
+whether a document reached the viewer and asserts it did not; `PagedPdfViewer`'s first job logged "Job failed" after
+unmount: quiet now; `ScrollingPdfViewer.renderPage` had no released check: added; the count was 10 with Kotest's
+executor entry: 9 tests; two ticket sentences were wider than the code: corrected. Surviving mutants below finding
+level, not reachable through a viewer: `adopted = null` dropped in `release()`; `CancellationException` excluded in
+`PdfJs.load`. Out of scope, older: `renderAllPages` polls forever on a mounted viewer whose load failed; `PdfJsSpec`
+never destroys its documents; `console.log(it)` in `ScrollingPdfViewer`.
+
 ## Acceptance
 
 - After a viewer unmounts its document is destroyed and its worker terminated; no document a viewer loads is left
@@ -67,3 +80,5 @@ ULTRA-00348 delta: no CRITICAL or MAJOR. A delta review follows, one level up.
 
 - 2026-11-23: filed on the maintainer's word and built on master.
 - 2026-11-23: IN PROGRESS.
+- 2026-11-23: done; gate closed.
+- 2026-11-23: DONE.

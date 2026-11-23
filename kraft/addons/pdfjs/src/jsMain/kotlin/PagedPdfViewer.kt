@@ -100,8 +100,13 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
 
             if (doc != null && documents.claim(doc)) {
                 jobQueue.add {
-                    calculateInitialScale(doc)
-                    modifyState { copy(doc = doc) }
+                    try {
+                        calculateInitialScale(doc)
+                        modifyState { copy(doc = doc) }
+                    } catch (e: Throwable) {
+                        // An unmount cut it off: that is no news
+                        if (!documents.isReleased) throw e
+                    }
                 }
             }
         }

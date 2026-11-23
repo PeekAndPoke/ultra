@@ -126,13 +126,14 @@ class PdfViewerLifecycleSpec : StringSpec({
             listOf(false, true).forEach { scrolling ->
                 val shown = StreamSource(true)
                 val before = workers.count
+                var reached = false
 
-                TestBed.preact(
-                    view = { ToggledViewer(shown, scrolling) { error("no document reaches a viewer that is gone") } },
-                ) {
-                    // At once: the loader waits at least 5 ms and the document comes from the worker later still
+                TestBed.preact(view = { ToggledViewer(shown, scrolling) { reached = true } }) {
+                    // Right after the first frame: the document comes from the worker later still. Should it reach
+                    // the viewer first, this is the ordinary unmount, and `reached` says so below
                     shown(false)
                     eventually(timeout = 10.seconds) { workers.count shouldBe before + 1 }
+                    reached shouldBe false
                 }
             }
         } finally {

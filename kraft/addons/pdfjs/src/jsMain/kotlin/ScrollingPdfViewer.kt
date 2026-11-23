@@ -177,7 +177,6 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
         // Unmounted: no canvas comes any more, so do not wait for them
         if (documents.isReleased) return
 
-
         val canvases: List<HTMLCanvasElement> = dom?.querySelectorAll(".page canvas")
             ?.asList()
             ?.filterIsInstance<HTMLCanvasElement>()
@@ -206,6 +205,7 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
     }
 
     private suspend fun renderPage(canvas: HTMLCanvasElement, pageNumber: Int) {
+        if (documents.isReleased) return
 
         state.doc?.let { doc: PdfjsLib.PDFDocumentProxy ->
             canvas.visitGuarded(quiet = { documents.isReleased }) { canvas ->

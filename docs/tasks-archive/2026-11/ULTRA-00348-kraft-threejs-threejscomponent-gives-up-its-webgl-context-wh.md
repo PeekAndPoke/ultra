@@ -1,6 +1,6 @@
 # ULTRA-00348: Kraft threejs: ThreeJsComponent gives up its WebGL context when it stops
 
-> **Status (2026-11-23): IN PROGRESS.** Scheduled by the maintainer ("We will come back to the container work after the threejs fix"). Built on master, gate pending.
+> **Status (2026-11-23): DONE.** Built on master (`b8f3995b`, `e324951c`). Gate: round 1 NOT CLEAN only for two older leaks in other addons, filed and fixed as ULTRA-00349 and ULTRA-00350; the round 1 fixes reviewed in their round 1 (no CRITICAL or MAJOR). Klang is told once the maintainer has published a release with it.
 >
 > **Part of:** ULTRA-00258 (Epic: Kraft addons)
 
@@ -110,3 +110,5 @@ from `stop()`: RED, `["dispose"]`; restored byte-identical. Counts (XML, `--reru
 - 2026-11-23: filed from Klang-Research's request; checked against the code.
 - 2026-11-23: scheduled by the maintainer; built on master; the other addons checked.
 - 2026-11-23: IN PROGRESS.
+- 2026-11-23: done; gate closed.
+- 2026-11-23: DONE.
