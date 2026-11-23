@@ -26,7 +26,12 @@ import kotlinx.html.div
 import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
 
-/** Renders a single page of a PDF at a time with page navigation. */
+/**
+ * Renders a single page of a PDF at a time with page navigation.
+ *
+ * The viewer owns the document it loads: on unmount it destroys it, which ends its pdf.js worker. A `State.doc` handed
+ * to `onChange` cannot be used after that.
+ */
 @Suppress("FunctionName")
 fun Tag.PagedPdfViewer(
     src: PdfSource,
@@ -73,6 +78,8 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
 
     private val pdfLoader = dataLoader { props.src.load() }
 
+    private val documents = PdfDocumentOwner()
+
     private var state: State by value(State()) { props.onChange(it) }
 
     private fun modifyState(block: State.() -> State) {
@@ -89,7 +96,7 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
         pdfLoader.state {
             val doc = (it as? DataLoader.State.Loaded<PdfjsLib.PDFDocumentProxy>)?.data
 
-            if (doc != null && state.doc == null) {
+            if (doc != null && documents.adopt(doc)) {
                 jobQueue.add {
                     calculateInitialScale(doc)
                     modifyState { copy(doc = doc) }
@@ -104,6 +111,12 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
                     canvas.width = it.offsetWidth
                     canvas.height = it.offsetHeight
                 }
+            }
+
+            // The document holds a pdf.js worker until destroyed: one per visit would pile up (ULTRA-00349)
+            onUnmount {
+                jobQueue.clear()
+                documents.release()
             }
         }
     }

@@ -31,7 +31,12 @@ import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.asList
 
-/** Renders all pages of a PDF in a scrollable container. */
+/**
+ * Renders all pages of a PDF in a scrollable container.
+ *
+ * The viewer owns the document it loads: on unmount it destroys it, which ends its pdf.js worker. A `State.doc` handed
+ * to `onChange` cannot be used after that.
+ */
 @Suppress("FunctionName")
 fun Tag.ScrollingPdfViewer(
     src: PdfSource,
@@ -77,6 +82,8 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
 
     private val pdfLoader = dataLoader { props.src.load() }
 
+    private val documents = PdfDocumentOwner()
+
     private var state: State by value(State()) { props.onChange(it) }
 
     private fun modifyState(block: State.() -> State) {
@@ -95,13 +102,21 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
 
             val doc = (it as? DataLoader.State.Loaded<PdfjsLib.PDFDocumentProxy>)?.data
 
-            if (doc != null && state.doc == null) {
+            if (doc != null && documents.adopt(doc)) {
                 modifyState { copy(doc = doc) }
 
                 jobQueue.add {
                     delay(10)
                     renderAllPages()
                 }
+            }
+        }
+
+        lifecycle {
+            // The document holds a pdf.js worker until destroyed: one per visit would pile up (ULTRA-00349)
+            onUnmount {
+                jobQueue.clear()
+                documents.release()
             }
         }
     }
