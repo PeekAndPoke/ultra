@@ -83,6 +83,11 @@ class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
 
     private var pad: SignaturePadJs? = null
 
+    // One reference each: every `::onWindowResize` is a new function, so a remove with another one removes nothing
+    // and the listener outlives the pad (ULTRA-00350)
+    private val windowResizeListener: (Event) -> Unit = ::onWindowResize
+    private val padEndStrokeListener: (Event) -> Unit = ::onPadEndStroke
+
     //  Public interface  ///////////////////////////////////////////////////////////////////////////////////////
 
     /** Exports the full canvas content. */
@@ -112,7 +117,7 @@ class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
     init {
         lifecycle {
             onMount {
-                window.addEventListener("resize", ::onWindowResize)
+                window.addEventListener("resize", windowResizeListener)
                 tryCreatePad()
             }
 
@@ -121,10 +126,10 @@ class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
             }
 
             onUnmount {
-                window.removeEventListener("resize", ::onWindowResize)
+                window.removeEventListener("resize", windowResizeListener)
 
                 pad?.let {
-                    it.removeEventListener("endStroke", ::onPadEndStroke)
+                    it.removeEventListener("endStroke", padEndStrokeListener)
                     it.off()
                 }
             }
@@ -155,7 +160,7 @@ class SignaturePad(ctx: Ctx<Props>) : Component<SignaturePad.Props>(ctx) {
         if (pad != null) return
 
         pad = addon.create(canvas, props.options).also { newPad ->
-            newPad.addEventListener("endStroke", ::onPadEndStroke)
+            newPad.addEventListener("endStroke", padEndStrokeListener)
         }
 
         resize()

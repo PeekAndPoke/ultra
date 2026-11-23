@@ -242,6 +242,9 @@ class SelectFieldComponent<T>(ctx: Ctx<Props<T>>) :
 
     private val ctrl by lazy { SelectFieldController(this) }
 
+    // One reference: a remove with another `::onDocumentMouseDown` removes nothing (ULTRA-00350)
+    private val documentMouseDownListener: (Event) -> Unit = ::onDocumentMouseDown
+
     private var selectedOption: Option<T>? by value(null)
 
     private var autoSuggestOptions: List<Option<T>> by value(emptyList())
@@ -276,12 +279,12 @@ class SelectFieldComponent<T>(ctx: Ctx<Props<T>>) :
             onMount {
                 // Add a mouse down handler on the document.
                 // By doing so we can close the dropdown when the user clicks somewhere else on the page.
-                window.document.addEventListener(type = "mousedown", callback = ::onDocumentMouseDown)
+                window.document.addEventListener(type = "mousedown", callback = documentMouseDownListener)
             }
 
             onUnmount {
                 // Remove the mouse down handler.
-                window.document.removeEventListener(type = "mousedown", callback = ::onDocumentMouseDown)
+                window.document.removeEventListener(type = "mousedown", callback = documentMouseDownListener)
             }
         }
     }

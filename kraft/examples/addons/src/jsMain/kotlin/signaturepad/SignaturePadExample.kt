@@ -53,6 +53,10 @@ class SignaturePadExample(ctx: NoProps) : PureComponent(ctx) {
 
     private var pad: SignaturePadJs? = null
 
+    // One reference each: a remove with another `::x` removes nothing
+    private val windowResizeListener: (Event) -> Unit = ::onWindowResize
+    private val padEndStrokeListener: (Event) -> Unit = ::onPadEndStroke
+
     private var dataPng: FileBase64? by value(null)
     private var dataPngTrimmed: FileBase64? by value(null)
     private var dataSvg: FileBase64? by value(null)
@@ -65,7 +69,7 @@ class SignaturePadExample(ctx: NoProps) : PureComponent(ctx) {
     init {
         lifecycle {
             onMount {
-                window.addEventListener("resize", ::onWindowResize)
+                window.addEventListener("resize", windowResizeListener)
                 tryCreatePad()
             }
 
@@ -75,7 +79,7 @@ class SignaturePadExample(ctx: NoProps) : PureComponent(ctx) {
             }
 
             onUnmount {
-                window.removeEventListener("resize", ::onWindowResize)
+                window.removeEventListener("resize", windowResizeListener)
                 destroyPad()
             }
         }
@@ -194,7 +198,7 @@ class SignaturePadExample(ctx: NoProps) : PureComponent(ctx) {
         if (pad != null) return
 
         pad = addon.create(canvas).also { newPad ->
-            newPad.addEventListener("endStroke", ::onPadEndStroke)
+            newPad.addEventListener("endStroke", padEndStrokeListener)
         }
 
         resizeCanvas()
@@ -202,7 +206,7 @@ class SignaturePadExample(ctx: NoProps) : PureComponent(ctx) {
 
     private fun destroyPad() {
         pad?.let {
-            it.removeEventListener("endStroke", ::onPadEndStroke)
+            it.removeEventListener("endStroke", padEndStrokeListener)
             it.off()
         }
         pad = null

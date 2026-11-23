@@ -33,6 +33,7 @@ import kotlinx.html.Tag
 import kotlinx.html.div
 import kotlinx.html.p
 import org.w3c.dom.HTMLDivElement
+import org.w3c.dom.events.Event
 import org.w3c.dom.events.KeyboardEvent
 
 @Suppress("FunctionName")
@@ -67,14 +68,18 @@ class BreakoutExample(ctx: NoProps) : PureComponent(ctx) {
     private var lives: Int by value(3)
     private var mounted: Boolean = false
 
+    // One reference each: a remove with another `::x` removes nothing
+    private val keyDownListener: (Event) -> Unit = ::onKeyDown
+    private val keyUpListener: (Event) -> Unit = ::onKeyUp
+
     //  LIFECYCLE  //////////////////////////////////////////////////////////////////////////////////////////////
 
     init {
         lifecycle {
             onMount {
                 mounted = true
-                window.addEventListener("keydown", ::onKeyDown)
-                window.addEventListener("keyup", ::onKeyUp)
+                window.addEventListener("keydown", keyDownListener)
+                window.addEventListener("keyup", keyUpListener)
                 tryStartGame()
             }
 
@@ -84,8 +89,8 @@ class BreakoutExample(ctx: NoProps) : PureComponent(ctx) {
 
             onUnmount {
                 mounted = false
-                window.removeEventListener("keydown", ::onKeyDown)
-                window.removeEventListener("keyup", ::onKeyUp)
+                window.removeEventListener("keydown", keyDownListener)
+                window.removeEventListener("keyup", keyUpListener)
                 app?.destroy(rendererDestroy = true)
                 app = null
                 game = null
@@ -108,6 +113,12 @@ class BreakoutExample(ctx: NoProps) : PureComponent(ctx) {
                 this.antialias = true
             }).await()
 
+            // Unmounted while init ran: destroy it now, or its WebGL context is never freed
+            if (!mounted) {
+                application.destroy(rendererDestroy = true)
+                return@launch
+            }
+
             container.append(application.canvas)
             app = application
 
@@ -127,7 +138,7 @@ class BreakoutExample(ctx: NoProps) : PureComponent(ctx) {
 
     //  INPUT  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-    private fun onKeyDown(evt: org.w3c.dom.events.Event) {
+    private fun onKeyDown(evt: Event) {
         val ke = evt as KeyboardEvent
         when (ke.key) {
             "ArrowLeft", "a", "A" -> game?.setMoveLeft(true)
@@ -136,7 +147,7 @@ class BreakoutExample(ctx: NoProps) : PureComponent(ctx) {
         }
     }
 
-    private fun onKeyUp(evt: org.w3c.dom.events.Event) {
+    private fun onKeyUp(evt: Event) {
         val ke = evt as KeyboardEvent
         when (ke.key) {
             "ArrowLeft", "a", "A" -> game?.setMoveLeft(false)
