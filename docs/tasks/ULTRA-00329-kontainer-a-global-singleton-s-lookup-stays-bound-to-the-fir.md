@@ -1,6 +1,6 @@
 # ULTRA-00329: Kontainer: a global singleton's Lookup stays bound to the first kontainer and keeps every prototype it creates
 
-> **Status (2026-11-14): NOT STARTED.** 
+> **Status (2026-11-23): DESIGNED.** Both changes re-confirmed by the maintainer; track D writes the plan first.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -52,3 +52,6 @@ that request's override lambdas and values reachable for the blueprint's lifetim
 ## History
 
 - 2026-11-14: created on the maintainer's word.
+- 2026-11-23: re-confirmed by the maintainer before implementing ("yes confirmed"): both changes as decided,
+  including the change of the insights wire shape (lists of instances become a count and two times); track D writes
+  a plan without code first.
