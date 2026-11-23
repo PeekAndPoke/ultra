@@ -67,6 +67,39 @@ without the warning.
 | visnetwork | canvas 2D (vis-network draws on its own canvas) | not affected, same reason |
 | avatars, browserdetect, datetime, jwtdecode, marked, nxcompile, prismjs, sourcemappedstacktrace | no canvas | not affected |
 
+## Review record
+
+### Round 1 (2026-11-23, level 1 of a standard gate, `reviewer-opus-high`, all three charters in one pass)
+
+**NOT CLEAN**, for two MAJORs outside the diff, both older than this change and found by the check of the other addons;
+the change itself had no CRITICAL or MAJOR. The reviewer ran nothing. Both MAJORs verified against the code by the
+coordinator:
+
+- MAJOR 1, pdfjs: neither viewer destroys its document (`PagedPdfViewer.kt`, `ScrollingPdfViewer.kt` have no unmount
+  cleanup; `PDFDocumentProxy` declares no `destroy`), and pdf.js makes a new `PDFWorker` per `getDocument` while
+  `GlobalWorkerOptions.workerPort` is unset (`pdf.mjs:11412-11414`): every mount leaves a worker. Out of scope: needs
+  its own ticket (asked the maintainer).
+- MAJOR 2, signaturepad: `SignaturePad.kt:115` adds `::onWindowResize`, `:124` removes another `::onWindowResize` (each
+  `::x` is a new function object), the same for `endStroke` (`:158`, `:127`): the window listener outlives the pad and
+  calls the caller's `onChange` with a dead pad. The pattern of ULTRA-00272. Also in
+  `kraft/semanticui/.../SelectFieldComponent.kt:284` and two examples. Out of scope: needs its own ticket (asked the
+  maintainer).
+- MINOR 3, the source check matched one spelling only: FIXED, it accepts a constructor field or a class method. The
+  experiment the reviewer proposed was run: the test browser gives no WebGL context at all (`webgl2=false
+  webgl=false`, HeadlessChrome 158, despite `karma.config.d/webgl.js`), so no real-context test is possible here.
+- MINOR 4, the second visit's renderer was not shown to be new: FIXED, constructions are counted (2).
+- MINOR 5, `stop()` unguarded: FIXED, the fields are cleared first and `forceContextLoss()` runs in a `finally` after
+  `dispose()`; the renderer is owned right after construction. Not tested: TestBed reports an error thrown in an
+  unmount on its own, so a throwing-`dispose()` test cannot be written cleanly; its mutant (no `finally`) was seen to
+  drop the context loss.
+- MINOR 6, pixi unmount during `init`: FIXED in the KDoc of `createApplication()`. The Breakout example has the race;
+  it goes with the follow-up for MAJOR 2, which touches that example anyway.
+- MINOR 7, the open question of "Decide before implementing": answered by the code, `stop()` runs only on unmount; a
+  new clock or `paused` stream never stops the renderer.
+
+The fix batch was read by the coordinator, not by a reviewer. Mutation on the final code: `forceContextLoss()` removed
+from `stop()`: RED, `["dispose"]`; restored byte-identical. Counts (XML, `--rerun`): threejs 24, pixijs 21, 0 failures.
+
 ## Acceptance
 
 - After the component stops, its WebGL context is lost; mounting it repeatedly raises no "Too many active WebGL

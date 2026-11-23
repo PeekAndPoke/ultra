@@ -166,13 +166,14 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
             this.antialias = props.antialias
             this.alpha = props.alpha
         })
+        // Owned at once, so a throw below still leaves it to stop(), and no second renderer is built on this canvas
+        renderer = newRenderer
         newRenderer.setPixelRatio(window.devicePixelRatio)
         newRenderer.setSize(resolvedWidth, resolvedHeight, updateStyle = false)
         props.clearColor?.let { newRenderer.setClearColor(it, alpha = if (props.alpha) 0.0 else 1.0) }
 
         scene = newScene
         camera = newCamera
-        renderer = newRenderer
 
         props.onReady(ThreeJsContext(newScene, newCamera, newRenderer))
 
@@ -211,13 +212,19 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
         loop = null
         // dispose() keeps the WebGL context alive until the canvas is collected, and a browser allows only a few live
         // ones: a page mounted again and again would lose its oldest, or its current, context (ULTRA-00348). After
-        // dispose() three.js listens no more, so the loss fires no handler.
-        renderer?.let {
-            it.dispose()
-            it.forceContextLoss()
-        }
+        // dispose() three.js listens no more, so the loss fires no handler. A throwing dispose() still gives up the
+        // context and clears the fields; its error then goes on to the caller.
+        val disposed = renderer
         renderer = null
         scene = null
         camera = null
+
+        disposed?.let {
+            try {
+                it.dispose()
+            } finally {
+                it.forceContextLoss()
+            }
+        }
     }
 }

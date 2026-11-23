@@ -171,7 +171,9 @@ class ThreeJsMembersSpec : StringSpec({
         withThree { three ->
             val source: String = three.raw.WebGLRenderer.toString().unsafeCast<String>()
 
-            source shouldContain "this.forceContextLoss = function"
+            // either form: a field set in the constructor (three.js 0.186) or a class method
+            (Regex("forceContextLoss\\s*=\\s*function").containsMatchIn(source) ||
+                Regex("forceContextLoss\\s*\\(\\s*\\)\\s*\\{").containsMatchIn(source)) shouldBe true
         }
     }
 })

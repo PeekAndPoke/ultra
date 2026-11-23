@@ -39,6 +39,9 @@ private class ComponentClock : FrameClock {
 private class FakeThree {
     var draws = 0
 
+    /** How many renderers were constructed. */
+    var renderers = 0
+
     /** What the renderers were asked to do besides drawing, in order: "dispose", "forceContextLoss". */
     val teardown = mutableListOf<String>()
 
@@ -47,16 +50,17 @@ private class FakeThree {
     init {
         val onDraw = { draws++ }
         val onTeardown = { call: String -> teardown.add(call); Unit }
+        val onConstruct = { renderers++; Unit }
 
         module.Scene = js("(function () { return function Scene() {}; })")()
         module.PerspectiveCamera = js("(function () { return function Camera() { this.position = { x: 0, y: 0, z: 0 }; }; })")()
         module.WebGLRenderer = js(
-            "(function (onDraw, onTeardown) { function R(p) {} " +
+            "(function (onDraw, onTeardown, onConstruct) { function R(p) { onConstruct(); } " +
                 "R.prototype.setPixelRatio = function () {}; R.prototype.setSize = function () {}; " +
                 "R.prototype.setClearColor = function () {}; R.prototype.render = function () { onDraw(); }; " +
                 "R.prototype.dispose = function () { onTeardown('dispose'); }; " +
                 "R.prototype.forceContextLoss = function () { onTeardown('forceContextLoss'); }; return R; })"
-        )(onDraw, onTeardown)
+        )(onDraw, onTeardown, onConstruct)
     }
 }
 
@@ -203,6 +207,7 @@ class ThreeJsComponentSpec : StringSpec({
             // Entered again: a new renderer, and its context is given up as well
             shown(true)
             eventually { three.draws shouldBe 2 }
+            three.renderers shouldBe 2
             shown(false)
             eventually { three.teardown shouldBe listOf("dispose", "forceContextLoss", "dispose", "forceContextLoss") }
         }

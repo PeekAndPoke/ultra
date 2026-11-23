@@ -44,6 +44,8 @@ class PixiJsAddon internal constructor(
     /**
      * Creates a new, uninitialized [Application]. Call `.init(options).await()` before use, and [Application.destroy] when
      * the page that owns it unmounts: it frees the WebGL context, of which a browser allows only a few live ones.
+     * `destroy()` throws while `init` is still running: a page that unmounts meanwhile destroys the app once `init` has
+     * returned, or the context that `init` makes is never freed.
      */
     fun createApplication(): Application {
         @Suppress("UnusedVariable", "unused")
