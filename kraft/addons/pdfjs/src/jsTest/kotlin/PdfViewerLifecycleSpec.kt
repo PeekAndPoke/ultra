@@ -1,5 +1,6 @@
 package io.peekandpoke.kraft.addons.pdfjs
 
+import io.kotest.assertions.throwables.shouldThrowAny
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -11,9 +12,12 @@ import io.peekandpoke.kraft.testing.TestBed
 import io.peekandpoke.kraft.testing.eventually
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.streams.StreamSource
+import kotlinx.coroutines.await
+import kotlinx.coroutines.flow.first
 import kotlinx.html.Tag
 import kotlinx.html.div
 import org.khronos.webgl.Uint8Array
+import kotlin.js.Promise
 import kotlin.time.Duration.Companion.seconds
 
 /** A one-page PDF without a cross-reference table: pdf.js rebuilds it, in the worker. */
@@ -62,12 +66,42 @@ private class ToggledViewer(ctx: Ctx<Props>) : Component<ToggledViewer.Props>(ct
     }
 }
 
+/** Counts the destroys of pdf.js workers: destroying a document destroys its worker. */
+private class WorkerDestroys private constructor(private val proto: dynamic, private val original: dynamic) {
+    var count = 0
+
+    fun uninstall() {
+        proto.destroy = original
+    }
+
+    companion object {
+        suspend fun install(): WorkerDestroys {
+            PdfJs.instance()
+            val module: dynamic = (js("import('pdfjs-dist')") as Promise<dynamic>).await()
+            val lib: dynamic = if (module.GlobalWorkerOptions != null) module else module.default
+            val proto: dynamic = lib.PDFWorker.prototype
+            val counter = WorkerDestroys(proto, proto.destroy)
+            val onDestroy = { counter.count++; Unit }
+
+            proto.destroy = js(
+                "(function (original, onDestroy) { " +
+                    "return function () { onDestroy(); return original.apply(this, arguments); }; })"
+            )(
+                counter.original,
+                onDestroy,
+            )
+
+            return counter
+        }
+    }
+}
+
 /** A fake document that counts its destroys. */
 private fun fakeDoc(onDestroy: () -> Unit): PdfjsLib.PDFDocumentProxy =
     js("(function (d) { return { destroy: function () { d(); return Promise.resolve(); } }; })")(onDestroy)
         .unsafeCast<PdfjsLib.PDFDocumentProxy>()
 
-/** The viewers destroy their document on unmount, which ends its worker (ULTRA-00349). */
+/** The viewers destroy their document on unmount, also one that arrives later, which ends its worker (ULTRA-00349). */
 class PdfViewerLifecycleSpec : StringSpec({
 
     listOf(false to "PagedPdfViewer", true to "ScrollingPdfViewer").forEach { (scrolling, name) ->
@@ -85,22 +119,74 @@ class PdfViewerLifecycleSpec : StringSpec({
         }
     }
 
-    "the owner adopts the first document, destroys any other and, released, the adopted one and later ones" {
+    "a viewer unmounted before its document arrives still ends the worker" {
+        val workers = WorkerDestroys.install()
+
+        try {
+            listOf(false, true).forEach { scrolling ->
+                val shown = StreamSource(true)
+                val before = workers.count
+
+                TestBed.preact(
+                    view = { ToggledViewer(shown, scrolling) { error("no document reaches a viewer that is gone") } },
+                ) {
+                    // At once: the loader waits at least 5 ms and the document comes from the worker later still
+                    shown(false)
+                    eventually(timeout = 10.seconds) { workers.count shouldBe before + 1 }
+                }
+            }
+        } finally {
+            workers.uninstall()
+        }
+    }
+
+    "a load that fails ends its worker" {
+        val workers = WorkerDestroys.install()
+
+        try {
+            val notAPdf = Uint8Array(8)
+            val params = js("({})").unsafeCast<PdfjsLib.GetDocumentParameters>().apply { data = notAPdf }
+
+            shouldThrowAny { PdfJs.instance().getDocument(params).first() }
+            eventually(timeout = 10.seconds) { workers.count shouldBe 1 }
+        } finally {
+            workers.uninstall()
+        }
+    }
+
+    "the owner keeps the first document, destroys any other and, released, the kept one and later ones" {
         val destroyed = mutableListOf<String>()
         val first = fakeDoc { destroyed.add("first") }
         val second = fakeDoc { destroyed.add("second") }
         val late = fakeDoc { destroyed.add("late") }
         val owner = PdfDocumentOwner()
 
-        owner.adopt(first) shouldBe true
-        owner.adopt(first) shouldBe false
-        owner.adopt(second) shouldBe false
+        owner.offer(first)
+        owner.offer(first)
+        owner.offer(second)
         destroyed shouldBe listOf("second")
+
+        owner.claim(second) shouldBe false
+        owner.claim(first) shouldBe true
+        owner.claim(first) shouldBe false
 
         owner.release()
         destroyed shouldBe listOf("second", "first")
+        owner.isReleased shouldBe true
 
-        owner.adopt(late) shouldBe false
+        owner.offer(late)
         destroyed shouldBe listOf("second", "first", "late")
+    }
+
+    "a document offered after release, before any claim, is destroyed and cannot be claimed" {
+        val destroyed = mutableListOf<String>()
+        val doc = fakeDoc { destroyed.add("doc") }
+        val owner = PdfDocumentOwner()
+
+        owner.release()
+        owner.offer(doc)
+
+        destroyed shouldBe listOf("doc")
+        owner.claim(doc) shouldBe false
     }
 })

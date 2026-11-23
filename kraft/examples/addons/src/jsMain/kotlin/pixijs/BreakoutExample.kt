@@ -9,6 +9,7 @@ import io.peekandpoke.kraft.addons.registry.AddonRegistry.Companion.addons
 import io.peekandpoke.kraft.components.NoProps
 import io.peekandpoke.kraft.components.PureComponent
 import io.peekandpoke.kraft.components.comp
+import io.peekandpoke.kraft.utils.jsObject
 import io.peekandpoke.kraft.utils.launch
 import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.css
@@ -106,7 +107,7 @@ class BreakoutExample(ctx: NoProps) : PureComponent(ctx) {
         starting = true
         launch {
             val application = addon.createApplication()
-            application.init(io.peekandpoke.kraft.utils.jsObject {
+            application.init(jsObject {
                 this.width = GAME_WIDTH
                 this.height = GAME_HEIGHT
                 this.backgroundColor = 0x1a1a2e

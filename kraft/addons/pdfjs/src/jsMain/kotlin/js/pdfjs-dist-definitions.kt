@@ -54,6 +54,9 @@ external interface PdfjsLib {
 
         /** True once the task, and with it its document and worker, was destroyed. */
         val destroyed: Boolean
+
+        /** Ends the task, its document and its worker. */
+        fun destroy(): Promise<Unit>
     }
 
     /**

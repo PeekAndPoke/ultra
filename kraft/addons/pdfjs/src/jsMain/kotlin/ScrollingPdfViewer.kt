@@ -14,6 +14,7 @@ import io.peekandpoke.ultra.html.css
 import kotlinx.browser.window
 import kotlinx.coroutines.await
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.onEach
 import kotlinx.css.Overflow
 import kotlinx.css.TextAlign
 import kotlinx.css.height
@@ -80,9 +81,10 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
 
     private val jobQueue = SimpleAsyncQueue()
 
-    private val pdfLoader = dataLoader { props.src.load() }
-
+    // Before the loader: it hands every document it loads to the owner, also one arriving after unmount
     private val documents = PdfDocumentOwner()
+
+    private val pdfLoader = dataLoader { props.src.load().onEach { documents.offer(it) } }
 
     private var state: State by value(State()) { props.onChange(it) }
 
@@ -102,7 +104,7 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
 
             val doc = (it as? DataLoader.State.Loaded<PdfjsLib.PDFDocumentProxy>)?.data
 
-            if (doc != null && documents.adopt(doc)) {
+            if (doc != null && documents.claim(doc)) {
                 modifyState { copy(doc = doc) }
 
                 jobQueue.add {
@@ -172,6 +174,9 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
     }
 
     private suspend fun renderAllPages() {
+        // Unmounted: no canvas comes any more, so do not wait for them
+        if (documents.isReleased) return
+
 
         val canvases: List<HTMLCanvasElement> = dom?.querySelectorAll(".page canvas")
             ?.asList()
@@ -203,7 +208,7 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
     private suspend fun renderPage(canvas: HTMLCanvasElement, pageNumber: Int) {
 
         state.doc?.let { doc: PdfjsLib.PDFDocumentProxy ->
-            canvas.visitGuarded { canvas ->
+            canvas.visitGuarded(quiet = { documents.isReleased }) { canvas ->
                 val context = canvas.getContext("2d") as CanvasRenderingContext2D
 
                 val page = doc.getPage(pageNumber).await()

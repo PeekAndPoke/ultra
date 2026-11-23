@@ -34,9 +34,7 @@ class PdfJs private constructor(private val lib: PdfjsLib) {
     /** Loads a PDF document from a URL [src] and emits the document proxy. */
     fun getDocument(src: String): Flow<PdfjsLib.PDFDocumentProxy> {
         return flow {
-            emit(
-                lib.getDocument(src).promise.await()
-            )
+            emit(load(lib.getDocument(src)))
         }
     }
 
@@ -50,9 +48,20 @@ class PdfJs private constructor(private val lib: PdfjsLib) {
         if (params.data != null) params.data = params.data.slice()
 
         return flow {
-            emit(
-                lib.getDocument(params.unsafeCast<PdfjsLib.GetDocumentParameters>()).promise.await()
-            )
+            emit(load(lib.getDocument(params.unsafeCast<PdfjsLib.GetDocumentParameters>())))
+        }
+    }
+
+    /**
+     * The document of [task]. A load that fails, or is given up, destroys the task: pdf.js keeps its worker otherwise
+     * (ULTRA-00349). Only around the wait: a document once emitted belongs to the collector.
+     */
+    private suspend fun load(task: PdfjsLib.PDFDocumentLoadingTask): PdfjsLib.PDFDocumentProxy {
+        return try {
+            task.promise.await()
+        } catch (e: Throwable) {
+            task.destroy().catch { }
+            throw e
         }
     }
 }
