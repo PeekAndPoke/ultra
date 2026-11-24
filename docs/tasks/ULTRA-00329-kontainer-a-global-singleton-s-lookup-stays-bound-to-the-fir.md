@@ -49,6 +49,46 @@ that request's override lambdas and values reachable for the blueprint's lifetim
 
 - The pin no longer says "CURRENT BEHAVIOUR"; `:ultra:kontainer:test` and the consumer suites are green.
 
+## Plan answers (maintainer, 2026-11-24)
+
+Track D's plan (2026-11-23) asked five questions; answered one at a time.
+
+- **Q1, scope of change 2:** the whole creation of every global singleton happens in the blueprint-wide kontainer,
+  with all its parameters (direct, `Lazy`, `Lazy<List>`, `Lookup`, `List`), not only its lazy ones. The maintainer:
+  "yes create all as you recommended". This closes the transitive case (a static prototype holding a `Lookup`,
+  injected directly into a global singleton).
+
+- **Q2, visibility:** the blueprint-wide kontainer stays internal; tests reach it from inside the module. Its
+  creations show in no request dump and no insights record. Process-wide counters (for example in the insights
+  graph endpoint) would be a follow-up ticket if wanted. The maintainer: "yes keep it internal".
+
+- **Q3, insights wire shape:** per service `{"cls", "type", "count", "firstCreatedAt", "lastCreatedAt"}`, nothing
+  else. **No `lastCls`**: this drops "the class name of the last created instance" from decision 1 above (it differs
+  from `cls` only when a factory returns a subclass, and for prototypes it shows an arbitrary last one). **No
+  backward compatibility**: the GUIs read this shape only and turn no old instance list into counters; the new
+  fields have defaults, so a record stored by 0.119.0 reads as a service with no creations instead of an error. The
+  maintainer: "No need for backward compat. Simplify the model and the code", then "yes take it like that".
+
+- **Q4, the instance API:** removed outright, no deprecation: `ServiceProvider.instances`,
+  `ServiceProvider.CreatedInstance`, `DebugInfo.InstanceDebugInfo`, `DebugInfo.ServiceDebugInfo.instances`,
+  `KontainerCollector.Data.Service.instances`, `Data.Instance`. A deprecated `instances` could only return an empty
+  or a made-up list. The replacement (`provider.created.count` and the two times) goes into the changelog under
+  breaking changes. The maintainer: "yes remove them".
+
+- **Q5, prototype creation:** lock-free; the count is updated atomically, the two times without a lock (they may be
+  off by microseconds under overlap, fine for a statistic). The lock guarded only the `instances` list; kept, it
+  would serialize every prototype created through a global singleton across all requests. The maintainer: "yes
+  make it lock-free ... check other service providers for the same pattern and possible simplification" (the check
+  is the next entry).
+
+- **Locks elsewhere (from Q5's check), all three taken:** `ForSingleton` keeps its double-checked lock (it
+  guarantees the one instance) and needs no counter: the count is 0 or 1 from `instance != null`, with one creation
+  time stored beside it. `ForOverride` records constants: count 1, both times the moment the kontainer was made.
+  `ServiceProviderFactory` keeps its providers in a `ConcurrentHashMap` with `computeIfAbsent` instead of one lock
+  around a plain map: after change 2 every `Lookup` of a global singleton goes through the blueprint-wide
+  kontainer's factory, so that lock would be shared by all requests. `LiveKontainerTracker` is unchanged (debug
+  only, a tiny critical section). The maintainer: "yes take all three".
+
 ## History
 
 - 2026-11-14: created on the maintainer's word.
