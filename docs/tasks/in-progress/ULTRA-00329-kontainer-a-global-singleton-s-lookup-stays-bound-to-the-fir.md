@@ -109,13 +109,13 @@ Track D's plan (2026-11-23) asked five questions; answered one at a time.
 | K3b | blueprint-wide kontainer (`KontainerBlueprint.globalKontainer`, lazy, untracked); `ForSingleton` with kind Static creates in it | mutants 7/7 RED |
 | gate 1 | strict, kontainer and the JVM wire | PASS in round 1; MINOR batch applied once (ledger below) |
 | K3d | GUIs (`funktor/inspect`, `funktor/codegen` TS and Vue, fixtures), `TAB-SPECS.md` | committed, mutants 12/12 RED |
-| gate 2 | strict, GUIs and `TAB-SPECS.md` | next |
+| gate 2 | strict, GUIs and `TAB-SPECS.md` | PASS in round 1; final batch applied once (ledger below) |
 
 Deviation from the batches of the plan: the JVM half of K3c moved before K3b, for the reason in the table.
 K3d reads v3 only (Q3): an older record's instance list is not read, and `readInstantMillis` reads only Slumber's
-`{ts}` object (a bare number is no longer taken for epoch seconds). A `DynamicOverride` now creates the service's
-own class, since no record names the instance handed in any more. The v1 (fat) shape keeps rendering its
-definitions; its services show no creations.
+`{ts}` object (a bare number is no longer taken for epoch seconds). After gate 2 (maintainer, 2026-11-24: "drop the
+v1 path too, no backward compat") the v1 (fat) shape is not read at all and shows as the raw tree; a v2 record reads
+as services without creations. A `DynamicOverride` names no class: it shows as "handed in at create".
 The plan's `ForPrototype` counter is one `AtomicReference` snapshot updated by CAS with first = min and last = max:
 lock-free as Q5 asks, and the snapshot never has `lastAt < firstAt`.
 
@@ -150,6 +150,38 @@ Fix-batch mutants:
 - M3, `ForLazyService` announces nothing: RED, but on the announcement guard, which runs first.
 - M3, `ForLazyService` also resolves the unannounced dynamic `Kontainer`: RED on the runtime check only, the one test in the suite that sees it.
 
+## Gate 2 ledger (strict; round 1, Opus high standing in for rung 2)
+
+Result: PASS in round 1, zero CRITICAL, zero MAJOR; the security charter had no findings. The final batch was applied
+once, not re-reviewed.
+
+| Charter | Severity | Finding | Disposition |
+|---|---|---|---|
+| impl | MINOR | the instances graph of a full (v1) record is empty, since v1 instance lists are not read | fix, by removing the v1 path (maintainer decision below) |
+| impl | MINOR | no-op counter reset when graph-only services are joined (`slices.kt`, `slices.ts`) | fix: removed |
+| impl | MINOR | long lines (`KontainerTab.kt:34`, `KontainerTab.vue:10`) | fix: re-wrapped |
+| domain | MINOR | a `DynamicOverride` names `UserProvider`, an interface, as the class it creates | fix: no class named, "handed in at create" in both GUIs and `TAB-SPECS.md` |
+| domain | MINOR | `TAB-SPECS.md` "Three shapes on disk; the readers read two." | fix: two shapes read, v1 as the raw tree |
+| domain | surplus | no-op counter reset | same as the impl finding |
+| domain | question | keep the v1 reading path? | maintainer decision, 2026-11-24: "drop the v1 path too, no backward compat": removed from both readers and tabs, `record-fat.json` and the v1-only cases deleted |
+| domain | note | a v2 record shows "0 instantiated" and "-" cells | reject: Q3 decision ("reads as a service with no creations") |
+| security | none | no findings | |
+
+CLEAN (verified by the reviewers):
+- No raw HTML sink in either tab or in the graph labels.
+- The readers survive wrong types, NaN, Infinity, negative counts and `__proto__`.
+- The per-instance DOM growth is gone.
+- The fixtures carry no local paths or secrets.
+- Writer and readers agree on every field: `{ts}` millis, count 0 absent, nulls.
+- Kraft/Vue parity of the cell, the sort, the summary and the graph pools.
+- The fixture drift is attributed correctly: `TemplateInsightsCollector` removed, `InsightsConfig` in `FunktorConfig`.
+
+Final-batch mutants:
+- Kraft reads v1 again: RED on the raw-tree pin of `InsightsPagesSpec`.
+- Vue reads v1 again: RED on four cases (both v1 pins, both "neither shape" cases).
+- Kraft names the override's class: RED on the new "handed in at create" test.
+- Vue names the override's class: RED on the parity definition sort.
+
 ## History
 
 - 2026-11-14: created on the maintainer's word.
@@ -159,4 +191,5 @@ Fix-batch mutants:
 - 2026-11-24: the plan's five questions, the lock check and the area edits answered (Plan answers).
 - 2026-11-24: IN PROGRESS. track D builds K3a and K3b; gate 1 next
 - 2026-11-24: K3a, the JVM half of K3c and K3b committed; gate 1 PASS in round 1, MINOR batch M1 to M4 applied.
-- 2026-11-24: K3c (TAB-SPECS) and K3d committed; gate 2 next.
+- 2026-11-24: K3c (TAB-SPECS) and K3d committed; gate 2 PASS in round 1, final batch applied (v1 path dropped on the
+  maintainer's word, override names no class).

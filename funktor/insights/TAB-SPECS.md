@@ -118,27 +118,25 @@ carry `{ "timeNs": null }` under this key; both GUIs drop it (`RETIRED_SLICES`):
 
 ## `kontainer`
 
-Three shapes on disk; the readers read two. **The full contract** of the join and the fingerprint is in
-ULTRA-00197 (insights graphs and static slices), "Wire contract"; the counters are ULTRA-00329. The reader is
-`readKontainer`.
+The readers read two shapes; anything else, v1 included, shows as the raw tree. **The full contract** of the join
+and the fingerprint is in ULTRA-00197 (insights graphs and static slices), "Wire contract"; the counters are
+ULTRA-00329. The reader is `readKontainer`.
 
 - **v3 (since ULTRA-00329)** `{ graphFingerprint, services: [{cls, type, count, firstCreatedAt, lastCreatedAt}] }`
   -- marked by the `graphFingerprint` KEY (its value may be `null`); only services with `count > 0`; class names
   flat strings; definitions come from `GET /_/funktor/insights/graphs/kontainer`, joined on `cls`.
 - **v2 (2026-10-19 to ULTRA-00329)** `{ graphFingerprint, services: [{cls, type, instances: [{cls, createdAt}]}] }`
   -- read as v3 whose services have no creations (`count` 0, no times): the instance lists are not read.
-- **v1 (before 2026-10-19)** `{ numOld, numTotal, info: { services: [...] } }` -- every service with its definition
-  inline; class names `{"fqn"}`, `codeLocation` `{"location"}`. Its instance lists are not read either.
+- **v1 (before 2026-10-19)** `{ numOld, numTotal, info: { services: [...] } }` -- not read: the tab shows the raw
+  tree.
 - `firstCreatedAt` and `lastCreatedAt` are `{ts, timezone, human}`, `ts` in millis; any other form reads as no time.
 - `type == "Singleton"` is process state shared by every request, and its count is process-wide; any other type is
   this request's own. The creation times only say whether this request created the instances. Prototypes a
   `Singleton` creates are counted outside every request (the blueprint-wide kontainer) and show in no record.
-- `numOld` / `numTotal` exist on v1 only, and were always 0 (tracking cannot be switched on): shown as
-  recorded, marked "not measured". v2 dropped them (maintainer, 2026-10-19).
-- A `DynamicOverride` is shown as v1 recorded it -- `Dynamic`, no injects, overwriting the graph's (blueprint)
-  definition -- never with the blueprint's injects, which did not run for a handed-in instance
-  (`overrideDefinition` in `slices.ts`). It creates the service's own class: no record names the class of the
-  instance handed in any more.
+- A `DynamicOverride` is shown as handed in at create: `Dynamic`, no injects, overwriting the graph's (blueprint)
+  definition, and no class named (the record does not know the class of the instance handed in, and the service's
+  own may be an interface). Never with the blueprint's injects, which did not run for it (`overrideDefinition` in
+  `slices.ts`).
 
 ## `app-config`
 

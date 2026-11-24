@@ -2,9 +2,8 @@
  * One component test per collector tab, each against a REAL recorded slice.
  *
  * `record-slim.json` is the request `InsightsRecordingSpec` records (lifecycle-hooks, as a superuser, on
- * the recording host); `record-vault.json` adds queries on both backends; `record-fat.json` is a record
- * written before the kontainer slice was slimmed. Expectations are read from the same data where they can
- * be, so the test checks the rendering rather than restating the fixture.
+ * the recording host); `record-vault.json` adds queries on both backends. Expectations are read from the
+ * same data where they can be, so the test checks the rendering rather than restating the fixture.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import AppConfigTab from '../src/funktorsdk/insights/AppConfigTab.vue'
@@ -218,12 +217,10 @@ describe('vault', () => {
 })
 
 describe('kontainer', () => {
-    it('a SLIM record says which shape it is, lists only services with creations and does not show the kontainer counts', async () => {
+    it('a record lists only services with creations and names the graph it was written against', async () => {
         const slice = sliceOf(recorded.slim(), 'kontainer')
         const host = await render(KontainerTab, slice)
 
-        expect(fact(host, 'Record shape')).toContain('slim')
-        expect(fact(host, 'Kontainers (young / old / total)'), 'a slim record shows no counters at all').toBeUndefined()
         expect(fact(host, 'Graph fingerprint')).toBe(slice.graphFingerprint)
         expect(host.querySelectorAll('.fk-services tbody tr')).toHaveLength(slice.services.length)
         expect(host.textContent).toContain('Injects and definitions are not part of this record')
@@ -255,19 +252,24 @@ describe('kontainer', () => {
         )
     })
 
-    it('an OLD (fat) record still renders: shape said, definitions and code locations inline', async () => {
-        const slice = sliceOf(recorded.fat(), 'kontainer')
-        const host = await render(KontainerTab, slice)
+    it('a kontainer slice written before 2026-10-19 is not read: the raw tree, like any slice the reader does not know', async () => {
+        const host = await render(KontainerTab, {
+            numOld: 0,
+            numTotal: 1,
+            info: {
+                services: [
+                    {
+                        cls: { fqn: 'com.example.Clock' },
+                        type: 'Prototype',
+                        definition: { creates: { fqn: 'com.example.Clock' }, injectionType: 'Prototype', injects: [], codeLocation: { location: 'Clocks.kt:7' } },
+                        instances: [{ cls: { fqn: 'com.example.Clock' }, createdAt: { ts: 1700000000000 } }],
+                    },
+                ],
+            },
+        })
 
-        expect(fact(host, 'Record shape')).toContain('full')
-        expect(host.querySelectorAll('.fk-services tbody tr')).toHaveLength(slice.info.services.length)
-        expect(fact(host, 'Kontainers (young / old / total)')).toBe(
-            `${slice.numTotal - slice.numOld} / ${slice.numOld} / ${slice.numTotal} -- not measured, tracking is never enabled`,
-        )
-
-        for (const service of slice.info.services) {
-            expect(host.textContent).toContain(service.definition.codeLocation.location)
-        }
+        expect(rawTreeOnly(host)).toBe(true)
+        expect(host.querySelector('.fk-services')).toBeNull()
     })
 
     it('a kontainer slice of neither shape falls back to the raw tree', async () => {

@@ -13,7 +13,6 @@ import { createGraphSource, provideInsightsGraphs } from '../src/funktorsdk/insi
 import type { InsightsGraphSource } from '../src/funktorsdk/insights/graphs.ts'
 import { sdkConfig } from '../src/funktorsdk/runtime/client.ts'
 import type { HttpRequest, HttpResponse, HttpTransport } from '../src/funktorsdk/runtime/http.ts'
-import fat from '../fixtures/record-fat.json'
 import databaseGraph from '../fixtures/graph-database.json'
 import kontainerGraph from '../fixtures/graph-kontainer.json'
 import refusal from '../fixtures/refusal-graph.json'
@@ -32,7 +31,6 @@ export const SERVER_INFO_PATH = '/_/funktor/insights/server'
 /** The recorded API responses, deep-copied so a test may change one without touching the next. */
 export const recorded = {
     slim: () => structuredClone(slim),
-    fat: () => structuredClone(fat),
     vault: () => structuredClone(vault),
     kontainerGraph: () => structuredClone(kontainerGraph),
     databaseGraph: () => structuredClone(databaseGraph),

@@ -480,11 +480,14 @@ export interface KontainerInjection {
 }
 
 export interface KontainerDefinition {
+    /** Null for an instance handed in at create: no record names its class. */
     creates: string | null
     injectionType: string | null
     injects: KontainerInjection[]
     codeLocation: string | null
     overwrites: KontainerDefinition | null
+    /** True for a `DynamicOverride`: the instance was handed in at create, see {@link overrideDefinition}. */
+    handedIn: boolean
 }
 
 /**
@@ -498,7 +501,7 @@ export function readInstantMillis(value: unknown): number | null {
 export interface KontainerService {
     cls: string | null
     type: string | null
-    /** Null on a `slim` record, whose definitions live in the kontainer graph -- see {@link joinKontainerGraph}. */
+    /** Null as read from a record, whose definitions live in the kontainer graph -- see {@link joinKontainerGraph}. */
     definition: KontainerDefinition | null
     /** How many instances the provider created; 0 in the graph and for a record written before the counters. */
     count: number
@@ -512,31 +515,11 @@ export function hasCreations(service: KontainerService): boolean {
     return service.count > 0
 }
 
-/**
- * Which of the two slice shapes a record carries.
- *
- * - `full` -- written before 2026-10-19: EVERY service, definitions inline (`info.services`).
- * - `slim` -- written since: only services with creations (`services`), joined to the kontainer graph
- *   endpoint by `cls`. The definitions were 70-85% of every record and are the same on every request.
- */
-export type KontainerShape = 'full' | 'slim'
-
+/** Only the services with creations; joined to the kontainer graph endpoint by `cls`. */
 export interface KontainerSlice {
-    shape: KontainerShape
-    /**
-     * `full` records only, and always 0 there: they counted TRACKED kontainers, and tracking cannot be switched
-     * on from outside `ultra:kontainer`. A `slim` record has no such fields (maintainer, 2026-10-19): null.
-     */
-    numOld: number | null
-    numTotal: number | null
-    /** The graph a `slim` record was written against; null on `full`, or when the server could not build one. */
+    /** The graph the record was written against; null when the server could not build one. */
     graphFingerprint: string | null
     services: KontainerService[]
-}
-
-/** Class references: `{"fqn": "..."}` on a `full` record, a flat string on a `slim` one and in the graph. */
-function readFqn(value: unknown): string | null {
-    return asString(asRecord(value)?.fqn) ?? asString(value)
 }
 
 function readDefinition(value: unknown, depth = 0): KontainerDefinition | null {
@@ -548,26 +531,26 @@ function readDefinition(value: unknown, depth = 0): KontainerDefinition | null {
     const overwrites = depth < 16 ? readDefinition(record.overwrites, depth + 1) : null
 
     return {
-        creates: readFqn(record.creates),
+        creates: asString(record.creates),
         injectionType: asString(record.injectionType),
         injects: (asArray(record.injects) ?? []).map((raw) => {
             const inject = asRecord(raw) ?? {}
             return {
                 name: asString(inject.name),
-                classes: (asArray(inject.classes) ?? []).map(readFqn).filter((fqn): fqn is string => fqn !== null),
+                classes: (asArray(inject.classes) ?? []).map(asString).filter((cls): cls is string => cls !== null),
                 provisionType: asString(inject.provisionType),
             }
         }),
-        // `{location}` on a `full` record, a flat string in the graph.
-        codeLocation: asString(record.codeLocation) ?? asString(asRecord(record.codeLocation)?.location),
+        codeLocation: asString(record.codeLocation),
         overwrites,
+        handedIn: false,
     }
 }
 
 function readService(raw: unknown): KontainerService {
     const service = asRecord(raw) ?? {}
     return {
-        cls: readFqn(service.cls),
+        cls: asString(service.cls),
         type: asString(service.type),
         definition: readDefinition(service.definition),
         // The counters only: an older record's instance list is not read, so its service shows no creations
@@ -589,24 +572,21 @@ function sortServices(services: KontainerService[]): KontainerService[] {
 }
 
 /**
- * Either shape, told apart by what is THERE: the `graphFingerprint` KEY marks `slim` (even when its value
- * is null), `info` marks `full`, and a slice with neither is unrecognised -- null, and the tab shows the
- * raw tree.
+ * The slice, marked by the `graphFingerprint` KEY (even when its value is null). Anything else is
+ * unrecognised -- null, and the tab shows the raw tree. A record written before 2026-10-19 (`info.services`)
+ * is no longer read.
  */
 export function readKontainer(data: unknown): KontainerSlice | null {
     const record = asRecord(data)
-    if (record === null) return null
+    if (record === null || !('graphFingerprint' in record)) return null
 
-    const slim = 'graphFingerprint' in record
-    const rawServices = slim ? asArray(record.services) : asArray(asRecord(record.info)?.services)
+    const rawServices = asArray(record.services)
     if (rawServices === null) return null
 
     return {
-        shape: slim ? 'slim' : 'full',
-        numOld: slim ? null : asNumber(record.numOld),
-        numTotal: slim ? null : asNumber(record.numTotal),
         graphFingerprint: asString(record.graphFingerprint),
-        services: sortServices(rawServices.map(readService)),
+        // A record's definitions live in the graph, as in the Kraft reader
+        services: sortServices(rawServices.map((raw) => ({ ...readService(raw), definition: null }))),
     }
 }
 
@@ -635,14 +615,13 @@ export function readKontainerGraph(data: unknown): KontainerGraphData | null {
 }
 
 /**
- * A `slim` record's services with their definitions filled in from [graph], joined on `cls`.
+ * A record's services with their definitions filled in from [graph], joined on `cls`.
  *
  * The TYPE stays the record's: it is what the provider was in THIS request's kontainer, and only the
  * record can say `DynamicOverride`. With `includeAll`, the graph's services without creations are added.
  *
  * A `DynamicOverride` does NOT get the graph's definition: its instance was handed in when the kontainer
- * was created, so the blueprint's injects never ran for it. It gets what a `full` record wrote for it --
- * see {@link overrideDefinition}.
+ * was created, so the blueprint's injects never ran for it -- see {@link overrideDefinition}.
  */
 export function joinKontainerGraph(
     slice: KontainerSlice,
@@ -656,8 +635,7 @@ export function joinKontainerGraph(
 
     const joined = slice.services.map((service) => {
         const blueprint = service.cls === null ? null : (byCls.get(service.cls)?.definition ?? null)
-        const definition =
-            service.definition ?? (service.type === 'DynamicOverride' ? overrideDefinition(service, blueprint) : blueprint)
+        const definition = service.type === 'DynamicOverride' ? overrideDefinition(blueprint) : blueprint
 
         return { ...service, definition }
     })
@@ -665,40 +643,34 @@ export function joinKontainerGraph(
     if (!includeAll) return joined
 
     const recorded = new Set(slice.services.map((service) => service.cls))
-    const rest = graph.services
-        .filter((service) => !recorded.has(service.cls))
-        .map((service) => ({ ...service, count: 0, firstCreatedAtMillis: null, lastCreatedAtMillis: null }))
+    const rest = graph.services.filter((service) => !recorded.has(service.cls))
 
     return sortServices([...joined, ...rest])
 }
 
 /**
- * The definition a `full` record carried for a `DynamicOverride` (`Dynamic`, injects nothing, overwrites the
- * blueprint's definition), except that it creates the service's own class: since the counters, a record no
- * longer names the class of the instance handed in.
- *
- * No code location: the override has none of its own (a `full` record named `ServiceProviderFactory`'s
- * constructor). Without injects it draws no edge -- the blueprint's injects did not run for this instance.
+ * A `DynamicOverride`: handed in at create, `Dynamic`, injects nothing, overwrites the blueprint's definition.
+ * It names no class: the record does not know the class of the instance handed in, and the service's own may
+ * be an interface. No code location, and no edge out of it: the blueprint's injects did not run for it.
  */
-export function overrideDefinition(service: KontainerService, blueprint: KontainerDefinition | null): KontainerDefinition {
+export function overrideDefinition(blueprint: KontainerDefinition | null): KontainerDefinition {
     return {
-        creates: service.cls,
+        creates: null,
         injectionType: 'Dynamic',
         injects: [],
         codeLocation: null,
         overwrites: blueprint,
+        handedIn: true,
     }
 }
 
 /**
- * Whether a `slim` record was written against [graph]: `same`, `other` -- expected after almost any deploy,
+ * Whether a record was written against [graph]: `same`, `other` -- expected after almost any deploy,
  * the fingerprint covers every code location, line numbers included -- or `unknown` when the record names
  * no graph (the server could not build one then). In the last two cases the definitions and edges shown are
- * the server's at the time the graph was fetched, not necessarily the ones the request ran with. A `full` record
- * carries its own: `same`.
+ * the server's at the time the graph was fetched, not necessarily the ones the request ran with.
  */
 export function graphMatch(slice: KontainerSlice, graph: KontainerGraphData): 'same' | 'other' | 'unknown' {
-    if (slice.shape === 'full') return 'same'
     if (slice.graphFingerprint === null) return 'unknown'
     return slice.graphFingerprint === graph.fingerprint ? 'same' : 'other'
 }

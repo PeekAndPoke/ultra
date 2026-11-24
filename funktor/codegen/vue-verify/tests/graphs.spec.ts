@@ -236,17 +236,6 @@ describe('the kontainer graphs', () => {
         expect(host.textContent).not.toContain('written against another kontainer graph')
     })
 
-    it('an OLD (fat) record draws from the record itself, with no request', async () => {
-        const { graphs, requests } = recordedGraphs()
-        const slice = sliceOf(recorded.fat(), 'kontainer')
-        const host = await render(KontainerTab, slice, graphs)
-
-        await click(host, 'Show Full Graph')
-
-        expect(requests).toEqual([])
-        expect(drawn.networks[0].data.nodes).toHaveLength(slice.info.services.length)
-    })
-
     it('without a graph source a slim record says why there is no graph, and still lists its services', async () => {
         const slice = sliceOf(recorded.slim(), 'kontainer')
         const host = await render(KontainerTab, slice)
