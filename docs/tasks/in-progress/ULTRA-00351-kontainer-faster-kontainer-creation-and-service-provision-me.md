@@ -157,6 +157,17 @@ the gets is the baseline (finding 1 does not touch them); `request` after findin
 | lazyLookupGet | 40.4 +- 0.2 | 33.2 +- 0.3 | -18% | 40 | 0 |
 | getStaticHotT8 | 31.8 +- 0.4 | 26.6 +- 0.4 | -16% | 40 | 0 |
 
+**Finding 7** (the argument array built directly, no intermediate list). The copy made by the spread in
+`ctor.call(*params)` stays: Kotlin emits `Arrays.copyOf` there and only a Java helper could avoid it. Tests: 616
+green; mutant of the new code (prototype arguments reversed): 23 RED. "before" is after finding 4.
+
+| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+|---|---:|---:|---:|---:|---:|
+| request | 5,178.7 +- 45.9 | 4,919.9 +- 43.2 | -5% | 6,456 | 5,832 |
+| prototypeNoArg | 75.4 +- 0.6 | 75.2 +- 0.4 | 0% | 104 | 104 |
+| prototype3Args | 208.1 +- 1.4 | 202.0 +- 3.3 | -3% | 224 | 176 |
+| prototypeFactory | 150.4 +- 1.3 | 142.3 +- 1.7 | -5% | 144 | 104 |
+
 ## Coverage map (before any change)
 
 New spec `ProvisionPathsCharacterizationSpec` (17 tests), green on today's code. Every mutant below was applied to

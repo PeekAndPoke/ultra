@@ -216,15 +216,11 @@ interface ServiceProvider {
         private fun create(kontainer: Kontainer, context: InjectionContext): Any {
 
             val nextCtx = context.next(definition.serviceCls)
+            val params = definition.producer.params
 
             return definition.producer.creator(
                 kontainer,
-                definition.producer.params.map {
-                    it.provide(
-                        kontainer = kontainer,
-                        context = nextCtx
-                    )
-                }.toTypedArray()
+                Array(params.size) { idx -> params[idx].provide(kontainer = kontainer, context = nextCtx) },
             )
         }
     }
@@ -296,15 +292,11 @@ interface ServiceProvider {
         private fun create(kontainer: Kontainer, context: InjectionContext): Any {
 
             val nextContext = context.next(definition.serviceCls)
+            val params = definition.producer.params
 
             return definition.producer.creator(
                 kontainer,
-                definition.producer.params.map {
-                    it.provide(
-                        kontainer = kontainer,
-                        context = nextContext,
-                    )
-                }.toTypedArray()
+                Array(params.size) { idx -> params[idx].provide(kontainer = kontainer, context = nextContext) },
             )
         }
     }
