@@ -214,6 +214,31 @@ class ProvisionPathsCharacterizationSpec : StringSpec({
         }
     }
 
+    "Aliased keys: getOrNull(Number) first, then Int and Integer share its entry, so Int finds the instance" {
+
+        // Int::class (Java int) and the instance's class (java.lang.Integer) are equal keys of the candidate cache,
+        // with different Java assignability: whichever form fills the shared entry first decides it
+        val kontainer = kontainer { instance(5) }.create()
+
+        assertSoftly {
+            kontainer.getOrNull(Number::class) shouldBe 5
+            kontainer.getOrNull(Int::class) shouldBe 5
+            kontainer.get(Int::class) shouldBe 5
+        }
+    }
+
+    "Aliased keys: getOrNull(Int) first leaves the shared entry empty, so getOrNull(Number) throws ServiceNotFound" {
+
+        val kontainer = kontainer { instance(5) }.create()
+
+        assertSoftly {
+            kontainer.getOrNull(Int::class) shouldBe null
+            shouldThrow<ServiceNotFound> {
+                kontainer.getOrNull(Number::class)
+            }.message shouldBe "Service kotlin.Int was not found"
+        }
+    }
+
     "getProvider of a super type is the provider of its one candidate" {
 
         val kontainer = kontainer { singleton(PathsMiddle::class) }.create()
