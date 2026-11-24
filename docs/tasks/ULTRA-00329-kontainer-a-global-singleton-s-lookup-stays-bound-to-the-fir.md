@@ -1,6 +1,6 @@
 # ULTRA-00329: Kontainer: a global singleton's Lookup stays bound to the first kontainer and keeps every prototype it creates
 
-> **Status (2026-11-23): DESIGNED.** Both changes re-confirmed by the maintainer; track D writes the plan first.
+> **Status (2026-11-24): DESIGNED.** Plan written by track D, every question answered by the maintainer (see Plan answers); the build starts on the maintainer's word.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -89,9 +89,21 @@ Track D's plan (2026-11-23) asked five questions; answered one at a time.
   kontainer's factory, so that lock would be shared by all requests. `LiveKontainerTracker` is unchanged (debug
   only, a tiny critical section). The maintainer: "yes take all three".
 
+- **Area edits allowed:** track D may edit `funktor/insights` (collector, models, `TAB-SPECS.md`), `funktor/inspect`
+  (`KontainerTab`), `funktor/codegen` (TS models, `KontainerTab.vue`, the `vue-verify` and
+  `funktor-demo/sdkgen-app` copies). ULTRA-00190 has no active work there; the paused `wt/insights-kraft` overlaps
+  in two lines of `KontainerCollector.kt` and resolves that when it resumes. The maintainer: "yes allow the edits".
+- **Where the plan changes by these answers:** K3a has no `lastCls` (and no mutant for it); K3c writes v3 only and
+  has no frozen v2 record to render; K3d reads v3 only (no folding of a v2 list, no `refresh.mjs` v2 target), an
+  old record shows as a service without creations; K3a or K3b also takes the three lock changes above.
+- **Gates:** two strict gates, after K3b (kontainer: domain and concurrency) and after K3d (insights wire and GUIs).
+  While the Fable credits are used up (week of 2026-11-24), each Fable rung runs on Opus one level higher: rung 2 as
+  Opus high, rung 3 as Opus xhigh (maintainer, 2026-11-24).
+
 ## History
 
 - 2026-11-14: created on the maintainer's word.
 - 2026-11-23: re-confirmed by the maintainer before implementing ("yes confirmed"): both changes as decided,
   including the change of the insights wire shape (lists of instances become a count and two times); track D writes
   a plan without code first.
+- 2026-11-24: the plan's five questions, the lock check and the area edits answered (Plan answers).
