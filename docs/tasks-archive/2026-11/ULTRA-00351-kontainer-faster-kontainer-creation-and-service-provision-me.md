@@ -1,9 +1,6 @@
 # ULTRA-00351: Kontainer: faster kontainer creation and service provision, measured, no behaviour change
 
-> **Status (2026-11-24): IN PROGRESS.** Track E (wt/kontainer). Gate round 1 PASS (no CRITICAL/MAJOR); MINOR batch
-> applied: finding 3 reverted (aliased keys), finding 6 dropped. In place: findings 1, 4, 7, 5, 10. Waiting for the
-> coordinator's delta review. Open for the maintainer: finding 2, the getAll / List / Lookup throw, the
-> `DynamicOverrides.Builder` copy, where the JMH harness lives.
+> **Status (2026-11-24): DONE.** Merged into master (31711410); four follow-up questions are with the maintainer (History).
 
 ## Why this exists
 
@@ -408,3 +405,5 @@ providers and singletons unchanged; ordering of `getAllProviders` unchanged.
   run, 14 suites and the compile sweep green. Stopped for the gate.
 - 2026-11-24: gate round 1 PASS. MINOR batch: finding 3 reverted (aliased `Int` / `Integer` keys, two pins), finding 6
   dropped, KDoc on `getAllCandidatesFor`, benchmark comment fixed; ledger recorded. Affected benchmarks re-run.
+- 2026-11-24: merged into master (31711410). Gate PASS in round 1; the MINOR batch reverted findings 3 and 6 and was checked by hand (both files back to master, one KDoc line). Open with the maintainer: finding 2 (override stack trace), the getAll/List/Lookup ServiceAmbiguous throw, the DynamicOverrides.Builder copy, where the JMH harness lives.
+- 2026-11-24: DONE.
