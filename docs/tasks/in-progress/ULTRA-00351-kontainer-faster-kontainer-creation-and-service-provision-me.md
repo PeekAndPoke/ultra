@@ -125,6 +125,22 @@ a `jmh` dependency of `ultra/kontainer` on `funktor-demo:server` would invert th
 Reading: `create` is 12.7 KB, nearly all of it the copied provider map (finding 1). Each override adds about
 1.2 KB and 0.8 to 1.2 us; the stack capture of finding 2 is part of that (not touched, waits for the maintainer).
 
+### Per finding (subset runs, same settings; "before" is the baseline above)
+
+**Finding 1** (blueprint map shared, overrides in their own map looked up first; getAllProviders keeps the order).
+Tests: the 616 of the kontainer suite green. Mutants of the new code: getProvider ignoring the override map, 40 RED;
+getAllProviders ignoring it, 5 RED.
+
+| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+|---|---:|---:|---:|---:|---:|
+| create | 3,357.8 +- 25.7 | 13.7 +- 0.1 | -100% | 12,704 | 232 |
+| createOneOverride | 4,572.3 +- 133.6 | 968.0 +- 7.7 | -79% | 13,936 | 1,632 |
+| createTwoOverrides | 5,395.4 +- 49.4 | 1,941.7 +- 14.1 | -64% | 15,032 | 2,720 |
+| cloneOneOverride | 4,796.0 +- 290.8 | 1,030.3 +- 7.2 | -79% | 14,136 | 1,832 |
+| request | 8,432.6 +- 118.5 | 5,316.1 +- 77.6 | -37% | 20,264 | 7,852 |
+| createT8 | 4,558.4 +- 121.8 | 65.9 +- 0.5 | -99% | 12,704 | 232 |
+| requestT8 | 11,128.4 +- 827.1 | 6,335.6 +- 54.1 | -43% | 19,984 | 7,680 |
+
 ## Coverage map (before any change)
 
 New spec `ProvisionPathsCharacterizationSpec` (17 tests), green on today's code. Every mutant below was applied to

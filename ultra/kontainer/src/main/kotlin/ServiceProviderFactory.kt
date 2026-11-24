@@ -13,26 +13,31 @@ class ServiceProviderFactory internal constructor(
     internal val dynamics: DynamicOverrides,
     providerProviders: Map<KClass<*>, ServiceProvider.Provider>,
 ) {
+    /** The blueprint's providers, shared by all its kontainers and never changed */
     private val providerProviders: Map<KClass<*>, ServiceProvider.Provider> = providerProviders
-        .plus(
-            dynamics.overrides.map { (cls, provider) ->
-                val baseType = blueprint.overriddenServiceOf(cls)
 
-                // The override runs here, at create, once per kontainer; when it throws, no kontainer results
-                val instance = provider()
+    /** The overrides by the service they replace, looked up before [providerProviders]; a later one wins */
+    private val overrideProviders: Map<KClass<*>, ServiceProvider.Provider> = when {
+        dynamics.overrides.isEmpty() -> emptyMap()
 
-                baseType to ServiceProvider.Provider.forOverride(
-                    definition = ServiceDefinition(
-                        serviceCls = cls,
-                        type = ServiceType.Singleton,
-                        kind = ServiceKind.Dynamic,
-                        producer = ServiceProducer.forInstance(instance),
-                        overwrites = blueprint.definitions[baseType]
-                    ),
-                    instance = instance,
-                )
-            }
-        )
+        else -> dynamics.overrides.entries.associate { (cls, provider) ->
+            val baseType = blueprint.overriddenServiceOf(cls)
+
+            // The override runs here, at create, once per kontainer; when it throws, no kontainer results
+            val instance = provider()
+
+            baseType to ServiceProvider.Provider.forOverride(
+                definition = ServiceDefinition(
+                    serviceCls = cls,
+                    type = ServiceType.Singleton,
+                    kind = ServiceKind.Dynamic,
+                    producer = ServiceProducer.forInstance(instance),
+                    overwrites = blueprint.definitions[baseType]
+                ),
+                instance = instance,
+            )
+        }
+    }
 
     private val providers: ConcurrentHashMap<KClass<*>, ServiceProvider> = ConcurrentHashMap()
 
@@ -47,7 +52,7 @@ class ServiceProviderFactory internal constructor(
      * Get the [ServiceProvider] for the given [cls], creating it on first use.
      */
     fun getProvider(cls: KClass<*>): ServiceProvider = providers.computeIfAbsent(cls) {
-        providerProviders.getValue(cls).provide()
+        (overrideProviders[cls] ?: providerProviders.getValue(cls)).provide()
     }
 
     /**
@@ -57,6 +62,6 @@ class ServiceProviderFactory internal constructor(
 
     /** Gets all providers, creating any that haven't been instantiated yet */
     fun getAllProviders(): Map<KClass<*>, ServiceProvider> = providerProviders.mapValues { (cls, provider) ->
-        providers.computeIfAbsent(cls) { provider.provide() }
+        providers.computeIfAbsent(cls) { (overrideProviders[cls] ?: provider).provide() }
     }
 }
