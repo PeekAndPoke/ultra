@@ -30,8 +30,8 @@ internal fun Tag.KontainerTab(data: JsonElement, ui: InsightsUi) =
  * The `kontainer` slice: which services this request's kontainer instantiated, and the service graph (ULTRA-00198,
  * as the Vue `KontainerTab`).
  *
- * A `full` record (before 2026-10-19) carries every definition; a `slim` one only the instantiated services and
- * the fingerprint of the graph it was written against. Its definitions come from the kontainer graph endpoint,
+ * A `full` record (before 2026-10-19) carries every definition; a `slim` one only the services with creations, each
+ * with a count and the first and last creation time, and the fingerprint of the graph it was written against. Its definitions come from the kontainer graph endpoint,
  * joined on `cls`, fetched on the first graph click and cached by fingerprint. A mismatch is said, not hidden.
  *
  * A click on a column header sorts by it, again reverses. Without the graph the tab still renders.
@@ -43,7 +43,7 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
     private enum class Column(val label: String) {
         Service("Service"),
         Type("Type"),
-        Instances("Instances"),
+        Created("Created"),
         Injects("Injects"),
         Definition("Definition & overwrites"),
     }
@@ -93,8 +93,9 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
         factList(summary(slice))
         note(
             "A Singleton is process state, shared by every request: created at boot or by whichever request first " +
-                "needed it. Every other type belongs to this request's kontainer. The creation time only says " +
-                "whether this request was the one that created the instance."
+                "needed it. Every other type belongs to this request's kontainer. The creation times only say " +
+                "whether this request was the one that created the instances. Prototypes a Singleton creates are " +
+                "counted outside every request and show in no record."
         )
         ui.hidden.divider()
 
@@ -114,7 +115,7 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
     }
 
     private fun summary(slice: KontainerSlice): List<Fact> {
-        val instantiated = slice.services.filter { it.instances.isNotEmpty() }
+        val instantiated = slice.services.filter { it.hasCreations }
         val shared = instantiated.count { it.isProcessWide }
         val own = "${instantiated.size} instantiated: ${instantiated.size - shared} this request's own, " +
             "$shared process-wide singletons"
@@ -199,7 +200,7 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
 
         val network = when {
             slice.shape == KontainerShape.Full -> kontainerNetwork(
-                if (which == NetworkKind.Instances) slice.services.filter { it.instances.isNotEmpty() } else slice.services,
+                if (which == NetworkKind.Instances) slice.services.filter { it.hasCreations } else slice.services,
                 which,
             )
 
@@ -215,7 +216,7 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
     private fun comparator(column: Column): Comparator<KontainerService> = when (column) {
         Column.Service -> compareBy(localeOrder) { it.cls ?: "" }
         Column.Type -> compareBy(localeOrder) { it.type ?: "" }
-        Column.Instances -> compareBy { it.instances.size }
+        Column.Created -> compareBy { it.count }
         Column.Injects -> compareBy { it.definition?.injects?.size ?: 0 }
         // What the cell shows, not the hidden FQN: sorting by package would look unsorted
         Column.Definition -> compareBy(localeOrder) {
@@ -261,6 +262,20 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
         }
     }
 
+    /** The count, then the creation time, or the first and the last one for several creations. */
+    private fun FlowContent.created(service: KontainerService) {
+        fun at(millis: Double?) = millis?.let { Date(it).toLocaleString() } ?: "n/a"
+
+        div { +service.count.formatNumber() }
+
+        if (service.count == 1.0) {
+            div { muted(at(service.firstCreatedAtMillis)) }
+        } else {
+            div { muted("first ${at(service.firstCreatedAtMillis)}") }
+            div { muted("last ${at(service.lastCreatedAtMillis)}") }
+        }
+    }
+
     private fun TBODY.row(service: KontainerService) {
         tr {
             key = service.cls ?: ""
@@ -268,22 +283,12 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
             td(classes = "insights-mono insights-path") { +(service.cls ?: "n/a") }
             td {
                 ui.basic.label { +(service.type ?: "n/a") }
-                if (service.instances.isNotEmpty()) {
+                if (service.hasCreations) {
                     div { muted(if (service.isProcessWide) "process-wide" else "this request's") }
                 }
             }
             td(classes = "insights-mono") {
-                if (service.instances.isEmpty()) muted("-")
-                service.instances.forEach { instance ->
-                    div {
-                        span {
-                            title = instance.cls ?: ""
-                            +shortName(instance.cls)
-                        }
-                        +" "
-                        muted(instance.createdAtMillis?.let { Date(it).toLocaleString() } ?: "n/a")
-                    }
-                }
+                if (service.hasCreations) created(service) else muted("-")
             }
             td(classes = "insights-mono") {
                 val injects = service.definition?.injects ?: emptyList()

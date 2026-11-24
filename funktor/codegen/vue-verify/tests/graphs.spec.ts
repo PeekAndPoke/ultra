@@ -353,7 +353,8 @@ describe('the kontainer network, built from the real graph', () => {
             const network = kontainerNetwork(joined, kind)
             const overrideIds = network.nodes.filter((node) => node.label.endsWith('\nDynamicOverride')).map((node) => node.id)
 
-            expect(overrideIds, kind).toHaveLength(2)
+            // UserProvider, the one override of the recorded request since ULTRA-00301
+            expect(overrideIds, kind).toHaveLength(1)
             expect(network.edges.filter((edge) => overrideIds.includes(edge.from)), kind).toEqual([])
         }
     })

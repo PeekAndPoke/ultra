@@ -118,22 +118,27 @@ carry `{ "timeNs": null }` under this key; both GUIs drop it (`RETIRED_SLICES`):
 
 ## `kontainer`
 
-Two shapes. **The full contract** — v1 and v2, the join, the fingerprint, the caveats — is in
-ULTRA-00197 (insights graphs and static slices), "Wire contract"; the reader is `readKontainer`.
+Three shapes on disk; the readers read two. **The full contract** of the join and the fingerprint is in
+ULTRA-00197 (insights graphs and static slices), "Wire contract"; the counters are ULTRA-00329. The reader is
+`readKontainer`.
 
-- **v2 (since 2026-10-19)** `{ graphFingerprint, services: [{cls, type, instances: [{cls, createdAt}]}] }`
-  — marked by the `graphFingerprint` KEY (its value may be `null`); only services with instances; class names
+- **v3 (since ULTRA-00329)** `{ graphFingerprint, services: [{cls, type, count, firstCreatedAt, lastCreatedAt}] }`
+  -- marked by the `graphFingerprint` KEY (its value may be `null`); only services with `count > 0`; class names
   flat strings; definitions come from `GET /_/funktor/insights/graphs/kontainer`, joined on `cls`.
-- **v1 (before)** `{ numOld, numTotal, info: { services: [...] } }` — every service with its definition inline;
-  class names `{"fqn"}`, `codeLocation` `{"location"}`.
-- `createdAt` is `{ts, timezone, human}`, `ts` in millis (Jackson-era records: epoch seconds as a double).
-- `type == "Singleton"` is process state shared by every request; any other type is this request's own.
-  `createdAt` only says whether this request created the instance.
+- **v2 (2026-10-19 to ULTRA-00329)** `{ graphFingerprint, services: [{cls, type, instances: [{cls, createdAt}]}] }`
+  -- read as v3 whose services have no creations (`count` 0, no times): the instance lists are not read.
+- **v1 (before 2026-10-19)** `{ numOld, numTotal, info: { services: [...] } }` -- every service with its definition
+  inline; class names `{"fqn"}`, `codeLocation` `{"location"}`. Its instance lists are not read either.
+- `firstCreatedAt` and `lastCreatedAt` are `{ts, timezone, human}`, `ts` in millis; any other form reads as no time.
+- `type == "Singleton"` is process state shared by every request, and its count is process-wide; any other type is
+  this request's own. The creation times only say whether this request created the instances. Prototypes a
+  `Singleton` creates are counted outside every request (the blueprint-wide kontainer) and show in no record.
 - `numOld` / `numTotal` exist on v1 only, and were always 0 (tracking cannot be switched on): shown as
-  recorded, marked "not measured". v2 dropped them (maintainer, 2026-10-19) and shows no counters.
-- A `DynamicOverride` of a v2 record is shown as v1 recorded it -- creates the instance's class, `Dynamic`, no
-  injects, overwriting the graph's (blueprint) definition -- never with the blueprint's injects, which did not
-  run for a handed-in instance (`overrideDefinition` in `slices.ts`).
+  recorded, marked "not measured". v2 dropped them (maintainer, 2026-10-19).
+- A `DynamicOverride` is shown as v1 recorded it -- `Dynamic`, no injects, overwriting the graph's (blueprint)
+  definition -- never with the blueprint's injects, which did not run for a handed-in instance
+  (`overrideDefinition` in `slices.ts`). It creates the service's own class: no record names the class of the
+  instance handed in any more.
 
 ## `app-config`
 

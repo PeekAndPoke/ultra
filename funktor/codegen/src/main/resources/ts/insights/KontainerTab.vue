@@ -6,8 +6,8 @@
  *
  * - `full` (written before 2026-10-19) -- every service with its definition. The graphs are drawn from
  *   the record itself, which is what the request actually ran with.
- * - `slim` (since) -- only services with instances, plus the `graphFingerprint` they were written
- *   against. Injects and definitions come from the kontainer graph endpoint, joined on `cls`, fetched on
+ * - `slim` (since) -- only services with creations, each with a count and the first and last creation
+ *   time, plus the `graphFingerprint` they were written against. Injects and definitions come from the kontainer graph endpoint, joined on `cls`, fetched on
  *   the first graph click and never before, and cached by fingerprint (`InsightsGraphSource.kontainer`). A
  *   fingerprint mismatch is said, not hidden: the edges are then the server's, fetched for a record of this
  *   fingerprint, which is expected after almost any deploy.
@@ -30,8 +30,8 @@ import type { Fact } from '../ui/types.ts'
 import { kontainerNetwork, useInsightsGraphsOrNull } from './graphs.ts'
 import type { NetworkData } from './graphs.ts'
 import NetworkGraph from './NetworkGraph.vue'
-import { definitionChain, graphMatch, isProcessWide, joinKontainerGraph, readKontainer } from './slices.ts'
-import type { KontainerGraphData, KontainerInstance, KontainerService } from './slices.ts'
+import { definitionChain, graphMatch, hasCreations, isProcessWide, joinKontainerGraph, readKontainer } from './slices.ts'
+import type { KontainerGraphData, KontainerService } from './slices.ts'
 
 defineOptions({ name: 'KontainerTab' })
 
@@ -65,7 +65,7 @@ const network = computed<NetworkData | null>(() => {
     if (value === null || which === null) return null
 
     if (value.shape === 'full') {
-        const pool = which === 'instances' ? value.services.filter((service) => service.instances.length > 0) : value.services
+        const pool = which === 'instances' ? value.services.filter(hasCreations) : value.services
         return kontainerNetwork(pool, which)
     }
 
@@ -96,7 +96,7 @@ const summary = computed<Fact[]>(() => {
     const value = slice.value
     if (value === null) return []
 
-    const instantiated = value.services.filter((service) => service.instances.length > 0)
+    const instantiated = value.services.filter(hasCreations)
     const shared = instantiated.filter(isProcessWide).length
     const own = `${instantiated.length} instantiated: ${instantiated.length - shared} this request's own, ${shared} process-wide singletons`
 
@@ -124,8 +124,8 @@ const summary = computed<Fact[]>(() => {
 const match = computed(() => (slice.value === null || graph.value === null ? null : graphMatch(slice.value, graph.value)))
 
 /** Full date and time, not just the clock: it says whether THIS request created the instance. */
-function createdAt(instance: KontainerInstance): string {
-    return instance.createdAtMillis === null ? 'n/a' : new Date(instance.createdAtMillis).toLocaleString()
+function at(millis: number | null): string {
+    return millis === null ? 'n/a' : new Date(millis).toLocaleString()
 }
 
 /** A full record's counts exactly as recorded; `?` for a missing one. */
@@ -136,12 +136,12 @@ function counts(value: { numOld: number | null; numTotal: number | null }): stri
 
 /*  Click-to-sort  ----------------------------------------------------------------------------------  */
 
-type SortColumn = 'service' | 'type' | 'instances' | 'injects' | 'definition'
+type SortColumn = 'service' | 'type' | 'created' | 'injects' | 'definition'
 
 const SORT_COLUMNS: Array<{ column: SortColumn, label: string }> = [
     { column: 'service', label: 'Service' },
     { column: 'type', label: 'Type' },
-    { column: 'instances', label: 'Instances' },
+    { column: 'created', label: 'Created' },
     { column: 'injects', label: 'Injects' },
     { column: 'definition', label: 'Definition & overwrites' },
 ]
@@ -155,8 +155,8 @@ function sortKey(service: KontainerService, column: SortColumn): string | number
             return service.cls ?? ''
         case 'type':
             return service.type ?? ''
-        case 'instances':
-            return service.instances.length
+        case 'created':
+            return service.count
         case 'injects':
             return service.definition?.injects.length ?? 0
         case 'definition':
@@ -209,8 +209,9 @@ function shortName(fqn: string | null): string {
             <FactList :facts="summary" />
             <p class="fk-section__note">
                 A Singleton is process state, shared by every request: created at boot or by whichever request
-                first needed it. Every other type belongs to this request's kontainer. The creation time only
-                says whether this request was the one that created the instance.
+                first needed it. Every other type belongs to this request's kontainer. The creation times only
+                say whether this request was the one that created the instances. Prototypes a Singleton creates
+                are counted outside every request and show in no record.
             </p>
         </section>
 
@@ -277,17 +278,21 @@ function shortName(fqn: string | null): string {
                         <td class="fk-mono fk-services__cls">{{ service.cls ?? 'n/a' }}</td>
                         <td>
                             <span class="fk-label">{{ service.type ?? 'n/a' }}</span>
-                            <div v-if="service.instances.length > 0" class="fk-muted">
+                            <div v-if="hasCreations(service)" class="fk-muted">
                                 {{ isProcessWide(service) ? 'process-wide' : "this request's" }}
                             </div>
                         </td>
 
                         <td class="fk-mono">
-                            <div v-if="service.instances.length === 0" class="fk-muted">-</div>
-                            <div v-for="(instance, index) in service.instances" :key="index">
-                                <span :title="instance.cls ?? ''">{{ shortName(instance.cls) }}</span>
-                                <span class="fk-muted">{{ createdAt(instance) }}</span>
-                            </div>
+                            <div v-if="!hasCreations(service)" class="fk-muted">-</div>
+                            <template v-else>
+                                <div>{{ service.count }}</div>
+                                <div v-if="service.count === 1" class="fk-muted">{{ at(service.firstCreatedAtMillis) }}</div>
+                                <template v-else>
+                                    <div class="fk-muted">first {{ at(service.firstCreatedAtMillis) }}</div>
+                                    <div class="fk-muted">last {{ at(service.lastCreatedAtMillis) }}</div>
+                                </template>
+                            </template>
                         </td>
 
                         <td class="fk-mono">

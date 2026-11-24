@@ -17,20 +17,34 @@ import {
 import { recorded, sliceOf } from './support.ts'
 
 describe('readKontainer', () => {
-    it('reads a SLIM record: instantiated services only, no definitions, the fingerprint kept', () => {
+    it('reads a SLIM record: services with creations only, no definitions, the fingerprint kept', () => {
         const raw = sliceOf(recorded.slim(), 'kontainer')
         const slice = readKontainer(raw)!
 
         expect(slice.shape).toBe('slim')
         expect(slice.graphFingerprint).toBe(raw.graphFingerprint)
         expect(slice.services).toHaveLength(raw.services.length)
-        expect(slice.services.every((service) => service.definition === null && service.instances.length > 0)).toBe(true)
+        expect(slice.services.every((service) => service.definition === null && service.count > 0)).toBe(true)
 
-        const first = raw.services[0]
-        const read = slice.services.find((service) => service.cls === first.cls)!
-        expect(read.type).toBe(first.type)
-        expect(read.instances[0].cls).toBe(first.instances[0].cls)
-        expect(read.instances[0].createdAtMillis).toBe(first.instances[0].createdAt.ts)
+        // Every service, by cls: its count and both times, each from its own key
+        for (const written of raw.services) {
+            const read = slice.services.find((service) => service.cls === written.cls)!
+            expect(read.type, written.cls).toBe(written.type)
+            expect(read.count, written.cls).toBe(written.count)
+            expect(read.firstCreatedAtMillis, written.cls).toBe(written.firstCreatedAt.ts)
+            expect(read.lastCreatedAtMillis, written.cls).toBe(written.lastCreatedAt.ts)
+        }
+    })
+
+    it('a service of a record written before the counters reads as one without creations: its instance list is not read', () => {
+        const slice = readKontainer({
+            graphFingerprint: 'fp',
+            services: [{ cls: 'a.Old', type: 'Prototype', instances: [{ cls: 'a.Old', createdAt: { ts: 1792413528458 } }] }],
+        })!
+
+        expect(slice.services).toEqual([
+            { cls: 'a.Old', type: 'Prototype', definition: null, count: 0, firstCreatedAtMillis: null, lastCreatedAtMillis: null },
+        ])
     })
 
     it('reads an OLD (fat) record: every service, {fqn} and {location} unwrapped, definitions inline', () => {
@@ -40,6 +54,7 @@ describe('readKontainer', () => {
         expect(slice.shape).toBe('full')
         expect(slice.graphFingerprint).toBeNull()
         expect(slice.services).toHaveLength(raw.info.services.length)
+        expect(slice.services.every((service) => service.count === 0 && service.firstCreatedAtMillis === null)).toBe(true)
 
         for (const service of raw.info.services) {
             const read = slice.services.find((it) => it.cls === service.cls.fqn)!
@@ -100,20 +115,19 @@ describe('the kontainer graph', () => {
         }
     })
 
-    it('a DynamicOverride gets what a full record wrote for it, not the blueprint whose injects did not run', () => {
+    it('a DynamicOverride gets what a full record wrote for it (creating its own class), not the blueprint whose injects did not run', () => {
         const slice = readKontainer(sliceOf(recorded.slim(), 'kontainer'))!
         const graph = readKontainerGraph(recorded.kontainerGraph().data)!
         const joined = joinKontainerGraph(slice, graph, true)
 
         const overrides = joined.filter((service) => service.type === 'DynamicOverride')
-        expect(overrides.map((service) => service.cls)).toEqual(
-            expect.arrayContaining(['io.peekandpoke.ultra.security.user.UserProvider', 'io.peekandpoke.funktor.core.model.InsightsConfig']),
-        )
+        // One since ULTRA-00301: InsightsConfig is no longer handed in per request
+        expect(overrides.map((service) => service.cls)).toEqual(['io.peekandpoke.ultra.security.user.UserProvider'])
 
         for (const service of overrides) {
             const blueprint = graph.services.find((it) => it.cls === service.cls)!.definition
             expect(service.definition).toEqual({
-                creates: service.instances[0].cls,
+                creates: service.cls,
                 injectionType: 'Dynamic',
                 injects: [],
                 codeLocation: null,
@@ -121,12 +135,14 @@ describe('the kontainer graph', () => {
             })
         }
 
-        // ...which is what the full record of the same service really says
+        // ...which is what the full record of the same service really says, except the class: it named the
+        // instance handed in, which a record with counters no longer knows
         const v1 = readKontainer(sliceOf(recorded.fat(), 'kontainer'))!.services
             .find((service) => service.cls === 'io.peekandpoke.ultra.security.user.UserProvider')!.definition!
         const v2 = overrides.find((service) => service.cls === 'io.peekandpoke.ultra.security.user.UserProvider')!.definition!
 
-        expect(v1.creates).toBe(v2.creates)
+        expect(v1.creates).toBe('io.peekandpoke.ultra.security.user.UserProvider$Lazy')
+        expect(v2.creates).toBe('io.peekandpoke.ultra.security.user.UserProvider')
         expect(v1.injectionType).toBe(v2.injectionType)
         expect(v1.injects).toEqual(v2.injects)
         expect(v1.overwrites!.creates).toBe(v2.overwrites!.creates)
@@ -181,9 +197,9 @@ describe('the kontainer graph', () => {
 })
 
 describe('the other readers', () => {
-    it('an instant is millis from Slumber\'s object, and seconds x 1000 from a Jackson-era double', () => {
+    it('an instant is millis from Slumber\'s object; a bare number is not guessed into a unit', () => {
         expect(readInstantMillis({ ts: 1792419655680, timezone: 'UTC', human: '...' })).toBe(1792419655680)
-        expect(readInstantMillis(1785496992.7)).toBe(1785496992700)
+        expect(readInstantMillis(1785496992.7)).toBeNull()
     })
 
     it('vault entries of the current collector are not legacy, and keep their placeholder text', () => {

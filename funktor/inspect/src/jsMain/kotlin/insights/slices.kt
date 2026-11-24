@@ -381,28 +381,29 @@ internal data class KontainerDefinition(
     fun chain(): List<KontainerDefinition> = generateSequence(this) { it.overwrites }.toList()
 }
 
-internal data class KontainerInstance(
-    val cls: String?,
-    /** Epoch MILLIS, from either shape a record can carry. */
-    val createdAtMillis: Double?,
-)
-
 internal data class KontainerService(
     val cls: String?,
     val type: String?,
     /** Null on a `slim` record, whose definitions live in the kontainer graph. */
     val definition: KontainerDefinition?,
-    val instances: List<KontainerInstance>,
+    /** How many instances the provider created; 0 in the graph and for a record written before the counters. */
+    val count: Double = 0.0,
+    /** Epoch MILLIS of the first and the last creation; null without creations. */
+    val firstCreatedAtMillis: Double? = null,
+    val lastCreatedAtMillis: Double? = null,
 ) {
     /** A Singleton is process state, shared by every request; every other type is this request's own. */
     val isProcessWide: Boolean get() = type == "Singleton"
+
+    /** True when the provider created at least one instance. */
+    val hasCreations: Boolean get() = count > 0
 }
 
 internal enum class KontainerShape {
     /** Written before 2026-10-19: every service, definitions inline. */
     Full,
 
-    /** Since: only services with instances, joined to the kontainer graph by `cls`. */
+    /** Since: only services with creations, joined to the kontainer graph by `cls`. */
     Slim,
 }
 
@@ -423,9 +424,8 @@ internal data class KontainerGraphData(
 /** `{"fqn": "..."}` on a `full` record, a flat string on a `slim` one and in the graph. */
 private fun JsonElement?.readFqn(): String? = asRecord()?.get("fqn").asString() ?: asString()
 
-/** An instant as epoch millis: Slumber writes `{ts, ...}`, the Jackson-era writer epoch SECONDS as a double. */
-internal fun JsonElement?.readInstantMillis(): Double? =
-    asRecord()?.get("ts").asNumber() ?: asNumber()?.let { it * 1000 }
+/** An instant as epoch millis: Slumber writes `{ts, timezone, human}`, `ts` in millis; anything else reads as null. */
+internal fun JsonElement?.readInstantMillis(): Double? = asRecord()?.get("ts").asNumber()
 
 private fun JsonElement?.readDefinition(depth: Int = 0): KontainerDefinition? {
     val record = asRecord() ?: return null
@@ -454,19 +454,16 @@ private fun JsonElement?.readService(): KontainerService {
         cls = service?.get("cls").readFqn(),
         type = service?.get("type").asString(),
         definition = service?.get("definition").readDefinition(),
-        instances = service?.get("instances").asArray()?.map { raw ->
-            val instance = raw.asRecord()
-            KontainerInstance(
-                cls = instance?.get("cls").readFqn(),
-                createdAtMillis = instance?.get("createdAt").readInstantMillis(),
-            )
-        } ?: emptyList(),
+        // The counters only: an older record's instance list is not read, so its service shows no creations
+        count = service?.get("count").asNumber() ?: 0.0,
+        firstCreatedAtMillis = service?.get("firstCreatedAt").readInstantMillis(),
+        lastCreatedAtMillis = service?.get("lastCreatedAt").readInstantMillis(),
     )
 }
 
-/** The old table's order: services with instances first, then by FQN. */
+/** The old table's order: services with creations first, then by FQN. */
 internal fun List<KontainerService>.sortedForTable(): List<KontainerService> =
-    sortedWith(compareBy<KontainerService> { it.instances.isEmpty() }.thenBy(localeOrder) { it.cls ?: "" })
+    sortedWith(compareBy<KontainerService> { !it.hasCreations }.thenBy(localeOrder) { it.cls ?: "" })
 
 /** Either shape, told apart by what is there: the `graphFingerprint` key marks `slim`, `info` marks `full`. */
 internal fun readKontainer(data: JsonElement?): KontainerSlice? {
@@ -487,7 +484,7 @@ internal fun readKontainer(data: JsonElement?): KontainerSlice? {
 
 /**
  * A `slim` record's services with their definitions from [graph], joined on `cls`; with [includeAll], the graph's
- * services without instances too. The type stays the record's: only the record can say `DynamicOverride`, and such
+ * services without creations too. The type stays the record's: only the record can say `DynamicOverride`, and such
  * a service gets [overrideDefinition] rather than the blueprint's, whose injects never ran for it.
  */
 internal fun KontainerSlice.joinGraph(graph: KontainerGraphData, includeAll: Boolean): List<KontainerService> {
@@ -504,14 +501,18 @@ internal fun KontainerSlice.joinGraph(graph: KontainerGraphData, includeAll: Boo
     if (!includeAll) return joined
 
     val recorded = services.map { it.cls }.toSet()
-    val rest = graph.services.filter { it.cls !in recorded }.map { it.copy(instances = emptyList()) }
+    val rest = graph.services.filter { it.cls !in recorded }
+        .map { it.copy(count = 0.0, firstCreatedAtMillis = null, lastCreatedAtMillis = null) }
 
     return (joined + rest).sortedForTable()
 }
 
-/** What a `full` record wrote for a `DynamicOverride`: its own class, `Dynamic`, no injects, overwriting the blueprint. */
+/**
+ * What a `full` record wrote for a `DynamicOverride` (`Dynamic`, no injects, overwriting the blueprint), except that it
+ * creates the service's own class: since the counters, a record no longer names the class of the instance handed in.
+ */
 internal fun overrideDefinition(service: KontainerService, blueprint: KontainerDefinition?) = KontainerDefinition(
-    creates = service.instances.firstOrNull()?.cls ?: service.cls,
+    creates = service.cls,
     injectionType = "Dynamic",
     injects = emptyList(),
     codeLocation = null,

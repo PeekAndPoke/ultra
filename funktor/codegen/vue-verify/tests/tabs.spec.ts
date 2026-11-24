@@ -218,7 +218,7 @@ describe('vault', () => {
 })
 
 describe('kontainer', () => {
-    it('a SLIM record says which shape it is, lists only instantiated services and does not show the counts', async () => {
+    it('a SLIM record says which shape it is, lists only services with creations and does not show the kontainer counts', async () => {
         const slice = sliceOf(recorded.slim(), 'kontainer')
         const host = await render(KontainerTab, slice)
 
@@ -227,6 +227,16 @@ describe('kontainer', () => {
         expect(fact(host, 'Graph fingerprint')).toBe(slice.graphFingerprint)
         expect(host.querySelectorAll('.fk-services tbody tr')).toHaveLength(slice.services.length)
         expect(host.textContent).toContain('Injects and definitions are not part of this record')
+
+        // Each row's Created cell starts with the service's count, read from the record's own key
+        const counts = Object.fromEntries(
+            [...host.querySelectorAll('.fk-services tbody tr')].map((row) => [
+                row.children[0]?.textContent?.trim(),
+                row.children[2]?.querySelector(':scope > div')?.textContent?.trim(),
+            ]),
+        )
+        expect(counts).toEqual(Object.fromEntries(slice.services.map((service: { cls: string, count: number }) => [service.cls, `${service.count}`])))
+        expect(new Set(Object.values(counts)).size, 'the fixture has services created once and more often').toBeGreaterThan(1)
     })
 
     it('tells process-wide singletons from this request\'s own by TYPE, not by creation time', async () => {

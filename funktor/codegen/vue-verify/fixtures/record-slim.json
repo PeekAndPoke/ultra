@@ -5,24 +5,24 @@
   },
   "data": {
     "ref": {
-      "bucket": "records-2026-11-10",
-      "file": "2026-11-10T15:58:13.987933028.json"
+      "bucket": "records-2026-11-24",
+      "file": "2026-11-24T19:42:39.791795960.json"
     },
     "recordedAt": {
-      "ts": 1794322694134,
+      "ts": 1795545759892,
       "timezone": "UTC",
-      "human": "2026-11-10T14:58:14.134Z"
+      "human": "2026-11-24T18:42:39.892Z"
     },
     "method": "GET",
     "path": "/_/funktor/introspection/lifecycle-hooks",
     "status": 200,
-    "durationMs": 8.095702,
+    "durationMs": 5.591516,
     "collectors": [
       {
         "key": "user",
         "data": {
           "user": {
-            "userId": "funktor_all_test_users/74910971",
+            "userId": "funktor_all_test_users/83309309",
             "clientIp": "localhost",
             "email": "super-insightskontainerslicespec@test.com",
             "desc": "Super User",
@@ -79,7 +79,7 @@
           },
           "headers": {
             "Content-Length": [
-              "1172"
+              "1256"
             ],
             "Content-Type": [
               "application/json; charset=UTF-8"
@@ -105,8 +105,8 @@
               "gitDesc": "n/a",
               "date": null
             },
-            "versionName": "-1794322692355000",
-            "versionHash": "3019b219-4966aae0-60f140f9-59b56240"
+            "versionName": "-1795545758640000",
+            "versionHash": "ba5a391-583b7420-7d7cf371-c4e1fc0"
           },
           "config": {
             "ktor": {
@@ -158,6 +158,9 @@
                   "userNs": "user"
                 },
                 "baseUrls": {}
+              },
+              "insights": {
+                "enabled": true
               }
             },
             "keys": {}
@@ -167,1105 +170,1117 @@
       {
         "key": "kontainer",
         "data": {
-          "graphFingerprint": "3b1b01c0fd88a9450b703424f12b05d6bd4e4a0972125ad4f2710d79637b9cbf",
+          "graphFingerprint": "8b6e6c2ca4d2d73667b349a634a61fe6008b8ce618e238a88293e1fd556b7951",
           "services": [
             {
               "cls": "io.peekandpoke.funktor.FunktorAllTestConfig",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.FunktorAllTestConfig",
-                  "createdAt": {
-                    "ts": 1794322693668,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.668289388Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759460,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.460861944Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759460,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.460861944Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.model.AppInfo",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.model.AppInfo",
-                  "createdAt": {
-                    "ts": 1794322693979,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.979638696Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759786,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.786526556Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759786,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.786526556Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.vault.SharedRepoClassLookup",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.vault.SharedRepoClassLookup",
-                  "createdAt": {
-                    "ts": 1794322692359,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:12.359365056Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545758643,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:38.643578377Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545758643,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:38.643578377Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.vault.DeferredVaultHookScope",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.vault.DeferredVaultHookScope",
-                  "createdAt": {
-                    "ts": 1794322692359,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:12.359413519Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545758643,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:38.643611260Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545758643,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:38.643611260Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.auth.api.AuthApiFeature",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.auth.api.AuthApiFeature",
-                  "createdAt": {
-                    "ts": 1794322693931,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.931831429Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759699,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.699552578Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759699,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.699552578Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.broker.IncomingConverterLookup",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.broker.IncomingConverterLookup",
-                  "createdAt": {
-                    "ts": 1794322693983,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.983460305Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759789,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.789094416Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759789,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.789094416Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingMpDateTimeConverter",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingMpDateTimeConverter",
-                  "createdAt": {
-                    "ts": 1794322693983,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.983590283Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759789,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.789160692Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759789,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.789160692Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingPrimitiveConverter",
-                  "createdAt": {
-                    "ts": 1794322693983,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.983616113Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759789,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.789164619Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759789,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.789164619Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingJavaTimeConverter",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingJavaTimeConverter",
-                  "createdAt": {
-                    "ts": 1794322693983,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.983627374Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759789,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.789167935Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759789,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.789167935Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingValueClassConverter",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.broker.vault.IncomingValueClassConverter",
-                  "createdAt": {
-                    "ts": 1794322693983,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.983638255Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759789,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.789173656Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759789,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.789173656Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.broker.OutgoingConverter",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.broker.OutgoingConverter",
-                  "createdAt": {
-                    "ts": 1794322693735,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.735240749Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555727960Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555727960Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingVaultConverter",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingVaultConverter",
-                  "createdAt": {
-                    "ts": 1794322693735,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.735208578Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555711779Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555711779Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingPrimitiveConverter",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingPrimitiveConverter",
-                  "createdAt": {
-                    "ts": 1794322693735,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.735216002Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555715035Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555715035Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingMpDateTimeConverter",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingMpDateTimeConverter",
-                  "createdAt": {
-                    "ts": 1794322693735,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.735222324Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555717810Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555717810Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingJavaTimeConverter",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingJavaTimeConverter",
-                  "createdAt": {
-                    "ts": 1794322693735,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.735228856Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555720626Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555720626Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingValueClassConverter",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.broker.vault.OutgoingValueClassConverter",
-                  "createdAt": {
-                    "ts": 1794322693735,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.735234517Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555723632Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555723632Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.rest.ValidateRoutesOnAppStarting",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.rest.ValidateRoutesOnAppStarting",
-                  "createdAt": {
-                    "ts": 1794322693738,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.738256980Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759557,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.557788686Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759557,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.557788686Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.rest.ConverterCompatBootCheck",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.rest.ConverterCompatBootCheck",
-                  "createdAt": {
-                    "ts": 1794322693932,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.932651785Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759699,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.699999878Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759699,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.699999878Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.rest.AuthChainBootCheck",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.rest.AuthChainBootCheck",
-                  "createdAt": {
-                    "ts": 1794322693932,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.932659190Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759700,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.700002904Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759700,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.700002904Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.security.jwt.JwtGenerator",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.security.jwt.JwtGenerator",
-                  "createdAt": {
-                    "ts": 1794322693733,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.733714805Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759554,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.554603663Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759554,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.554603663Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.cluster.FunktorClusterApiFeature",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.cluster.FunktorClusterApiFeature",
-                  "createdAt": {
-                    "ts": 1794322693932,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.932199291Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759699,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.699744032Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759699,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.699744032Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.cluster.locks.GlobalServerId",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.cluster.locks.GlobalServerId",
-                  "createdAt": {
-                    "ts": 1794322693669,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.669145233Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759461,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.461416568Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759461,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.461416568Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.cluster.workers.services.WorkerTracker",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.cluster.workers.services.WorkerTracker",
-                  "createdAt": {
-                    "ts": 1794322693669,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.669173737Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759461,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.461424613Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759461,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.461424613Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.logging.api.LoggingApiFeature",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.logging.api.LoggingApiFeature",
-                  "createdAt": {
-                    "ts": 1794322693932,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.932323458Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759699,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.699808314Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759699,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.699808314Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.log.Slf4jAppender",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.log.Slf4jAppender",
-                  "createdAt": {
-                    "ts": 1794322692359,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:12.359399622Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545758643,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:38.643598425Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545758643,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:38.643598425Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.saas.api.OrgsApiFeature",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.saas.api.OrgsApiFeature",
-                  "createdAt": {
-                    "ts": 1794322693932,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.932427527Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759699,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.699867897Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759699,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.699867897Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationBootCheck",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationBootCheck",
-                  "createdAt": {
-                    "ts": 1794322693932,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.932666634Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759700,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.700005669Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759700,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.700005669Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationGuard",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.saas.isolation.OrgIsolationGuard",
-                  "createdAt": {
-                    "ts": 1794322693983,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.983854268Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759789,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.789292652Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759789,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.789292652Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.InsightsCodec",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.InsightsCodec",
-                  "createdAt": {
-                    "ts": 1794322693979,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.979634097Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759786,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.786521907Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759786,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.786521907Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.HeaderLogging",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.HeaderLogging",
-                  "createdAt": {
-                    "ts": 1794322693979,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.979604290Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759786,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.786501218Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759786,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.786501218Z"
+              }
+            },
+            {
+              "cls": "io.peekandpoke.funktor.insights.InsightsEnvironmentCheck",
+              "type": "Singleton",
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759557,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.557872285Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759557,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.557872285Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.InsightsGraphs",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.InsightsGraphs",
-                  "createdAt": {
-                    "ts": 1794322693979,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.979674685Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759786,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.786550551Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759786,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.786550551Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.api.InsightsApiFeature",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.api.InsightsApiFeature",
-                  "createdAt": {
-                    "ts": 1794322693734,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.734622108Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555270350Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759555,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.555270350Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.inspect.introspection.api.IntrospectionApiFeature",
-                  "createdAt": {
-                    "ts": 1794322693932,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.932615135Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759699,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.699977966Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759699,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.699977966Z"
+              }
             },
             {
               "cls": "com.arangodb.ArangoDatabaseAsync",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "com.arangodb.internal.ArangoDatabaseAsyncImpl",
-                  "createdAt": {
-                    "ts": 1794322692359,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:12.359418619Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545758643,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:38.643615017Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545758643,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:38.643615017Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.kontainer.KontainerBlueprint",
               "type": "Singleton",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.kontainer.KontainerBlueprint",
-                  "createdAt": {
-                    "ts": 1794322693979,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.979664315Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759786,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.786545231Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759786,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.786545231Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks",
               "type": "SemiDynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.lifecycle.AppLifeCycleHooks",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988644096Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792246386Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792246386Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.cluster.vault.EnsureRepositoriesOnAppStarting",
               "type": "SemiDynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.cluster.vault.EnsureRepositoriesOnAppStarting",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988596916Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792207061Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792207061Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo",
               "type": "SemiDynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.saas.storage.karango.KarangoOrgsRepo",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988618497Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792225576Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792225576Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.repair.RepairManOnAppStartingHook",
               "type": "SemiDynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.repair.RepairManOnAppStartingHook",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988518676Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792143721Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792143721Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.CollectorKeyUniquenessCheck",
               "type": "SemiDynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.CollectorKeyUniquenessCheck",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988631822Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792235926Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792235926Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo",
               "type": "SemiDynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988563021Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792180470Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792180470Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.rest.JwtSigningKeyOnAppStarting",
               "type": "SemiDynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.rest.JwtSigningKeyOnAppStarting",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988534326Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792155543Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792155543Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.saas.storage.OrgsStorage",
               "type": "SemiDynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.saas.storage.OrgsStorage$Vault",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988622855Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792228642Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792228642Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.logging.karango.KarangoLogAppender",
               "type": "SemiDynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.logging.karango.KarangoLogAppender",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988473800Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792110267Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792110267Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.saas.EnsureOrganisationOnAppStarting",
               "type": "SemiDynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.saas.EnsureOrganisationOnAppStarting",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988627023Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792231728Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792231728Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.lifecycle.VaultHookScopeBinder",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.lifecycle.VaultHookScopeBinder",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988505351Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792132509Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792132509Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.log.UltraLogManager",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.log.UltraLogManager",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988489320Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792119424Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792119424Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.security.user.UserProvider",
               "type": "DynamicOverride",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.security.user.UserProvider$Lazy",
-                  "createdAt": {
-                    "ts": 1794322693987,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.987769205Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759791,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.791740985Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759791,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.791740985Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.vault.Database",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.vault.Database",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988594361Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792204917Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792204917Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.vault.EntityCache",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.vault.DefaultEntityCache",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988855780Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792428642Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792428642Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.vault.hooks.TimestampedHook",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.vault.hooks.TimestampedHook",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988605372Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792213082Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792213082Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.vault.profiling.QueryProfiler",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.vault.profiling.NullQueryProfiler",
-                  "createdAt": {
-                    "ts": 1794322693996,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.996419656Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797585172Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797585172Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.core.repair.RepairMan",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.repair.RepairMan",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988514889Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792141005Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792141005Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.auth.AuthSystemAppHooks",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.auth.AuthSystemAppHooks",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988524046Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792146857Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792146857Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.rest.codec.RestCodec",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.rest.codec.SlumberRestCodec",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988873935Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792436898Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792436898Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.cluster.locks.GlobalLocksProvider",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.cluster.locks.VaultGlobalLocksProvider",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988581175Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792195579Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792195579Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStarting",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStarting",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988585103Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792199226Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792199226Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStopped",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.cluster.locks.lifecycle.GlobalLocksCleanupOnAppStopped",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988641300Z"
-                  }
-                }
-              ]
-            },
-            {
-              "cls": "io.peekandpoke.funktor.core.model.InsightsConfig",
-              "type": "DynamicOverride",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.core.model.InsightsConfig",
-                  "createdAt": {
-                    "ts": 1794322693987,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.987777561Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792244342Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792244342Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.Insights",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "impl.InsightsFull",
-                  "createdAt": {
-                    "ts": 1794322693987,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.987956222Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759791,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.791799787Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759791,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.791799787Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.InsightsRepository",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.InsightsFileRepository",
-                  "createdAt": {
-                    "ts": 1794322693987,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.987878624Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759791,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.791788005Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759791,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.791788005Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.collectors.UserCollector",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.collectors.UserCollector",
-                  "createdAt": {
-                    "ts": 1794322693996,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.996315006Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797529746Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797529746Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.collectors.RequestCollector",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.collectors.RequestCollector",
-                  "createdAt": {
-                    "ts": 1794322693996,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.996334574Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797537260Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797537260Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.collectors.ResponseCollector",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.collectors.ResponseCollector",
-                  "createdAt": {
-                    "ts": 1794322693996,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.996346236Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797541048Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797541048Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.collectors.RoutingCollector",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.collectors.RoutingCollector",
-                  "createdAt": {
-                    "ts": 1794322693996,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.996365713Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797550977Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797550977Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.collectors.AppConfigCollector",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.collectors.AppConfigCollector",
-                  "createdAt": {
-                    "ts": 1794322693996,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.996385301Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797561877Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797561877Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.collectors.KontainerCollector",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.collectors.KontainerCollector",
-                  "createdAt": {
-                    "ts": 1794322693996,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.996394538Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797568139Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797568139Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.collectors.RuntimeCollector",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.collectors.RuntimeCollector",
-                  "createdAt": {
-                    "ts": 1794322693996,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.996401812Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797576455Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797576455Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector",
-                  "createdAt": {
-                    "ts": 1794322693996,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.996410459Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797580172Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797580172Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector$Appender",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.collectors.LogCollector$Appender",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988485473Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792116178Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792116178Z"
+              }
             },
             {
               "cls": "io.peekandpoke.funktor.insights.collectors.VaultCollector",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.collectors.VaultCollector",
-                  "createdAt": {
-                    "ts": 1794322693996,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.996423814Z"
-                  }
-                }
-              ]
-            },
-            {
-              "cls": "io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector",
-              "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector",
-                  "createdAt": {
-                    "ts": 1794322693996,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.996431699Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797587546Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759797,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.797587546Z"
+              }
             },
             {
               "cls": "io.peekandpoke.karango.vault.KarangoDriver",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.karango.vault.KarangoDriver",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988549786Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792169109Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792169109Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.kontainer.Kontainer",
               "type": "Dynamic",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.kontainer.Kontainer",
-                  "createdAt": {
-                    "ts": 1794322693987,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.987848977Z"
-                  }
-                }
-              ]
+              "count": 1,
+              "firstCreatedAt": {
+                "ts": 1795545759791,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.791772696Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759791,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.791772696Z"
+              }
             },
             {
               "cls": "io.peekandpoke.ultra.log.Log",
               "type": "Prototype",
-              "instances": [
-                {
-                  "cls": "io.peekandpoke.ultra.log.LogImpl",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988493759Z"
-                  }
-                },
-                {
-                  "cls": "io.peekandpoke.ultra.log.LogImpl",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988511753Z"
-                  }
-                },
-                {
-                  "cls": "io.peekandpoke.ultra.log.LogImpl",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988528224Z"
-                  }
-                },
-                {
-                  "cls": "io.peekandpoke.ultra.log.LogImpl",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988543584Z"
-                  }
-                },
-                {
-                  "cls": "io.peekandpoke.ultra.log.LogImpl",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988565896Z"
-                  }
-                },
-                {
-                  "cls": "io.peekandpoke.ultra.log.LogImpl",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988582368Z"
-                  }
-                },
-                {
-                  "cls": "io.peekandpoke.ultra.log.LogImpl",
-                  "createdAt": {
-                    "ts": 1794322693988,
-                    "timezone": "UTC",
-                    "human": "2026-11-10T14:58:13.988637102Z"
-                  }
-                }
-              ]
+              "count": 7,
+              "firstCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792123903Z"
+              },
+              "lastCreatedAt": {
+                "ts": 1795545759792,
+                "timezone": "UTC",
+                "human": "2026-11-24T18:42:39.792241426Z"
+              }
             }
           ]
         }
@@ -1275,11 +1290,11 @@
         "data": {
           "jvmVersion": "17.0.17",
           "maxMem": 536870912,
-          "reservedMem": 458227712,
-          "freeMem": 263367128,
+          "reservedMem": 450887680,
+          "freeMem": 251891360,
           "cpus": 16,
           "kotlinVersion": "2.4.21",
-          "openFileDescriptors": 310,
+          "openFileDescriptors": 296,
           "maxFileDescriptors": 1048576,
           "systemProperties": {
             "os.name": "Linux",
@@ -1309,14 +1324,14 @@
   },
   "messages": null,
   "insights": {
-    "ts": 1794322694,
+    "ts": 1795545759,
     "method": "GET",
-    "url": "http://insights.funktor.local:80/_/funktor/insights/records/records%2D2026%2D11%2D10/2026%2D11%2D10T15%3A58%3A13%2E987933028%2Ejson",
+    "url": "http://insights.funktor.local:80/_/funktor/insights/records/records%2D2026%2D11%2D24/2026%2D11%2D24T19%3A42%3A39%2E791795960%2Ejson",
     "server": "build-host",
     "status": {
       "value": 200,
       "description": "OK"
     },
-    "durationMs": 3.28292
+    "durationMs": 2.871397
   }
 }

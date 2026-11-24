@@ -487,30 +487,12 @@ export interface KontainerDefinition {
     overwrites: KontainerDefinition | null
 }
 
-export interface KontainerInstance {
-    cls: string | null
-    /** Epoch MILLIS, normalised from either shape by {@link readInstantMillis}. */
-    createdAtMillis: number | null
-}
-
 /**
- * An instant, as epoch MILLIS, from either shape a record can carry.
- *
- * `DebugInfo.InstanceDebugInfo.createdAt` is a `java.time.Instant`, which Slumber writes as an OBJECT
- * (`{ts, timezone, human}`, `ts` in millis) -- not a number. The Jackson-era writer emitted epoch
- * SECONDS as a double instead, so both shapes exist in a depot.
- *
- * Reading only the number was the one place in this file that could silently MISREAD rather than
- * degrade: a millis value multiplied by 1000 lands in the year 58,000. Found by the review gate,
- * 2026-08-24.
+ * An instant, as epoch MILLIS: Slumber writes a `java.time.Instant` as an OBJECT (`{ts, timezone, human}`,
+ * `ts` in millis). Anything else reads as null, so a bare number is never guessed into a unit.
  */
 export function readInstantMillis(value: unknown): number | null {
-    const wrapped = asNumber(asRecord(value)?.ts)
-    if (wrapped !== null) return wrapped
-
-    // Legacy: epoch seconds as a double.
-    const seconds = asNumber(value)
-    return seconds === null ? null : seconds * 1000
+    return asNumber(asRecord(value)?.ts)
 }
 
 export interface KontainerService {
@@ -518,14 +500,23 @@ export interface KontainerService {
     type: string | null
     /** Null on a `slim` record, whose definitions live in the kontainer graph -- see {@link joinKontainerGraph}. */
     definition: KontainerDefinition | null
-    instances: KontainerInstance[]
+    /** How many instances the provider created; 0 in the graph and for a record written before the counters. */
+    count: number
+    /** Epoch MILLIS of the first and the last creation; null without creations. */
+    firstCreatedAtMillis: number | null
+    lastCreatedAtMillis: number | null
+}
+
+/** True when the provider created at least one instance. */
+export function hasCreations(service: KontainerService): boolean {
+    return service.count > 0
 }
 
 /**
  * Which of the two slice shapes a record carries.
  *
  * - `full` -- written before 2026-10-19: EVERY service, definitions inline (`info.services`).
- * - `slim` -- written since: only services with instances (`services`), joined to the kontainer graph
+ * - `slim` -- written since: only services with creations (`services`), joined to the kontainer graph
  *   endpoint by `cls`. The definitions were 70-85% of every record and are the same on every request.
  */
 export type KontainerShape = 'full' | 'slim'
@@ -579,21 +570,21 @@ function readService(raw: unknown): KontainerService {
         cls: readFqn(service.cls),
         type: asString(service.type),
         definition: readDefinition(service.definition),
-        instances: (asArray(service.instances) ?? []).map((rawInstance) => {
-            const instance = asRecord(rawInstance) ?? {}
-            return { cls: readFqn(instance.cls), createdAtMillis: readInstantMillis(instance.createdAt) }
-        }),
+        // The counters only: an older record's instance list is not read, so its service shows no creations
+        count: asNumber(service.count) ?? 0,
+        firstCreatedAtMillis: readInstantMillis(service.firstCreatedAt),
+        lastCreatedAtMillis: readInstantMillis(service.lastCreatedAt),
     }
 }
 
 /**
- * The old table's order: services WITH instances first, then by FQN. Instantiated services are the
+ * The old table's order: services WITH creations first, then by FQN. Instantiated services are the
  * ones the tab is usually open to see.
  */
 function sortServices(services: KontainerService[]): KontainerService[] {
     return [...services].sort((a, b) => {
-        const byInstances = Number(b.instances.length > 0) - Number(a.instances.length > 0)
-        return byInstances !== 0 ? byInstances : (a.cls ?? '').localeCompare(b.cls ?? '')
+        const byCreations = Number(hasCreations(b)) - Number(hasCreations(a))
+        return byCreations !== 0 ? byCreations : (a.cls ?? '').localeCompare(b.cls ?? '')
     })
 }
 
@@ -623,7 +614,7 @@ export function readKontainer(data: unknown): KontainerSlice | null {
  * True for a service whose instance is PROCESS state, shared by every request: a `Singleton`, created at
  * boot or by whichever request first needed it. Every other type belongs to this request's kontainer.
  *
- * The type tells, not the creation time: `createdAt` only says whether THIS request created the instance.
+ * The type tells, not the creation time: it only says whether THIS request created the instance.
  */
 export function isProcessWide(service: KontainerService): boolean {
     return service.type === 'Singleton'
@@ -647,7 +638,7 @@ export function readKontainerGraph(data: unknown): KontainerGraphData | null {
  * A `slim` record's services with their definitions filled in from [graph], joined on `cls`.
  *
  * The TYPE stays the record's: it is what the provider was in THIS request's kontainer, and only the
- * record can say `DynamicOverride`. With `includeAll`, the graph's services without instances are added.
+ * record can say `DynamicOverride`. With `includeAll`, the graph's services without creations are added.
  *
  * A `DynamicOverride` does NOT get the graph's definition: its instance was handed in when the kontainer
  * was created, so the blueprint's injects never ran for it. It gets what a `full` record wrote for it --
@@ -674,21 +665,24 @@ export function joinKontainerGraph(
     if (!includeAll) return joined
 
     const recorded = new Set(slice.services.map((service) => service.cls))
-    const rest = graph.services.filter((service) => !recorded.has(service.cls)).map((service) => ({ ...service, instances: [] }))
+    const rest = graph.services
+        .filter((service) => !recorded.has(service.cls))
+        .map((service) => ({ ...service, count: 0, firstCreatedAtMillis: null, lastCreatedAtMillis: null }))
 
     return sortServices([...joined, ...rest])
 }
 
 /**
- * The definition a `full` record carried for a `DynamicOverride`: it creates the instance's own class,
- * `Dynamic`, injects nothing, and overwrites the blueprint's definition.
+ * The definition a `full` record carried for a `DynamicOverride` (`Dynamic`, injects nothing, overwrites the
+ * blueprint's definition), except that it creates the service's own class: since the counters, a record no
+ * longer names the class of the instance handed in.
  *
  * No code location: the override has none of its own (a `full` record named `ServiceProviderFactory`'s
  * constructor). Without injects it draws no edge -- the blueprint's injects did not run for this instance.
  */
 export function overrideDefinition(service: KontainerService, blueprint: KontainerDefinition | null): KontainerDefinition {
     return {
-        creates: service.instances[0]?.cls ?? service.cls,
+        creates: service.cls,
         injectionType: 'Dynamic',
         injects: [],
         codeLocation: null,
