@@ -1,6 +1,6 @@
 # ULTRA-00352: Kontainer: getAll, List and Lookup throw ServiceAmbiguous when one candidate extends another
 
-> **Status (2026-11-24): IN PROGRESS.** Track F: tests first, fix, mutation-checked; waiting for the gate
+> **Status (2026-11-25): DONE.** Merged into master (692e743a); gate PASS in round 1.
 
 ## Why this exists
 
@@ -105,3 +105,5 @@ runtime agree better.
 - 2026-11-24: created on the maintainer's word.
 - 2026-11-24: IN PROGRESS. Track F: tests first, fix, mutation-checked; waiting for the gate
 - 2026-11-25: gate round 1 PASS (0 CRITICAL, 0 MAJOR); MINOR batch applied: the reverse aliasing direction pinned and named.
+- 2026-11-25: merged into master (692e743a); gate PASS in round 1, MINOR batch checked by hand.
+- 2026-11-25: DONE.

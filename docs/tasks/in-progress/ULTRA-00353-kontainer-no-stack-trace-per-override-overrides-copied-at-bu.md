@@ -149,3 +149,4 @@ is unpublished and `ultra/kontainer` has no JMH plugin.
 - 2026-11-24: created on the maintainer's word.
 - 2026-11-24: IN PROGRESS. Track F: a, b and c done, tests first and mutation-checked, measured; waiting for the gate
 - 2026-11-25: gate round 1 PASS (0 CRITICAL, 0 MAJOR); MINOR batch applied: CodeLocation back to `by lazy`, println removed, InsightsGraphsApiSpec asserts `overwrites`; the `$$Lambda` suffix is with the maintainer. Kontainer 626 / 0 / 0, funktor/all 289 / 0 / 0 (XML).
+- 2026-11-25: merged into master (692e743a); gate PASS in round 1. Open: strip the `$$Lambda...` suffix from the override location (maintainer).
