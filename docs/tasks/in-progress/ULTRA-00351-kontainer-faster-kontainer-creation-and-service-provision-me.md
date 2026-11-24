@@ -141,6 +141,22 @@ getAllProviders ignoring it, 5 RED.
 | createT8 | 4,558.4 +- 121.8 | 65.9 +- 0.5 | -99% | 12,704 | 232 |
 | requestT8 | 11,128.4 +- 827.1 | 6,335.6 +- 54.1 | -43% | 19,984 | 7,680 |
 
+**Finding 4** (`providers[cls]` first, `computeIfAbsent` with one stored function). Tests: 616 green. "before" for
+the gets is the baseline (finding 1 does not touch them); `request` after finding 1 was 5,316 ns and 7,852 B.
+
+| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+|---|---:|---:|---:|---:|---:|
+| request | 8,432.6 +- 118.5 | 5,178.7 +- 45.9 | -39% | 20,264 | 6,456 |
+| getStaticHot | 28.8 +- 1.2 | 25.5 +- 0.7 | -11% | 40 | 0 |
+| getDynamicHot | 28.2 +- 0.2 | 23.8 +- 0.2 | -16% | 40 | 0 |
+| getOrNullInterface | 44.9 +- 0.4 | 42.2 +- 1.2 | -6% | 40 | 0 |
+| getAll5 | 164.3 +- 6.8 | 137.0 +- 1.7 | -17% | 264 | 64 |
+| prototypeNoArg | 81.6 +- 0.7 | 75.4 +- 0.6 | -8% | 144 | 104 |
+| prototype3Args | 227.4 +- 1.7 | 208.1 +- 1.4 | -8% | 384 | 224 |
+| prototypeFactory | 165.2 +- 1.4 | 150.4 +- 1.3 | -9% | 264 | 144 |
+| lazyLookupGet | 40.4 +- 0.2 | 33.2 +- 0.3 | -18% | 40 | 0 |
+| getStaticHotT8 | 31.8 +- 0.4 | 26.6 +- 0.4 | -16% | 40 | 0 |
+
 ## Coverage map (before any change)
 
 New spec `ProvisionPathsCharacterizationSpec` (17 tests), green on today's code. Every mutant below was applied to

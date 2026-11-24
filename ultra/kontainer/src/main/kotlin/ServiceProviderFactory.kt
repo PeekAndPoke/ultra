@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.kontainer
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Function as JavaFunction
 import kotlin.reflect.KClass
 
 /**
@@ -51,7 +52,10 @@ class ServiceProviderFactory internal constructor(
     /**
      * Get the [ServiceProvider] for the given [cls], creating it on first use.
      */
-    fun getProvider(cls: KClass<*>): ServiceProvider = providers.computeIfAbsent(cls) {
+    fun getProvider(cls: KClass<*>): ServiceProvider = providers[cls] ?: providers.computeIfAbsent(cls, createProvider)
+
+    /** Creates the provider for a class on its first use; one instance, so a get allocates no lambda */
+    private val createProvider = JavaFunction<KClass<*>, ServiceProvider> { cls ->
         (overrideProviders[cls] ?: providerProviders.getValue(cls)).provide()
     }
 
