@@ -157,6 +157,9 @@ interface ServiceProvider {
 
     /**
      * Provides a singleton: a global one for [ServiceKind.Static], otherwise one per kontainer
+     *
+     * The instance is created under this provider's lock. A constructor that forces a `Lazy` injection back into a
+     * singleton still being created can deadlock across two threads, or on one thread re-enter the lock and recurse.
      */
     data class ForSingleton(
         override val kind: ServiceKind,
@@ -216,15 +219,11 @@ interface ServiceProvider {
         private fun create(kontainer: Kontainer, context: InjectionContext): Any {
 
             val nextCtx = context.next(definition.serviceCls)
+            val params = definition.producer.params
 
             return definition.producer.creator(
                 kontainer,
-                definition.producer.params.map {
-                    it.provide(
-                        kontainer = kontainer,
-                        context = nextCtx
-                    )
-                }.toTypedArray()
+                Array(params.size) { idx -> params[idx].provide(kontainer = kontainer, context = nextCtx) },
             )
         }
     }
@@ -296,15 +295,11 @@ interface ServiceProvider {
         private fun create(kontainer: Kontainer, context: InjectionContext): Any {
 
             val nextContext = context.next(definition.serviceCls)
+            val params = definition.producer.params
 
             return definition.producer.creator(
                 kontainer,
-                definition.producer.params.map {
-                    it.provide(
-                        kontainer = kontainer,
-                        context = nextContext,
-                    )
-                }.toTypedArray()
+                Array(params.size) { idx -> params[idx].provide(kontainer = kontainer, context = nextContext) },
             )
         }
     }
