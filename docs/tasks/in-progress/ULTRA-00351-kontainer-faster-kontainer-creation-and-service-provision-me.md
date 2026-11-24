@@ -1,8 +1,9 @@
 # ULTRA-00351: Kontainer: faster kontainer creation and service provision, measured, no behaviour change
 
-> **Status (2026-11-24): IN PROGRESS.** Track E (wt/kontainer). Benchmark harness and baseline done, coverage mapped
-> and missing tests added (mutation-checked). Finding 3 suspicion confirmed (getAll throws). Waiting for the go
-> before any production change.
+> **Status (2026-11-24): IN PROGRESS.** Track E (wt/kontainer). Findings 1, 4, 7, 3 (getOrNull only), 6, 5, 10
+> applied and measured; 9 measured as a regression and not applied; suites and compile sweep green. Waiting for the
+> `/feature-review` gate. Open for the maintainer: finding 2, the getAll / List / Lookup throw of finding 3, the
+> `DynamicOverrides.Builder` copy.
 
 ## Why this exists
 
@@ -125,7 +126,59 @@ a `jmh` dependency of `ultra/kontainer` on `funktor-demo:server` would invert th
 Reading: `create` is 12.7 KB, nearly all of it the copied provider map (finding 1). Each override adds about
 1.2 KB and 0.8 to 1.2 us; the stack capture of finding 2 is part of that (not touched, waits for the maintainer).
 
-### Per finding (subset runs, same settings; "before" is the baseline above)
+### Final full run (wt/kontainer after 96a4f863, 2026-11-24, same settings, load average 3 to 4)
+
+Applied: findings 1, 4, 7, 3 (getOrNull only), 6, 5, 10 (presize only). Not applied: 2, the getAll / List / Lookup
+part of 3 and the `DynamicOverrides.Builder` copy (maintainer questions), 8 (not asked for), 9 (measured as a
+regression). No benchmark regresses.
+
+| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+|---|---:|---:|---:|---:|---:|
+| create | 3,357.8 +- 25.7 | 15.3 +- 0.1 | -100% | 12,704 | 264 |
+| createOneOverride | 4,572.3 +- 133.6 | 950.5 +- 8.4 | -79% | 13,936 | 1,664 |
+| createTwoOverrides | 5,395.4 +- 49.4 | 1,953.2 +- 18.3 | -64% | 15,032 | 2,752 |
+| cloneOneOverride | 4,796.0 +- 290.8 | 1,028.2 +- 14.9 | -79% | 14,136 | 1,864 |
+| request | 8,432.6 +- 118.5 | 3,592.6 +- 32.4 | -57% | 20,264 | 5,520 |
+| getStaticHot | 28.8 +- 1.2 | 13.6 +- 0.1 | -53% | 40 | 0 |
+| getDynamicHot | 28.2 +- 0.2 | 13.8 +- 0.6 | -51% | 40 | 0 |
+| getOrNullInterface | 44.9 +- 0.4 | 14.9 +- 0.3 | -67% | 40 | 0 |
+| getAll5 | 164.3 +- 6.8 | 94.7 +- 1.3 | -42% | 264 | 64 |
+| prototypeNoArg | 81.6 +- 0.7 | 61.3 +- 1.2 | -25% | 144 | 104 |
+| prototype3Args | 227.4 +- 1.7 | 109.5 +- 4.0 | -52% | 384 | 176 |
+| prototypeFactory | 165.2 +- 1.4 | 82.1 +- 3.4 | -50% | 264 | 104 |
+| lazyLookupGet | 40.4 +- 0.2 | 26.8 +- 0.2 | -34% | 40 | 0 |
+| createT8 | 4,558.4 +- 121.8 | 74.4 +- 0.5 | -98% | 12,704 | 264 |
+| requestT8 | 11,128.4 +- 827.1 | 4,330.3 +- 58.1 | -61% | 19,984 | 5,328 |
+| getStaticHotT8 | 31.8 +- 0.4 | 16.2 +- 0.2 | -49% | 40 | 0 |
+
+### Suites and compile sweep (after 96a4f863, counts from the XML, all written by this run)
+
+| Suite | Tests | Failures | Errors |
+|---|---:|---:|---:|
+| `:ultra:kontainer:test` | 616 | 0 | 0 |
+| `:ultra:log:jvmTest` | 74 | 0 | 0 |
+| `:ultra:vault:jvmTest` | 287 | 0 | 0 |
+| `:funktor:insights:jvmTest` | 119 | 0 | 0 |
+| `:funktor:cluster:jvmTest` | 162 | 0 | 0 |
+| `:funktor:all:jvmTest` | 289 | 0 | 0 |
+| `:funktor:core:jvmTest` | 775 (2 skipped) | 0 | 0 |
+| `:funktor:rest:jvmTest` | 124 | 0 | 0 |
+| `:funktor:auth:jvmTest` | 322 | 0 | 0 |
+| `:funktor:messaging:jvmTest` | 67 | 0 | 0 |
+| `:funktor:logging:jvmTest` | 14 | 0 | 0 |
+| `:funktor:codegen:test` | 104 | 0 | 0 |
+| `:funktor:saas:jvmTest` | 50 | 0 | 0 |
+| `:funktor-demo:server:test` | 52 | 0 | 0 |
+
+Compile sweep (`compileKotlinJvm compileTestKotlinJvm compileKotlinJs compileTestKotlinJs compileKotlin
+compileTestKotlin compileJmhKotlin --continue`): BUILD SUCCESSFUL, 0 lines `e:`. No public signature changed, so no
+stale-test-class risk from an ABI change.
+
+Trap seen on the way: `generateDocs` runs before the kontainer tests and writes into the tracked
+`ultra/kontainer/common/docs/`; when a mutant broke an example it deleted `ultra::docs/index.md`. The next green run
+wrote it back unchanged. Mutation runs since then use `-x generateDocs`.
+
+### Per finding (subset runs, same settings; each says what its "before" is, the baseline unless stated)
 
 **Finding 1** (blueprint map shared, overrides in their own map looked up first; getAllProviders keeps the order).
 Tests: the 616 of the kontainer suite green. Mutants of the new code: getProvider ignoring the override map, 40 RED;
@@ -292,3 +345,6 @@ change the result.
 - 2026-11-24: IN PROGRESS. baseline measured, coverage mapped; waiting for the go
 - 2026-11-24: Track E: JMH harness and baseline, coverage map, 17 characterization tests mutation-checked on
   today's code; finding 3's getAll throw confirmed and pinned. Stopped for the go.
+- 2026-11-24: Track E, after the go: findings 1, 4, 7, 3 (getOrNull), 6, 5, 10 committed one by one with their
+  deltas; 9 implemented, measured as a regression, reverted; a finding 4 variant measured and dropped. Final full
+  run, 14 suites and the compile sweep green. Stopped for the gate.
