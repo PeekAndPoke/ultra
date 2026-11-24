@@ -156,7 +156,7 @@ interface ServiceProvider {
     }
 
     /**
-     * Provides a global singleton service
+     * Provides a singleton: a global one for [ServiceKind.Static], otherwise one per kontainer
      */
     data class ForSingleton(
         override val kind: ServiceKind,
@@ -187,7 +187,7 @@ interface ServiceProvider {
          */
         override fun provide(kontainer: Kontainer, context: InjectionContext): Any {
             return instance ?: synchronized(this) {
-                instance ?: create(kontainer, context).apply {
+                instance ?: create(creatingKontainer(kontainer), context).apply {
                     createdAt = Instant.now()
                     instance = this
                 }
@@ -199,6 +199,15 @@ interface ServiceProvider {
          */
         override fun validate(kontainer: Kontainer) = definition.producer.params.flatMap {
             it.validate(kontainer)
+        }
+
+        /**
+         * The kontainer the instance is created in: the blueprint-wide one for a global singleton, so its parameters
+         * do not bind to the kontainer that asked first; the asking one otherwise.
+         */
+        private fun creatingKontainer(kontainer: Kontainer): Kontainer = when (kind) {
+            ServiceKind.Static -> kontainer.blueprint.globalKontainer
+            ServiceKind.SemiDynamic, ServiceKind.Dynamic -> kontainer
         }
 
         /**

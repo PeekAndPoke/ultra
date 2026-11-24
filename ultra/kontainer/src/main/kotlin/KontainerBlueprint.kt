@@ -122,6 +122,20 @@ class KontainerBlueprint internal constructor(
     }
 
     /**
+     * The blueprint-wide kontainer, without overrides and untracked, created on first use.
+     *
+     * Every global singleton is created in it, with all its parameters, so nothing it holds is bound to the kontainer
+     * of whichever request needed it first. A global singleton reaches only static services, so this kontainer
+     * resolves the same services for it as any other would. Internal: its creations show in no request's dump.
+     */
+    internal val globalKontainerLazy: Lazy<Kontainer> = lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        instantiate(dynamics = DynamicOverrides(emptyMap()), track = false)
+    }
+
+    /** See [globalKontainerLazy] */
+    internal val globalKontainer: Kontainer get() = globalKontainerLazy.value
+
+    /**
      * The declared dynamic services each semi dynamic service reaches, in definition order.
      */
     private val semiDynamicSources: Map<KClass<*>, List<KClass<*>>> by lazy {
@@ -261,9 +275,9 @@ class KontainerBlueprint internal constructor(
     }
 
     /**
-     * Creates a new kontainer
+     * Creates a new kontainer; [track] hands it to the [tracker]
      */
-    internal fun instantiate(dynamics: DynamicOverrides): Kontainer {
+    internal fun instantiate(dynamics: DynamicOverrides, track: Boolean = true): Kontainer {
 
         val factory = ServiceProviderFactory(
             blueprint = this,
@@ -272,8 +286,7 @@ class KontainerBlueprint internal constructor(
         )
 
         return Kontainer(factory).apply {
-            // Track the Kontainer
-            tracker.track(this)
+            if (track) tracker.track(this)
         }
     }
 

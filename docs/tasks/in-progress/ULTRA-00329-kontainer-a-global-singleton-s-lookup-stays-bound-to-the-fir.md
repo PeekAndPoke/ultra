@@ -1,6 +1,6 @@
 # ULTRA-00329: Kontainer: a global singleton's Lookup stays bound to the first kontainer and keeps every prototype it creates
 
-> **Status (2026-11-24): DESIGNED.** Plan written by track D, every question answered by the maintainer (see Plan answers); the build starts on the maintainer's word.
+> **Status (2026-11-24): IN PROGRESS.** track D builds K3a and K3b; gate 1 next
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -100,6 +100,21 @@ Track D's plan (2026-11-23) asked five questions; answered one at a time.
   While the Fable credits are used up (week of 2026-11-24), each Fable rung runs on Opus one level higher: rung 2 as
   Opus high, rung 3 as Opus xhigh (maintainer, 2026-11-24).
 
+## Progress (track D, `wt/kontainer`)
+
+| Batch | What | State |
+|---|---|---|
+| K3a | counters (`ServiceProvider.created`), lock-free `ForPrototype`, `ForSingleton` time beside the instance, `ForOverride` constants, `ServiceProviderFactory` on `ConcurrentHashMap`; `ultra/log` compile edit | committed, mutants 10/10 RED |
+| K3c, JVM half | `KontainerCollector.Data` v3 `{cls, type, count, firstCreatedAt, lastCreatedAt}`, Slumber spec, `funktor/all` slice spec | committed ahead of K3b (K3a removed the API the collector read, and the change 2 suites need `funktor/insights` to compile); mutants 6/6 RED |
+| K3b | blueprint-wide kontainer (`KontainerBlueprint.globalKontainer`, lazy, untracked); `ForSingleton` with kind Static creates in it | mutants 7/7 RED |
+| gate 1 | strict, kontainer and the JVM wire | next |
+| K3d | GUIs (`funktor/inspect`, `funktor/codegen` TS and Vue, fixtures), `TAB-SPECS.md` | after gate 1 |
+| gate 2 | strict, GUIs | after K3d |
+
+Deviation from the batches of the plan: the JVM half of K3c moved before K3b, for the reason in the table.
+The plan's `ForPrototype` counter is one `AtomicReference` snapshot updated by CAS with first = min and last = max:
+lock-free as Q5 asks, and the snapshot never has `lastAt < firstAt`.
+
 ## History
 
 - 2026-11-14: created on the maintainer's word.
@@ -107,3 +122,4 @@ Track D's plan (2026-11-23) asked five questions; answered one at a time.
   including the change of the insights wire shape (lists of instances become a count and two times); track D writes
   a plan without code first.
 - 2026-11-24: the plan's five questions, the lock check and the area edits answered (Plan answers).
+- 2026-11-24: IN PROGRESS. track D builds K3a and K3b; gate 1 next
