@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Kontainer creation and service provision on [funktorShapedBlueprint] (ULTRA-00351).
  *
- * Run: `console/wt-gradle.sh :ultra:kontainer:jmh`; iterations and profiler are set in the build file.
+ * Run: `console/wt-gradle.sh :ultra:kontainer-benchmarks:jmh`; iterations and profiler are set in the build file.
  */
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)

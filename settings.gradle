@@ -20,6 +20,7 @@ include(
         ":ultra:html",
         ":ultra:i18n",
         ":ultra:kontainer",
+        ":ultra:kontainer-benchmarks",
         ":ultra:log",
         ":ultra:meta",
         ":ultra:security",

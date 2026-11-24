@@ -32,6 +32,7 @@ class PathsOther : PathsBase
 class PathsListHolder(val all: List<PathsBase>)
 class PathsLazyListHolder(val all: Lazy<List<PathsBase>>)
 class PathsLookupHolder(val all: Lookup<PathsBase>)
+class PathsNumbersHolder(val all: List<Number>)
 
 class PathsTwoNoArg() {
     @Suppress("unused", "UNUSED_PARAMETER")
@@ -62,8 +63,8 @@ value class PathsId(val value: String)
 class PathsUsesId(val id: PathsId, val static: PathsStatic)
 
 /**
- * Pins the provision paths ULTRA-00351 makes faster: the provider map of a kontainer, resolution and re-resolution,
- * and how a class producer builds its instances, its failures included.
+ * Pins the provision paths ULTRA-00351 makes faster: the provider map of a kontainer, resolution, getAll, List and
+ * Lookup (each candidate's own service since ULTRA-00352), and how a class producer builds its instances.
  */
 class ProvisionPathsCharacterizationSpec : StringSpec({
 
@@ -246,11 +247,34 @@ class ProvisionPathsCharacterizationSpec : StringSpec({
         kontainer.getProvider(PathsBase::class) shouldBeSameInstanceAs kontainer.getProvider(PathsMiddle::class)
     }
 
-    // Re-resolution of the candidates of getAll and Lookup (ULTRA-00351 finding 3) //////////////////////////////////
+    // getAll, List and Lookup hand out each candidate's own service (ULTRA-00352) ////////////////////////////////////
 
-    "getAll of a base type whose candidates include a super type of another candidate throws ServiceAmbiguous" {
+    "getAll returns each candidate's own service in candidate order, also when one candidate extends another" {
 
-        // Today each candidate is resolved once more, and PathsMiddle has two candidates: itself and PathsLeaf
+        // PathsMiddle is a super type of PathsLeaf: resolving it once more would be ambiguous
+        val kontainer = kontainer {
+            singleton(PathsLeaf::class)
+            singleton(PathsMiddle::class)
+        }.create()
+
+        val leaf = kontainer.get(PathsLeaf::class)
+        val all = kontainer.getAll(PathsBase::class)
+
+        assertSoftly {
+            kontainer.getCandidates(PathsBase::class).toList() shouldBe listOf(PathsLeaf::class, PathsMiddle::class)
+            all.map { it::class } shouldBe listOf(PathsLeaf::class, PathsMiddle::class)
+            all[0] shouldBeSameInstanceAs leaf
+
+            // Singletons: every form hands out the same instances
+            kontainer.getAll(PathsBase::class).zip(all).forEach { (a, b) -> a shouldBeSameInstanceAs b }
+            kontainer.getAll(PathsMiddle::class).map { it::class } shouldBe listOf(PathsLeaf::class, PathsMiddle::class)
+            kontainer.getAll(PathsMiddle::class)[1] shouldBeSameInstanceAs all[1]
+            kontainer.getAll(PathsLeaf::class) shouldBe listOf(leaf)
+        }
+    }
+
+    "get of such a super type still throws ServiceAmbiguous naming both candidates" {
+
         val kontainer = kontainer {
             singleton(PathsMiddle::class)
             singleton(PathsLeaf::class)
@@ -260,15 +284,13 @@ class ProvisionPathsCharacterizationSpec : StringSpec({
                 "${PathsMiddle::class.getName()}, ${PathsLeaf::class.getName()}"
 
         assertSoftly {
-            shouldThrow<ServiceAmbiguous> { kontainer.getAll(PathsBase::class) }.message shouldBe message
-
-            shouldThrow<ServiceAmbiguous> { kontainer.getAll(PathsMiddle::class) }.message shouldBe message
-
-            kontainer.getAll(PathsLeaf::class) shouldBe listOf(kontainer.get(PathsLeaf::class))
+            shouldThrow<ServiceAmbiguous> { kontainer.get(PathsMiddle::class) }.message shouldBe message
+            shouldThrow<ServiceAmbiguous> { kontainer.getProvider(PathsMiddle::class) }.message shouldBe message
+            kontainer.getOrNull(PathsMiddle::class) shouldBe null
         }
     }
 
-    "List, Lazy List and Lookup injections of such a base type fail the same way, the Lookup only for the super type" {
+    "List, Lazy List and Lookup injections of such a base type hand out each candidate's own service" {
 
         val kontainer = kontainer {
             singleton(PathsMiddle::class)
@@ -278,18 +300,94 @@ class ProvisionPathsCharacterizationSpec : StringSpec({
             singleton(PathsLookupHolder::class)
         }.create()
 
-        val message = "Service ${PathsMiddle::class.getName()} is ambiguous. It has multiple candidates: " +
-                "${PathsMiddle::class.getName()}, ${PathsLeaf::class.getName()}"
+        val all = kontainer.getAll(PathsBase::class)
 
         assertSoftly {
-            shouldThrow<ServiceAmbiguous> { kontainer.get(PathsListHolder::class) }.message shouldBe message
+            all.map { it::class } shouldBe listOf(PathsMiddle::class, PathsLeaf::class)
 
-            val lazyList = kontainer.get(PathsLazyListHolder::class).all
-            shouldThrow<ServiceAmbiguous> { lazyList.value }.message shouldBe message
+            val list = kontainer.get(PathsListHolder::class).all
+            list.size shouldBe 2
+            list.zip(all).forEach { (a, b) -> a shouldBeSameInstanceAs b }
+
+            val lazyList = kontainer.get(PathsLazyListHolder::class).all.value
+            lazyList.size shouldBe 2
+            lazyList.zip(all).forEach { (a, b) -> a shouldBeSameInstanceAs b }
 
             val lookup = kontainer.get(PathsLookupHolder::class).all
-            shouldThrow<ServiceAmbiguous> { lookup.get(PathsMiddle::class) }.message shouldBe message
-            lookup.get(PathsLeaf::class) shouldBeSameInstanceAs kontainer.get(PathsLeaf::class)
+            lookup.get(PathsMiddle::class) shouldBeSameInstanceAs all[0]
+            lookup.get(PathsLeaf::class) shouldBeSameInstanceAs all[1]
+        }
+    }
+
+    "getAll and the List injection hand out each candidate as get would: the override, a new prototype each time" {
+
+        val kontainer = kontainer {
+            dynamic(PathsMiddle::class)
+            prototype(PathsOther::class)
+            singleton(PathsListHolder::class)
+        }.create {
+            with(PathsMiddle::class) { PathsMiddle() }
+        }
+
+        val overridden = kontainer.get(PathsMiddle::class)
+        val first = kontainer.getAll(PathsBase::class)
+        val second = kontainer.getAll(PathsBase::class)
+        val list = kontainer.get(PathsListHolder::class).all
+
+        assertSoftly {
+            kontainer.getProvider(PathsMiddle::class).reported shouldBe Reported.OverriddenDynamicSingleton
+
+            first.map { it::class } shouldBe listOf(PathsMiddle::class, PathsOther::class)
+            first[0] shouldBeSameInstanceAs overridden
+            second[0] shouldBeSameInstanceAs overridden
+            list[0] shouldBeSameInstanceAs overridden
+
+            (first[1] === second[1]) shouldBe false
+            (list[1] === first[1]) shouldBe false
+        }
+    }
+
+    "Aliased keys: getAll(Number) finds the Int instance also after getOrNull(Int) left the shared entry empty" {
+
+        // getAll hands out the registered key's provider without resolving it again, so it does not read the shared
+        // Int / Integer entry that getOrNull(Int) left empty; getOrNull keeps its order-dependent answers (above)
+        val kontainer = kontainer { instance(5) }.create()
+
+        assertSoftly {
+            kontainer.getOrNull(Int::class) shouldBe null
+            kontainer.getAll(Number::class) shouldBe listOf(5)
+        }
+    }
+
+    "Aliased keys: getAll(Number) or a Lookup entry first no longer fills the shared entry, so Int finds nothing" {
+
+        // Before ULTRA-00352 both resolved the candidate again, which filled the shared Int / Integer entry with the
+        // instance's class; afterwards getOrNull(Int) found 5 and get(Int) returned 5
+        val byGetAll = kontainer { instance(5) }.create()
+        val byLookup = kontainer { instance(5) }.create()
+
+        byGetAll.getAll(Number::class) shouldBe listOf(5)
+        byLookup.getLookup(Number::class).get(Int::class) shouldBe 5
+
+        // getOrNull(Int), then what get(Int) throws, for each: one assertion shows all four answers
+        listOf(byGetAll, byLookup).map { kontainer ->
+            kontainer.getOrNull(Int::class) to runCatching { kontainer.get(Int::class) }.exceptionOrNull()
+                ?.let { "${it::class.simpleName}: ${it.message}" }
+        } shouldBe List(2) { null to "ServiceNotFound: Service kotlin.Int was not found" }
+    }
+
+    "Aliased keys: a List injection of the super type fills the shared entry at build, so Int finds the instance" {
+
+        // The blueprint's dependency lookup asks for the candidates of each injected candidate: unchanged by ULTRA-00352
+        val kontainer = kontainer {
+            instance(5)
+            singleton(PathsNumbersHolder::class)
+        }.create()
+
+        assertSoftly {
+            kontainer.getOrNull(Int::class) shouldBe 5
+            kontainer.get(Int::class) shouldBe 5
+            kontainer.get(PathsNumbersHolder::class).all shouldBe listOf(5)
         }
     }
 

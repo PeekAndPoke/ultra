@@ -9,6 +9,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import io.peekandpoke.ultra.kontainer.DynamicOverrides
 import io.peekandpoke.ultra.kontainer.InjectionContext
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerInconsistent
@@ -554,6 +555,30 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
             clone.get(Dyn::class) shouldNotBeSameInstanceAs original.get(Dyn::class)
             clone.get(Holder::class) shouldNotBeSameInstanceAs original.get(Holder::class)
             runs.get() shouldBe 2
+        }
+    }
+
+    // ULTRA-00353: the overrides are copied when the builder is built.
+    "A builder kept after create and used again does not change what later clones of that kontainer get" {
+
+        open class Dyn
+        class First : Dyn()
+        class Second : Dyn()
+
+        var kept: DynamicOverrides.Builder? = null
+
+        val original = kontainer {
+            dynamic(Dyn::class)
+        }.create {
+            with(Dyn::class) { First() }
+            kept = this
+        }
+
+        kept!!.with(Dyn::class) { Second() }
+
+        assertSoftly {
+            original.get(Dyn::class)::class shouldBe First::class
+            original.clone().get(Dyn::class)::class shouldBe First::class
         }
     }
 

@@ -12,7 +12,8 @@ class DynamicOverrides internal constructor(
     class Builder {
         private val overrides = mutableMapOf<KClass<out Any>, () -> Any>()
 
-        internal fun build() = DynamicOverrides(overrides)
+        /** A copy: using the builder again later does not change the built overrides */
+        internal fun build() = DynamicOverrides(overrides.toMap())
 
         /** Overrides a dynamic service resolved by reified type; [instance] runs at create, once per kontainer */
         inline fun <reified SRV : Any> with(noinline instance: () -> SRV) {
