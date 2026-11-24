@@ -42,6 +42,18 @@ to choose `dynamicPrototype()` over `prototype()`, that only dynamic singletons 
 
 Known behaviours with tickets (ULTRA-00327 to ULTRA-00337) are documented only once each is decided.
 
+## Also after ULTRA-00329 (counters, blueprint-wide kontainer)
+
+ULTRA-00329 removed the instance API and changed the dump; these spots describe the old model:
+- `docs-site/src/pages/ultra/kontainer/introspection.astro` lines 20 and 27 (the dump shows "current instances", an
+  `Instances` column; now "Created": `n, first <t>, last <t>`) and line 103 (`provider.instances.size`; now
+  `provider.created.count`).
+- `docs-site/src/data/llms/kontainer.md:1034` (the dump shows "instances").
+- `ultra/kontainer/docs/ultra::docs/index.md`: a stale generated copy (`.instances.size`); `generateDocs` writes only
+  `ultra/kontainer/common/docs`. Delete it or wire it, after asking.
+- Worth a sentence on the introspection page: global singletons are created in a blueprint-wide kontainer, so the
+  prototypes they create show in no request's dump.
+
 ## Acceptance
 
 - Every statement on the Kontainer pages is true against the merged code; `pnpm astro build` is green.
@@ -66,3 +78,4 @@ Known behaviours with tickets (ULTRA-00327 to ULTRA-00337) are documented only o
 - 2026-11-14: in scope after the merge of `f750497f`: an override naming a registered dynamic exactly replaces that
   service, while reads through the base type stay ambiguous (ULTRA-00345); factories are not constructed by callers
   (ULTRA-00346).
+- 2026-11-24: spots from ULTRA-00329 added (instance API removed, dump column "Created").

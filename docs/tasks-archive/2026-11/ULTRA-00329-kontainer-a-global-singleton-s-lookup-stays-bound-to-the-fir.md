@@ -1,6 +1,6 @@
 # ULTRA-00329: Kontainer: a global singleton's Lookup stays bound to the first kontainer and keeps every prototype it creates
 
-> **Status (2026-11-24): IN PROGRESS.** track D builds K3a and K3b; gate 1 next
+> **Status (2026-11-24): DONE.** track D builds K3a and K3b; gate 1 next
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -193,3 +193,6 @@ Final-batch mutants:
 - 2026-11-24: K3a, the JVM half of K3c and K3b committed; gate 1 PASS in round 1, MINOR batch M1 to M4 applied.
 - 2026-11-24: K3c (TAB-SPECS) and K3d committed; gate 2 PASS in round 1, final batch applied (v1 path dropped on the
   maintainer's word, override names no class).
+- 2026-11-24: DONE.
+
+- 2026-11-24: merged into master (cc71f47d) and archived. Gates 1 and 2 passed in round 1 each. DOCS follow-up: the spots are in ULTRA-00338.
