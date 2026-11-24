@@ -63,6 +63,14 @@ service.
 | `getCandidate` takes the provider of a fresh kontainer (ignores this kontainer's overrides) | override/prototype and 4 existing (5) |
 
 - Kontainer suite 621 / 0 / 0 (XML), generateDocs without changes to tracked files.
+- Measured (JMH, same settings as ULTRA-00351, 2026-11-24, load average 3 to 5 from other builds; before: master
+  39db4ddd, after: d957e729). Other benchmarks are not touched by the change.
+
+| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+|---|---:|---:|---:|---:|---:|
+| getAll5 | 104.1 +- 1.3 | 64.6 +- 3.1 | -38% | 64 | 64 |
+| lazyLookupGet | 29.4 +- 0.2 | 18.1 +- 0.1 | -38% | 0 | 0 |
+| request | 4,746.5 +- 279.9 | 4,280.7 +- 68.5 | -10% | 5,496 | 5,512 |
 
 ## Acceptance
 

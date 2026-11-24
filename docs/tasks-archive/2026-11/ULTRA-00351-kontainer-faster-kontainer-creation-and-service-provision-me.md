@@ -85,6 +85,8 @@ says otherwise:
 
 Harness: `ultra/kontainer/src/jmh` (JMH 1.37, Gradle plugin `me.champeau.jmh` 0.7.4, both checked online
 2026-11-24), run with `console/wt-gradle.sh :ultra:kontainer:jmh`, one benchmark set with `-PjmhIncludes=<regex>`.
+Moved by ULTRA-00353 into the unpublished module `ultra/kontainer-benchmarks`; run it with
+`console/wt-gradle.sh :ultra:kontainer-benchmarks:jmh`.
 Fixture `funktorShapedBlueprint()` (`fixture.kt`): 254 definitions plus the 3 built-ins: 149 static singletons
 (class and factory producers, 5 implementations of `Handler`, `Clock`, a `Lookup<Handler>`, a `List<Handler>`, a
 `Lazy` holder), 60 dynamic singletons (`UserProvider` and `RequestInfo` overridable), 40 semi dynamic singletons
