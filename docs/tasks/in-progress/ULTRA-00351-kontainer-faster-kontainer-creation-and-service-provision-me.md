@@ -168,6 +168,18 @@ green; mutant of the new code (prototype arguments reversed): 23 RED. "before" i
 | prototype3Args | 208.1 +- 1.4 | 202.0 +- 3.3 | -3% | 224 | 176 |
 | prototypeFactory | 150.4 +- 1.3 | 142.3 +- 1.7 | -5% | 144 | 104 |
 
+**Finding 3** (`getOrNull` only: the provider of the one candidate directly; getAll, List and Lookup unchanged, their
+pins stay). Behaviour-neutral by construction: when `service` has exactly one candidate `T`, every candidate of `T` is
+a candidate of `service`, so `T`'s candidates are exactly `{T}` and the second resolution can only return `T`.
+Tests: 616 green; mutant of the new code (provider of the requested class): 4 RED, and generateDocs fails on the
+examples. "before" is after finding 7.
+
+| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+|---|---:|---:|---:|---:|---:|
+| request | 4,919.9 +- 43.2 | 4,515.5 +- 37.9 | -8% | 5,832 | 5,728 |
+| prototype3Args | 202.0 +- 3.3 | 154.2 +- 1.4 | -24% | 176 | 176 |
+| getOrNullInterface (before: after finding 4) | 42.2 +- 1.2 | 26.8 +- 0.4 | -36% | 0 | 0 |
+
 ## Coverage map (before any change)
 
 New spec `ProvisionPathsCharacterizationSpec` (17 tests), green on today's code. Every mutant below was applied to

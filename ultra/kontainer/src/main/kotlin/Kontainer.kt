@@ -128,7 +128,9 @@ class Kontainer internal constructor(
 
         val type = blueprint.superTypeLookup.getDistinctForOrNull(service) ?: return null
 
-        return get(type, context)
+        // The one candidate of [service] is the only candidate of itself, so it is not resolved a second time
+        @Suppress("UNCHECKED_CAST")
+        return factory.getProvider(type).provide(this, context) as T
     }
 
     /**
