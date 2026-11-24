@@ -157,6 +157,9 @@ interface ServiceProvider {
 
     /**
      * Provides a singleton: a global one for [ServiceKind.Static], otherwise one per kontainer
+     *
+     * The instance is created under this provider's lock. A constructor that forces a `Lazy` injection back into a
+     * singleton still being created can deadlock across two threads, or on one thread re-enter the lock and recurse.
      */
     data class ForSingleton(
         override val kind: ServiceKind,
