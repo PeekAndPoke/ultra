@@ -15,8 +15,15 @@ import io.peekandpoke.ultra.kontainer.InjectionContext
 import io.peekandpoke.ultra.kontainer.Kontainer
 import io.peekandpoke.ultra.kontainer.KontainerBlueprint
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
+import io.peekandpoke.ultra.kontainer.LazyServiceLookup
 import io.peekandpoke.ultra.kontainer.ServiceKind
+import io.peekandpoke.ultra.kontainer.ServiceType
 import io.peekandpoke.ultra.kontainer.kontainer
+import java.util.Collections
+import java.util.concurrent.CyclicBarrier
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.thread
+import kotlin.reflect.KClass
 
 abstract class GkBase
 class GkSingle : GkBase()
@@ -51,6 +58,50 @@ class GkLookupDyn(val lookup: Lookup<GkBase>)
 class GkContext(val context: InjectionContext)
 class GkKontainer(val kontainer: Kontainer)
 class GkChained(val promoted: GkPromoted)
+class GkLazyDynSingle(val lazy: Lazy<GkDyn>)
+
+/** A static prototype that counts its births, injected by each of the [GkRace] singletons. */
+class GkRaceProto {
+    companion object {
+        val births = AtomicInteger()
+    }
+
+    init {
+        births.incrementAndGet()
+    }
+}
+
+/** Eight distinct static singletons, so eight threads can each create a different one at the same time. */
+abstract class GkRace(val proto: GkRaceProto)
+class GkRace0(proto: GkRaceProto) : GkRace(proto)
+class GkRace1(proto: GkRaceProto) : GkRace(proto)
+class GkRace2(proto: GkRaceProto) : GkRace(proto)
+class GkRace3(proto: GkRaceProto) : GkRace(proto)
+class GkRace4(proto: GkRaceProto) : GkRace(proto)
+class GkRace5(proto: GkRaceProto) : GkRace(proto)
+class GkRace6(proto: GkRaceProto) : GkRace(proto)
+class GkRace7(proto: GkRaceProto) : GkRace(proto)
+
+private val gkRaces: List<KClass<out GkRace>> = listOf(
+    GkRace0::class, GkRace1::class, GkRace2::class, GkRace3::class,
+    GkRace4::class, GkRace5::class, GkRace6::class, GkRace7::class,
+)
+
+/** Reads every [Lazy] and gets every service of every [LazyServiceLookup] held in a field of [service]. */
+private fun resolveLazies(service: Any) {
+    service.javaClass.declaredFields.forEach { field ->
+        field.isAccessible = true
+
+        when (val value = field.get(service)) {
+            is Lazy<*> -> value.value
+            is LazyServiceLookup<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                val lookup = value as LazyServiceLookup<Any>
+                lookup.classes.forEach { lookup.get(it) }
+            }
+        }
+    }
+}
 
 /**
  * Pins the blueprint-wide kontainer (ULTRA-00329): every global singleton is created in it, with all its parameters,
@@ -153,9 +204,51 @@ class GlobalKontainerSpec : StringSpec({
         }
     }
 
+    "Concurrent first creations of different global singletons, each from its own kontainer, share one blueprint-wide kontainer" {
+
+        repeat(100) {
+            GkRaceProto.births.set(0)
+
+            val blueprint = kontainer {
+                prototype(GkRaceProto::class)
+                gkRaces.forEach { singleton(it) }
+            }
+
+            val kontainers = gkRaces.map { blueprint.create() }
+            val barrier = CyclicBarrier(gkRaces.size)
+            val errors = Collections.synchronizedList(mutableListOf<Throwable>())
+
+            gkRaces.indices
+                .map { idx ->
+                    thread {
+                        try {
+                            barrier.await()
+                            kontainers[idx].get(gkRaces[idx])
+                        } catch (e: Throwable) {
+                            errors.add(e)
+                        }
+                    }
+                }
+                .forEach { it.join() }
+
+            assertSoftly {
+                errors shouldBe emptyList()
+
+                gkRaces.forEach { cls ->
+                    kontainers.first().getProvider(cls).created.count shouldBe 1L
+                }
+
+                withClue("every prototype the singletons injected was created by the one blueprint-wide kontainer") {
+                    GkRaceProto.births.get() shouldBe gkRaces.size
+                    blueprint.globalKontainer.getProvider(GkRaceProto::class).created.count shouldBe gkRaces.size.toLong()
+                }
+            }
+        }
+    }
+
     "Everything a Static service reaches, through any injection form, is Static as well" {
 
-        val subject = kontainer {
+        val blueprint = kontainer {
             singleton(GkSingle::class)
             prototype(GkProto::class)
             dynamic(GkDyn::class)
@@ -167,7 +260,10 @@ class GlobalKontainerSpec : StringSpec({
             singleton(GkContext::class)
             singleton(GkKontainer::class)
             singleton(GkChained::class)
-        }.create()
+            singleton(GkLazyDynSingle::class)
+        }
+
+        val subject = blueprint.create()
 
         val services = subject.tools.getDebugInfo().services.associateBy { it.cls.fqn }
 
@@ -194,8 +290,10 @@ class GlobalKontainerSpec : StringSpec({
             }
 
             withClue("each way of reaching a dynamic promotes") {
-                listOf(GkPromoted::class, GkLazyDyn::class, GkLookupDyn::class, GkContext::class, GkKontainer::class, GkChained::class)
-                    .forEach { statics shouldNotContain it.java.name }
+                listOf(
+                    GkPromoted::class, GkLazyDyn::class, GkLookupDyn::class, GkContext::class, GkKontainer::class,
+                    GkChained::class, GkLazyDynSingle::class,
+                ).forEach { statics shouldNotContain it.java.name }
             }
 
             statics.forEach { static ->
@@ -204,6 +302,25 @@ class GlobalKontainerSpec : StringSpec({
                         services.getValue(reached).kind shouldBe ServiceKind.Static
                     }
                 }
+            }
+        }
+
+        // At runtime, independent of the announcements the kinds are computed from: create every Static singleton and
+        // resolve all its lazies; the blueprint-wide kontainer must never have been asked for anything else.
+        statics.map { Class.forName(it).kotlin }
+            .filter { subject.getProvider(it).type == ServiceType.Singleton }
+            .forEach { resolveLazies(subject.get(it)) }
+
+        val factory = blueprint.globalKontainer.getServiceProviderFactory()
+
+        withClue("the runtime check is not vacuous: the parameters of the static singletons were resolved there") {
+            factory.isProviderCreated(GkSingle::class) shouldBe true
+            factory.isProviderCreated(GkProto::class) shouldBe true
+        }
+
+        services.values.filter { it.kind != ServiceKind.Static }.forEach { service ->
+            withClue("${service.cls.fqn} is ${service.kind}, the blueprint-wide kontainer must not provide it") {
+                factory.isProviderCreated(Class.forName(service.cls.fqn).kotlin) shouldBe false
             }
         }
     }

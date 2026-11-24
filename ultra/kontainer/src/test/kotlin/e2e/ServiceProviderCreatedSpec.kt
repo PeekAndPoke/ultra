@@ -199,20 +199,6 @@ class ServiceProviderCreatedSpec : StringSpec({
         }
     }
 
-    "A global singleton reports the same creation in every kontainer of the blueprint" {
-
-        val blueprint = kontainer { singleton(CreatedSingle::class) }
-
-        val one = blueprint.create()
-        one.get(CreatedSingle::class)
-        val two = blueprint.create()
-
-        assertSoftly {
-            two.getProvider(CreatedSingle::class).created.count shouldBe 1L
-            two.getProvider(CreatedSingle::class).created shouldBe one.getProvider(CreatedSingle::class).created
-        }
-    }
-
     "An override counts one creation, made when its kontainer was created" {
 
         val blueprint = kontainer { dynamic(CreatedOverridable::class) }

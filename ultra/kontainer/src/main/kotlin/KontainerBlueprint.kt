@@ -126,7 +126,8 @@ class KontainerBlueprint internal constructor(
      *
      * Every global singleton is created in it, with all its parameters, so nothing it holds is bound to the kontainer
      * of whichever request needed it first. A global singleton reaches only static services, so this kontainer
-     * resolves the same services for it as any other would. Internal: its creations show in no request's dump.
+     * resolves the same services for it as any other would. Internal: the prototypes created in it show in no
+     * request's dump; the global singletons do, as their providers are shared.
      */
     internal val globalKontainerLazy: Lazy<Kontainer> = lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         instantiate(dynamics = DynamicOverrides(emptyMap()), track = false)

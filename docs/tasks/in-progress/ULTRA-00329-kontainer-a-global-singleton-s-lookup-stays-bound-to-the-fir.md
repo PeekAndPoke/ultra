@@ -107,13 +107,44 @@ Track D's plan (2026-11-23) asked five questions; answered one at a time.
 | K3a | counters (`ServiceProvider.created`), lock-free `ForPrototype`, `ForSingleton` time beside the instance, `ForOverride` constants, `ServiceProviderFactory` on `ConcurrentHashMap`; `ultra/log` compile edit | committed, mutants 10/10 RED |
 | K3c, JVM half | `KontainerCollector.Data` v3 `{cls, type, count, firstCreatedAt, lastCreatedAt}`, Slumber spec, `funktor/all` slice spec | committed ahead of K3b (K3a removed the API the collector read, and the change 2 suites need `funktor/insights` to compile); mutants 6/6 RED |
 | K3b | blueprint-wide kontainer (`KontainerBlueprint.globalKontainer`, lazy, untracked); `ForSingleton` with kind Static creates in it | mutants 7/7 RED |
-| gate 1 | strict, kontainer and the JVM wire | next |
+| gate 1 | strict, kontainer and the JVM wire | PASS in round 1; MINOR batch applied once (ledger below) |
 | K3d | GUIs (`funktor/inspect`, `funktor/codegen` TS and Vue, fixtures), `TAB-SPECS.md` | after gate 1 |
 | gate 2 | strict, GUIs | after K3d |
 
 Deviation from the batches of the plan: the JVM half of K3c moved before K3b, for the reason in the table.
 The plan's `ForPrototype` counter is one `AtomicReference` snapshot updated by CAS with first = min and last = max:
 lock-free as Q5 asks, and the snapshot never has `lastAt < firstAt`.
+
+## Gate 1 ledger (strict; round 1, Opus high standing in for rung 2)
+
+Result: PASS in round 1, zero CRITICAL, zero MAJOR. The MINORs were applied once as a batch, not re-reviewed.
+
+| Charter | Severity | Finding | Disposition |
+|---|---|---|---|
+| impl | MINOR | docs show the removed instance API (`introspection.astro`, `docs-site/src/data/llms/kontainer.md`, the stale `ultra/kontainer/docs/ultra::docs/index.md` copy) | out of scope: DOCS follow-up at archive |
+| impl | MINOR | KDoc of `globalKontainerLazy` said none of its creations show in a request's dump; the global singletons do (shared providers) | fix (M1) |
+| impl | surplus | duplicate test in `ServiceProviderCreatedSpec` ("same creation in every kontainer") | fix (M4): removed, the characterization test stays |
+| impl, security | surplus | `globalKontainerLazy` plus a getter | reject: reviewers split, the domain reviewer argues to keep it; a one-line convenience |
+| impl, security | surplus | `DebugInfo.CreatedDebugInfo` mirrors `ServiceProvider.Created` | reject: the `DebugInfo` mirror pattern of the module (domain reviewer) |
+| security | MINOR | no concurrency test of the blueprint-wide lazy | fix (M2) |
+| security | surplus | JVM defaults on `KontainerCollector.Data.Service` | reject: Q3 decision |
+| domain | MINOR | docs, as the impl docs finding | as above |
+| domain | MINOR | the "everything a Static service reaches is Static" guard checks the kinds against their own announcements | fix (M3): a runtime check that the blueprint-wide kontainer provides no non-Static class |
+
+CLEAN (verified by the reviewers):
+- No request data reaches the blueprint-wide kontainer.
+- The Static premise holds for every parameter form.
+- No deadlock: the lazy initializer runs no service code, and there is no reentrant `computeIfAbsent`.
+- The counter CAS is exact and side-effect free.
+- The singleton's `createdAt` and `instance` are published safely.
+- No unbounded growth.
+- The insights wire leaks nothing new.
+
+Fix-batch mutants:
+- M2, `SYNCHRONIZED` to `PUBLICATION`: survives, as an equivalent mutant. `PUBLICATION` hands every caller the one published value, and the initializer has no side effect but an allocation, so no test can tell them apart.
+- M2, `SYNCHRONIZED` to `NONE`: RED (the concurrency test; prototypes counted in a kontainer other than the published one).
+- M3, `ForLazyService` announces nothing: RED, but on the announcement guard, which runs first.
+- M3, `ForLazyService` also resolves the unannounced dynamic `Kontainer`: RED on the runtime check only, the one test in the suite that sees it.
 
 ## History
 
@@ -123,3 +154,4 @@ lock-free as Q5 asks, and the snapshot never has `lastAt < firstAt`.
   a plan without code first.
 - 2026-11-24: the plan's five questions, the lock check and the area edits answered (Plan answers).
 - 2026-11-24: IN PROGRESS. track D builds K3a and K3b; gate 1 next
+- 2026-11-24: K3a, the JVM half of K3c and K3b committed; gate 1 PASS in round 1, MINOR batch M1 to M4 applied.
