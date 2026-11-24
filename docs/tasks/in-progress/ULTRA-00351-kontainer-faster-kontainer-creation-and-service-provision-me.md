@@ -1,6 +1,8 @@
 # ULTRA-00351: Kontainer: faster kontainer creation and service provision, measured, no behaviour change
 
-> **Status (2026-11-24): DESIGNED.** Starts when the other kontainer tracks are done (maintainer). Benchmark first.
+> **Status (2026-11-24): IN PROGRESS.** Track E (wt/kontainer). Benchmark harness and baseline done, coverage mapped
+> and missing tests added (mutation-checked). Finding 3 suspicion confirmed (getAll throws). Waiting for the go
+> before any production change.
 
 ## Why this exists
 
@@ -81,6 +83,80 @@ says otherwise:
 5. `/feature-review` gate (standard; correctness-critical, a concurrency charter question for every reviewer).
 6. CHANGELOG: an internal entry under Unreleased with the measured gains; no breaking change.
 
+## Measurements
+
+Harness: `ultra/kontainer/src/jmh` (JMH 1.37, Gradle plugin `me.champeau.jmh` 0.7.4, both checked online
+2026-11-24), run with `console/wt-gradle.sh :ultra:kontainer:jmh`, one benchmark set with `-PjmhIncludes=<regex>`.
+Fixture `funktorShapedBlueprint()` (`fixture.kt`): 254 definitions plus the 3 built-ins: 149 static singletons
+(class and factory producers, 5 implementations of `Handler`, `Clock`, a `Lookup<Handler>`, a `List<Handler>`, a
+`Lazy` holder), 60 dynamic singletons (`UserProvider` and `RequestInfo` overridable), 40 semi dynamic singletons
+through chains, 5 prototypes (no-arg class, 3-arg class, factory with args, factory without, 1-arg class).
+`request` = create with the `UserProvider` override, then 10 gets (2 deep semi dynamics, a static, a dynamic, a
+3-arg prototype, `getAll` of 5, `getOrNull` of an interface, the Lookup holder, a `Lazy` value).
+
+**Deviation from the work order:** iterations are 1 s, not JMH's default 10 s: `-wi 5 -w 1s -i 10 -r 1s -f 2
+-prof gc` (set in `build.gradle.kts`). With 10 s iterations one run takes about 85 minutes; with 1 s it takes 8.5
+minutes and the errors stay within a few percent. The same settings before and after.
+
+**No funktor-demo fixture:** its blueprint needs a `FunktorDemoConfig` and its services reach Arango and Mongo, and
+a `jmh` dependency of `ultra/kontainer` on `funktor-demo:server` would invert the module layering.
+
+### Baseline (master 912f035c, 2026-11-24, JDK 17.0.17, 16 cores, load average 5 to 10 from other builds)
+
+| Benchmark | ns/op | B/op |
+|---|---:|---:|
+| create | 3,357.8 +- 25.7 | 12,704 |
+| createOneOverride | 4,572.3 +- 133.6 | 13,936 |
+| createTwoOverrides | 5,395.4 +- 49.4 | 15,032 |
+| cloneOneOverride | 4,796.0 +- 290.8 | 14,136 |
+| request | 8,432.6 +- 118.5 | 20,264 |
+| getStaticHot | 28.8 +- 1.2 | 40 |
+| getDynamicHot | 28.2 +- 0.2 | 40 |
+| getOrNullInterface | 44.9 +- 0.4 | 40 |
+| getAll5 | 164.3 +- 6.8 | 264 |
+| prototypeNoArg | 81.6 +- 0.7 | 144 |
+| prototype3Args | 227.4 +- 1.7 | 384 |
+| prototypeFactory | 165.2 +- 1.4 | 264 |
+| lazyLookupGet | 40.4 +- 0.2 | 40 |
+| createT8 (8 threads) | 4,558.4 +- 121.8 | 12,704 |
+| requestT8 (8 threads) | 11,128.4 +- 827.1 | 19,984 |
+| getStaticHotT8 (8 threads) | 31.8 +- 0.4 | 40 |
+
+Reading: `create` is 12.7 KB, nearly all of it the copied provider map (finding 1). Each override adds about
+1.2 KB and 0.8 to 1.2 us; the stack capture of finding 2 is part of that (not touched, waits for the maintainer).
+
+## Coverage map (before any change)
+
+New spec `ProvisionPathsCharacterizationSpec` (17 tests), green on today's code. Every mutant below was applied to
+TODAY's code, the kontainer suite run, the file restored with `cp`.
+
+| Finding | Behaviour it touches | Pinning tests (existing / new) | Mutant of today's code: RED tests |
+|---|---|---|---|
+| 1 | provider for an unknown class | new: getProvider of an unknown class, with and without overrides | `getValue` to `[cls]!!`: the new test |
+| 1 | listing order, override in place | KontainerToolsKindsSpec, ToolsCharacterizationSpec listing order; new: getAllProviders order | overrides listed first: those 3 |
+| 1 | the blueprint map is not changed by an override | DynamicsAtCreate "Two kontainers", ExactOverrideMatchSpec x2, ValidationCharacterization newKontainer; new: override seen only by its own kontainer | override written into the shared map: those 5 |
+| 1 | getAllProviders registers what it creates | new: getAllProviders creates the missing providers | not registering: the new test |
+| 1, 4 | provider once per kontainer, shared for global singletons, concurrent first requests | ServiceProviderFactorySpec (12), ServiceProviderCreatedSpec | (existing, not re-run as mutants) |
+| 3 | getAll and Lookup resolve each candidate again | new: getAll ambiguity, List / Lazy List / Lookup ambiguity | skipping re-resolution in getAll: both new tests; in the Lookup: the Lookup test |
+| 3, 5 | messages of not found and ambiguous, on every call | new: get unknown, get ambiguous; ExactOverrideMatch, DynamicsAtCreate | message changed: 5 RED (ambiguous), 1 RED (not found) |
+| 3, 5 | getOrNull: one candidate, none, two | OptionalsSpec, InjectionForms; new: getOrNull on every call | two candidates give the first: the new test |
+| 5 | getProvider of a super type | BaseTypeInjection, all factory specs; new: getProvider of a super type | resolving by the requested class: 37 RED |
+| 7 | argument order and values | the three factory specs, GeneralInjection, GlobalKontainer | arguments reversed: 55 RED (singletons), 23 RED (prototypes) |
+| 9 | refusal order and messages | BuiltInServicesCharacterization, DynamicPrototypeSpec, DynamicsAtCreate | ambiguity check dropped: 2 RED; dynamics check before the built-in check: 12 RED |
+| 6 | createInstance edge cases | new: two all-optional constructors, throwing no-arg constructor, private no-arg constructor | `ctor.call()`: two-constructor test; unwrapping InvocationTargetException: throwing test; Java constructor made accessible: two-constructor and private tests |
+| 8 | constructor call with arguments | new: throwing constructor with arguments, private constructor with arguments, value class parameter | unwrapping: throwing test; Java constructor made accessible: private and value class tests |
+| 10 | `tools` identity | `Kontainer.tools` is a `val`: a lazy keeps the identity but allocates a `Lazy` (24 B) to save a 16 B object, so no gain; not planned |
+
+Also pinned as it is, not touched by any finding: an `object` registered as a class service is refused at the
+definition (no primary constructor).
+
+**Finding 3, confirmed latent bug (a question for the maintainer, not fixed):** with `PathsMiddle : PathsBase` and
+`PathsLeaf : PathsMiddle` both registered, `getAll(PathsBase)`, a `List<PathsBase>` or `Lazy<List<PathsBase>>`
+injection, and `Lookup<PathsBase>.get(PathsMiddle::class)` throw `ServiceAmbiguous` for `PathsMiddle`. The new
+tests pin today's behaviour, so finding 3 is applied only to `getOrNull` (every plain, nullable and Lazy
+injection): there the one candidate's own candidates are always exactly itself, so the second resolution cannot
+change the result.
+
 ## Acceptance
 
 - Baseline and after numbers for every benchmark recorded here; no benchmark regresses beyond noise.
@@ -92,3 +168,6 @@ says otherwise:
 - 2026-11-24: created on the maintainer's word from the read-only performance and thread-safety audit, with the
   conditions above ("This should not lead to any behaviour changes, only internal changes"). Start after the other
   kontainer tracks.
+- 2026-11-24: IN PROGRESS. baseline measured, coverage mapped; waiting for the go
+- 2026-11-24: Track E: JMH harness and baseline, coverage map, 17 characterization tests mutation-checked on
+  today's code; finding 3's getAll throw confirmed and pinned. Stopped for the go.
