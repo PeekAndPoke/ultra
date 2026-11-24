@@ -180,6 +180,21 @@ examples. "before" is after finding 7.
 | prototype3Args | 202.0 +- 3.3 | 154.2 +- 1.4 | -24% | 176 | 176 |
 | getOrNullInterface (before: after finding 4) | 42.2 +- 1.2 | 26.8 +- 0.4 | -36% | 0 | 0 |
 
+**Finding 9: measured, not worth it, not applied.** Implemented as "createChecked resolves each override once into
+a map and hands it to the factory" (616 tests green), then measured against the numbers after finding 1. The extra
+map costs more than the hash lookups it saves (an exact override costs one `HashSet` lookup in
+`overriddenServiceOf`), and `create` without overrides also got slower:
+
+| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+|---|---:|---:|---:|---:|---:|
+| create | 13.7 +- 0.1 | 16.3 +- 0.1 | +20% | 232 | 264 |
+| createOneOverride | 968.0 +- 7.7 | 1,018.3 +- 10.1 | +5% | 1,632 | 1,792 |
+| createTwoOverrides | 1,941.7 +- 14.1 | 2,004.5 +- 15.9 | +3% | 2,720 | 2,936 |
+| cloneOneOverride | 1,030.3 +- 7.2 | 1,053.1 +- 8.6 | +2% | 1,832 | 1,984 |
+| createT8 | 65.9 +- 0.5 | 74.4 +- 0.5 | +13% | 232 | 264 |
+
+Reverted; the code stays as after finding 3.
+
 ## Coverage map (before any change)
 
 New spec `ProvisionPathsCharacterizationSpec` (17 tests), green on today's code. Every mutant below was applied to
