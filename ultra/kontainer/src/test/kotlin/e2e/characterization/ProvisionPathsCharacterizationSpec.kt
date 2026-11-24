@@ -32,6 +32,7 @@ class PathsOther : PathsBase
 class PathsListHolder(val all: List<PathsBase>)
 class PathsLazyListHolder(val all: Lazy<List<PathsBase>>)
 class PathsLookupHolder(val all: Lookup<PathsBase>)
+class PathsNumbersHolder(val all: List<Number>)
 
 class PathsTwoNoArg() {
     @Suppress("unused", "UNUSED_PARAMETER")
@@ -348,13 +349,45 @@ class ProvisionPathsCharacterizationSpec : StringSpec({
 
     "Aliased keys: getAll(Number) finds the Int instance also after getOrNull(Int) left the shared entry empty" {
 
-        // getOrNull keeps its order-dependent answers (the two aliased-key tests above); getAll hands out the
-        // registered key's provider without resolving it again
+        // getAll hands out the registered key's provider without resolving it again, so it does not read the shared
+        // Int / Integer entry that getOrNull(Int) left empty; getOrNull keeps its order-dependent answers (above)
         val kontainer = kontainer { instance(5) }.create()
 
         assertSoftly {
             kontainer.getOrNull(Int::class) shouldBe null
             kontainer.getAll(Number::class) shouldBe listOf(5)
+        }
+    }
+
+    "Aliased keys: getAll(Number) or a Lookup entry first no longer fills the shared entry, so Int finds nothing" {
+
+        // Before ULTRA-00352 both resolved the candidate again, which filled the shared Int / Integer entry with the
+        // instance's class; afterwards getOrNull(Int) found 5 and get(Int) returned 5
+        val byGetAll = kontainer { instance(5) }.create()
+        val byLookup = kontainer { instance(5) }.create()
+
+        byGetAll.getAll(Number::class) shouldBe listOf(5)
+        byLookup.getLookup(Number::class).get(Int::class) shouldBe 5
+
+        // getOrNull(Int), then what get(Int) throws, for each: one assertion shows all four answers
+        listOf(byGetAll, byLookup).map { kontainer ->
+            kontainer.getOrNull(Int::class) to runCatching { kontainer.get(Int::class) }.exceptionOrNull()
+                ?.let { "${it::class.simpleName}: ${it.message}" }
+        } shouldBe List(2) { null to "ServiceNotFound: Service kotlin.Int was not found" }
+    }
+
+    "Aliased keys: a List injection of the super type fills the shared entry at build, so Int finds the instance" {
+
+        // The blueprint's dependency lookup asks for the candidates of each injected candidate: unchanged by ULTRA-00352
+        val kontainer = kontainer {
+            instance(5)
+            singleton(PathsNumbersHolder::class)
+        }.create()
+
+        assertSoftly {
+            kontainer.getOrNull(Int::class) shouldBe 5
+            kontainer.get(Int::class) shouldBe 5
+            kontainer.get(PathsNumbersHolder::class).all shouldBe listOf(5)
         }
     }
 

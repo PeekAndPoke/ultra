@@ -53,6 +53,14 @@ service.
     `ServiceNotFound: Service kotlin.Int was not found` (the second resolution read the empty shared `Int`/`Integer`
     entry). A side effect of the decided fix in the same direction: getAll no longer depends on what was asked first.
     `getOrNull`'s order-dependent answers stay pinned as before.
+  - Aliased keys, the reverse direction (gate round 1): `getAll(Number)` or a Lookup entry FIRST, then
+    `getOrNull(Int)` is now null and `get(Int)` throws `ServiceNotFound: Service kotlin.Int was not found`; before,
+    the second resolution filled the shared `Int`/`Integer` entry with the instance's class, and both returned 5.
+    Pinned with all four answers in one assertion; RED on the pre-fix code (getAll and the Lookup map back to `get`):
+    `[(5, null), (5, null)]` instead of `[(null, ServiceNotFound...), (null, ServiceNotFound...)]`.
+  - Injection forms are unaffected: the blueprint's `DependencyLookup` asks for the candidates of every injected
+    candidate at build, which fills that entry for a `List<Number>` or `Lookup<Number>` injection before any request.
+    Pinned: with a `List<Number>` holder registered, `getOrNull(Int)` and `get(Int)` find 5 (green before and after).
 - Mutants (each applied to the fixed code, kontainer suite with `-x generateDocs`, restored with `cp` and `cmp`):
 
 | Mutant | RED |
@@ -74,6 +82,20 @@ service.
 
 - Suites and compile sweep after both tickets: see ULTRA-00353 (all green, kontainer 624 / 0 / 0).
 
+## Review ledger
+
+Round 1, standard gate, three charters (implementation and code style, domain, security), Opus high (rung 1), for
+ULTRA-00352 and ULTRA-00353 together. Zero CRITICAL, zero MAJOR: PASS. This ticket's rows (ULTRA-00353 has its own):
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MINOR (impl, domain) | `ProvisionPathsCharacterizationSpec.kt:351` | Aliasing, the reverse direction: getAll or a Lookup entry no longer fills the shared `Int`/`Integer` entry, so a later `getOrNull(Int)` is null (was 5) and `get(Int)` throws (was 5) | fix | Pinned (RED on the old code, all four answers shown), comment reworded, named here and in the changelog line; injection forms unaffected, pinned |
+
+CLEAN in round 1: get/getOrNull/getProvider/use code untouched; every candidate path uses getCandidate in candidate
+order; getValue cannot miss for a candidate; overrides found via the base-type key; Lookup blueprint lambdas capture
+only the KClass (request isolation); global singletons' List/Lookup resolve in the global kontainer; validation and
+runtime agree better.
+
 ## Acceptance
 
 - The four forms return both candidates, in candidate order; every other kontainer and consumer suite green unchanged.
@@ -82,3 +104,4 @@ service.
 
 - 2026-11-24: created on the maintainer's word.
 - 2026-11-24: IN PROGRESS. Track F: tests first, fix, mutation-checked; waiting for the gate
+- 2026-11-25: gate round 1 PASS (0 CRITICAL, 0 MAJOR); MINOR batch applied: the reverse aliasing direction pinned and named.

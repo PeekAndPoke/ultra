@@ -143,8 +143,6 @@ class ServiceDefinitionsSpec : StringSpec() {
 
             val info = subject.tools.getDebugInfo().services.first { it.cls.fqn == CounterService::class.java.name }
 
-            println("=== Location of an override: ${info.definition.codeLocation.location}")
-
             info.definition.codeLocation.location shouldStartWith ServiceDefinitionsSpec::class.qualifiedName!!
         }
     }

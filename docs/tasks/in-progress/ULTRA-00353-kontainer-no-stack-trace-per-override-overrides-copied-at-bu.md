@@ -38,8 +38,9 @@ Open points left by ULTRA-00351 (kontainer creation and provision performance), 
 `CodeLocation.of(origin: Class<*>)`; `create()` is unchanged for blueprint definitions. `ServiceProviderFactory` passes
 `CodeLocation.of(provider.javaClass)`, the override lambda's class: no `Throwable`, no stack walk. Its `stack` is one
 `StackTraceElement(<lambda class>, "invoke", null, -1)`, built on first use; `first()`, `stackPrinted` and the debug
-info read it as before. The two `by lazy` caches became plain `@Volatile` fields (a race computes the same value
-twice): 80 B less per location, measured (`createOneOverride` 976 B with the lazies, 896 B without).
+info read it as before. The two `by lazy` caches stay as they were (gate round 1: the hand-written `@Volatile` caches
+of 554fc10c saved 80 B per override, `createOneOverride` 976 B with the lazies, 896 B without, but were reverted;
+`stackPrinted` had no test).
 
 **Finding: Kotlin 2 compiles lambdas with invokedynamic.** The lambda's class is a hidden class, so the location
 reads `io.peekandpoke.ultra.kontainer.e2e.ServiceDefinitionsSpec$4$$Lambda$770/0x000075b0a8375a50.invoke(Unknown
@@ -77,7 +78,7 @@ The old command is still written in `CHANGELOG.md` (master only, for the coordin
 | override definition without `codeLocation` (back to `CodeLocation.create()`) | both location tests |
 | `CodeLocation.of` captures a `Throwable` | both location tests |
 | `CodeLocation.of(instance.javaClass)` instead of the lambda's class | both location tests |
-| stack cache hit returns an empty array | the exact-location test (its second read) |
+| stack cache hit returns an empty array (on the `@Volatile` caches, since reverted) | the exact-location test (its second read) |
 | `build()` without `toMap()` | the kept-builder test (clone gets the second override) |
 
 ### Measurements (JMH, same settings as ULTRA-00351, 2026-11-24, load average 3 to 5; before: d957e729)
@@ -92,6 +93,8 @@ The old command is still written in `CHANGELOG.md` (master only, for the coordin
 Reading: the stack capture was about 1.2 us and 850 B per override (-91% for one override). The copy of decision 2 costs
 80 B per create with one override (a singleton map) and 216 B with two (a LinkedHashMap), about 35 ns for two.
 After the move, from the new module: `create` 17.4 +- 0.2 ns, 248 B; `getAll5` 59.2 +- 2.0 ns, 64 B.
+After the gate's revert to `by lazy` (one run, load average 3.5 to 4): `createOneOverride` 124.0 +- 1.1 ns, 976 B
+(the 80 B of the two lazies back; still -91% in time and -41% in bytes against 1,319.7 ns and 1,664 B).
 
 ### Suites and compile sweep (after 8e65db73, counts from the XML, all written by this run)
 
@@ -116,6 +119,26 @@ Compile sweep (`compileKotlinJvm compileTestKotlinJvm compileKotlinJs compileTes
 compileTestKotlin compileJmhKotlin --continue`): BUILD SUCCESSFUL, 0 lines `e:`, `compileJmhKotlin` now in
 `:ultra:kontainer-benchmarks`. These runs cover ULTRA-00352 as well.
 
+## Review ledger
+
+Round 1, standard gate, three charters (implementation and code style, domain, security), Opus high (rung 1), for
+ULTRA-00352 and ULTRA-00353 together. Zero CRITICAL, zero MAJOR: PASS. This ticket's rows (ULTRA-00352 has the
+aliasing row):
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MINOR (security, impl) | `funktor/all/src/jvmTest/kotlin/InsightsGraphsApiSpec.kt:191` | `codeLocation shouldNotContain "ServiceProviderFactory"` no longer tells a request's graph from the blueprint's | fix | Asserts the UserProvider definition's `overwrites` is null (an override always overwrites the blueprint definition; field checked on `InsightsKontainerGraph.Definition`), soft with the type check; mutant (graph from a kontainer with the UserProvider override): RED on the new assertion, restored |
+| 1 | MINOR (security) | `ServiceProviderFactory.kt` | The hidden-class suffix carries a native address (`/0x...`) into the debug info | maintainer-decision | Whether to strip the `$$Lambda...` suffix is asked; not stripped |
+| 1 | MINOR (impl) | `ServiceDefinition.kt` | `stackPrinted` has no test after the cache rewrite | fix | Reverted to `by lazy` as before |
+| 1 | surplus (impl) | `ServiceDefinition.kt` | Hand-written `@Volatile` caches for 80 B | fix | Reverted; `createOneOverride` re-measured (976 B) |
+| 1 | surplus (impl) | `ServiceDefinitionsSpec.kt` | `println` in a new test | fix | Removed |
+| 1 | surplus (impl) | `ServiceDefinition.kt` | Dead `origin?.name ?: "n/a"` fallback | fix | Gone with the revert: `checkNotNull(origin)` states the invariant |
+| 1 | surplus (impl) | `ultra/kontainer-benchmarks/build.gradle.kts` | group and version on an unpublished module | reject | Mirrors `ultra/slumber-test-classes`, harmless |
+| 1 | surplus (impl) | `DynamicOverrides.kt` | The copy is redundant on the clone path (merge copies again) | reject | One `build()` for create and clone is simpler; measured (about 10 ns, 80 B) |
+
+CLEAN in round 1: the CodeLocation API is compatible and blueprint definitions keep their stack; the benchmark module
+is unpublished and `ultra/kontainer` has no JMH plugin.
+
 ## Acceptance
 
 - No stack walk on the override path; the override's location names the lambda's class; both changes pinned by tests.
@@ -125,3 +148,4 @@ compileTestKotlin compileJmhKotlin --continue`): BUILD SUCCESSFUL, 0 lines `e:`,
 
 - 2026-11-24: created on the maintainer's word.
 - 2026-11-24: IN PROGRESS. Track F: a, b and c done, tests first and mutation-checked, measured; waiting for the gate
+- 2026-11-25: gate round 1 PASS (0 CRITICAL, 0 MAJOR); MINOR batch applied: CodeLocation back to `by lazy`, println removed, InsightsGraphsApiSpec asserts `overwrites`; the `$$Lambda` suffix is with the maintainer. Kontainer 626 / 0 / 0, funktor/all 289 / 0 / 0 (XML).

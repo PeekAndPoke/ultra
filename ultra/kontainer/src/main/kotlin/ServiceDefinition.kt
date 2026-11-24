@@ -49,32 +49,11 @@ class ServiceDefinition internal constructor(
             }
         }
 
-        /** Computed on first use; a race only computes the same stack twice */
-        @Volatile
-        private var stackCache: Array<StackTraceElement>? = null
-
-        /** Computed on first use from [stack] */
-        @Volatile
-        private var stackPrintedCache: String? = null
-
         /** The filtered stack trace, excluding Kontainer internals; a single entry for a location named by a class */
-        val stack: Array<StackTraceElement>
-            get() = stackCache ?: computeStack().also { stackCache = it }
-
-        /** The filtered stack trace as a formatted string */
-        val stackPrinted: String
-            get() = stackPrintedCache ?: computeStackPrinted().also { stackPrintedCache = it }
-
-        /** Returns the first (most relevant) stack trace element, or null */
-        fun first(): StackTraceElement? {
-            return stack.firstOrNull()
-        }
-
-        private fun computeStack(): Array<StackTraceElement> {
-
+        val stack: Array<StackTraceElement> by lazy {
             if (throwable == null) {
-                return arrayOf(
-                    StackTraceElement(origin?.name ?: "n/a", "invoke", null, -1)
+                return@lazy arrayOf(
+                    StackTraceElement(checkNotNull(origin).name, "invoke", null, -1)
                 )
             }
 
@@ -96,7 +75,7 @@ class ServiceDefinition internal constructor(
                 it.className !in excludes
             }
 
-            return when (firstIdx) {
+            when (firstIdx) {
                 -1 -> originalStack
 
                 else -> originalStack.toList()
@@ -105,11 +84,17 @@ class ServiceDefinition internal constructor(
             }
         }
 
-        private fun computeStackPrinted(): String {
+        /** The filtered stack trace as a formatted string */
+        val stackPrinted: String by lazy {
             val newThrowable = Throwable()
             newThrowable.stackTrace = stack
 
-            return newThrowable.stackTraceToString()
+            newThrowable.stackTraceToString()
+        }
+
+        /** Returns the first (most relevant) stack trace element, or null */
+        fun first(): StackTraceElement? {
+            return stack.firstOrNull()
         }
     }
 
