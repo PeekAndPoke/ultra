@@ -40,7 +40,8 @@ class ServiceProviderFactory internal constructor(
         }
     }
 
-    private val providers: ConcurrentHashMap<KClass<*>, ServiceProvider> = ConcurrentHashMap()
+    /** Presized for a typical request; the table itself is allocated on the first provider */
+    private val providers: ConcurrentHashMap<KClass<*>, ServiceProvider> = ConcurrentHashMap(32)
 
     /** Creates a new [Kontainer] for [Kontainer.clone], merging in [overrides]; checked like [KontainerBlueprint.create] */
     internal fun newKontainer(overrides: DynamicOverrides): Kontainer {

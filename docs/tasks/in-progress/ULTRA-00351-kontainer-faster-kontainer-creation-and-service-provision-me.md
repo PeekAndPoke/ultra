@@ -157,6 +157,11 @@ the gets is the baseline (finding 1 does not touch them); `request` after findin
 | lazyLookupGet | 40.4 +- 0.2 | 33.2 +- 0.3 | -18% | 40 | 0 |
 | getStaticHotT8 | 31.8 +- 0.4 | 26.6 +- 0.4 | -16% | 40 | 0 |
 
+Finding 4's price, found later: the stored function is one object per kontainer, `create` 232 B to 264 B and
+13.7 ns to 14.8 ns. Measured alternative (not applied): a plain read and a capturing `computeIfAbsent` lambda only on
+a miss keeps `create` at 232 B, but costs one lambda per provider created, `request` 5,840 B to 7,048 B and
+`requestT8` +10% in time. One object per kontainer is the better trade.
+
 **Finding 7** (the argument array built directly, no intermediate list). The copy made by the spread in
 `ctor.call(*params)` stays: Kotlin emits `Arrays.copyOf` there and only a Java helper could avoid it. Tests: 616
 green; mutant of the new code (prototype arguments reversed): 23 RED. "before" is after finding 4.
@@ -181,17 +186,18 @@ examples. "before" is after finding 7.
 | getOrNullInterface (before: after finding 4) | 42.2 +- 1.2 | 26.8 +- 0.4 | -36% | 0 | 0 |
 
 **Finding 9: measured, not worth it, not applied.** Implemented as "createChecked resolves each override once into
-a map and hands it to the factory" (616 tests green), then measured against the numbers after finding 1. The extra
-map costs more than the hash lookups it saves (an exact override costs one `HashSet` lookup in
-`overriddenServiceOf`), and `create` without overrides also got slower:
+a map and hands it to the factory" (616 tests green). The extra map costs more than the hash lookups it saves (an
+exact override costs one `HashSet` lookup in `overriddenServiceOf`). Correction: the first version of this table
+compared against the numbers after finding 1, which miss the 32 B per kontainer finding 4 added; "before" below is
+a later run of the code without finding 9 (after finding 5, which does not touch creation):
 
-| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+| Benchmark | ns/op before | ns/op with finding 9 | delta | B/op before | B/op with finding 9 |
 |---|---:|---:|---:|---:|---:|
-| create | 13.7 +- 0.1 | 16.3 +- 0.1 | +20% | 232 | 264 |
-| createOneOverride | 968.0 +- 7.7 | 1,018.3 +- 10.1 | +5% | 1,632 | 1,792 |
-| createTwoOverrides | 1,941.7 +- 14.1 | 2,004.5 +- 15.9 | +3% | 2,720 | 2,936 |
-| cloneOneOverride | 1,030.3 +- 7.2 | 1,053.1 +- 8.6 | +2% | 1,832 | 1,984 |
-| createT8 | 65.9 +- 0.5 | 74.4 +- 0.5 | +13% | 232 | 264 |
+| create | 14.8 +- 0.1 | 16.3 +- 0.1 | +10% | 264 | 264 |
+| createOneOverride | 964.2 +- 11.4 | 1,018.3 +- 10.1 | +6% | 1,664 | 1,792 |
+| createTwoOverrides | 1,938.8 +- 16.7 | 2,004.5 +- 15.9 | +3% | 2,752 | 2,936 |
+| cloneOneOverride | 1,029.4 +- 7.2 | 1,053.1 +- 8.6 | +2% | 1,864 | 1,984 |
+| createT8 | 75.3 +- 0.5 | 74.4 +- 0.5 | -1% | 264 | 264 |
 
 Reverted; the code stays as after finding 3.
 
@@ -226,6 +232,19 @@ for everything, 167 RED. "before" is the latest number of each benchmark from th
 | prototypeFactory | 142.3 +- 1.7 | 87.5 +- 0.9 | -39% | 104 | 104 |
 | lazyLookupGet | 33.2 +- 0.3 | 29.5 +- 1.2 | -11% | 0 | 0 |
 | getStaticHotT8 | 26.6 +- 0.4 | 16.4 +- 1.6 | -38% | 0 | 0 |
+
+**Finding 10** (the providers map presized for 32 entries, so a request's map does not grow twice; the table is
+still allocated on the first provider, so `create` allocates the same). `Kontainer.tools` stays eager: a lazy keeps
+its identity but allocates a 24 B `Lazy` to save a 16 B object. Tests: 616 green. "before" is a run of the code
+after finding 5 without this change. The cost: a kontainer that creates only a few providers allocates a 64-slot
+table instead of a 16-slot one (about 190 B more).
+
+| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+|---|---:|---:|---:|---:|---:|
+| create | 14.8 +- 0.1 | 15.5 +- 0.1 | +4% | 264 | 264 |
+| createOneOverride | 964.2 +- 11.4 | 963.0 +- 9.5 | 0% | 1,664 | 1,664 |
+| request | 4,095.3 +- 36.9 | 3,659.2 +- 26.5 | -11% | 5,840 | 5,520 |
+| requestT8 | 4,782.9 +- 74.8 | 4,361.5 +- 69.0 | -9% | 5,832 | 5,416 |
 
 ## Coverage map (before any change)
 
