@@ -6,6 +6,26 @@
 
 - `ultra/kontainer`: `ServiceProviderFactory.newKontainer` is internal; a new kontainer comes from `create` or
   `Kontainer.clone`. Since 0.119.0 nothing outside the module could build the overrides it takes (ULTRA-00346).
+- `ultra/kontainer`: no reference to a created instance is kept any more; each provider counts its creations instead.
+  `ServiceProvider.instances`, `ServiceProvider.CreatedInstance`, `DebugInfo.InstanceDebugInfo` and
+  `DebugInfo.ServiceDebugInfo.instances` are removed. Use `provider.created` (`count`, `firstAt`, `lastAt`) and
+  `ServiceDebugInfo.created` (`CreatedDebugInfo`). The dump's fourth column is "Created" (`n, first <t>, last <t>`)
+  (ULTRA-00329).
+- `ultra/kontainer`, behaviour change (no compile signal):
+  - A global (static) singleton is created, with all its parameters, in an internal blueprint-wide kontainer without
+    overrides, not in the kontainer of the request that first needed it. It no longer keeps that request's kontainer,
+    override values and every prototype its `Lookup`, `Lazy` or `List` created alive for the life of the process.
+    Prototypes a global singleton creates show in no request's dump or insights record (ULTRA-00329).
+  - Concurrent creations of one prototype are no longer serialized per provider; `ServiceProviderFactory` creates its
+    providers lock-free. A prototype factory that is not thread-safe was only protected by accident, and only within
+    one kontainer (ULTRA-00329).
+- `funktor/insights`: the `kontainer` slice of a record (wire v3) writes each service as
+  `{cls, type, count, firstCreatedAt, lastCreatedAt}` instead of an `instances` list, and only services created at
+  least once. `KontainerCollector.Data.Instance` is removed. Records already stored are served as written. Both GUIs
+  (Kraft inspect and the generated Vue SDK) read v3 only: a record of 0.119.0 shows its services without creations, a
+  record written before 2026-10-19 (v1) is shown as the raw tree. The tab's "Instances" column is "Created" (the
+  count, the first and the last creation), and a `DynamicOverride` names no created class: "handed in at create"
+  (ULTRA-00329).
 
 ## 0.119.0
 
