@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.kontainer.e2e
 
+import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
@@ -20,6 +21,12 @@ class ServiceDefinitionsSpec : StringSpec() {
     private fun overrideService(builder: KontainerBuilder) {
         with(builder) {
             singleton(CounterService::class, CounterServiceEx01::class)
+        }
+    }
+
+    private fun setupDynamicService(builder: KontainerBuilder) {
+        with(builder) {
+            dynamic(CounterService::class)
         }
     }
 
@@ -99,6 +106,46 @@ class ServiceDefinitionsSpec : StringSpec() {
                     def.overwrites.overwrites.shouldBeNull()
                 }
             }
+        }
+
+        // ULTRA-00353: an override's location is the class of its lambda, no stack is captured
+        "Code location of an override names the class of the override lambda, and nothing else" {
+
+            val override: () -> CounterService = { CounterServiceEx01() }
+
+            val subject = kontainer {
+                setupDynamicService(this)
+            }.create {
+                with(CounterService::class, override)
+            }
+
+            val definition = subject.getProvider(CounterService::class).definition
+            val info = subject.tools.getDebugInfo().services.first { it.cls.fqn == CounterService::class.java.name }
+
+            assertSoftly {
+                definition.codeLocation.stack.map { it.className } shouldBe listOf(override.javaClass.name)
+                definition.codeLocation.first()?.className shouldBe override.javaClass.name
+                info.definition.codeLocation.location shouldStartWith "${override.javaClass.name}."
+
+                withClue("The overwritten definition keeps the location where the blueprint defined it") {
+                    definition.overwrites?.codeLocation?.first()?.methodName shouldBe ::setupDynamicService.name
+                }
+            }
+        }
+
+        "Code location of an override written in place points at the class where with { } was written" {
+
+            val subject = kontainer {
+                setupDynamicService(this)
+            }.create {
+                with(CounterService::class) { CounterServiceEx02() }
+            }
+
+            val info = subject.tools.getDebugInfo().services.first { it.cls.fqn == CounterService::class.java.name }
+
+            println("=== Location of an override: ${info.definition.codeLocation.location}")
+
+            info.definition.codeLocation.location shouldStartWith ServiceDefinitionsSpec::class.qualifiedName!!
         }
     }
 }

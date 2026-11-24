@@ -33,7 +33,9 @@ class ServiceProviderFactory internal constructor(
                     type = ServiceType.Singleton,
                     kind = ServiceKind.Dynamic,
                     producer = ServiceProducer.forInstance(instance),
-                    overwrites = blueprint.definitions[baseType]
+                    overwrites = blueprint.definitions[baseType],
+                    // Names the override lambda's class: no stack walk on every create
+                    codeLocation = ServiceDefinition.CodeLocation.of(provider.javaClass),
                 ),
                 instance = instance,
             )

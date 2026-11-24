@@ -26,19 +26,58 @@ class ServiceDefinition internal constructor(
 
     /** Captures the code location where a service was defined, for debugging */
     class CodeLocation private constructor(
-        private val throwable: Throwable,
+        /** The captured stack, or null when [origin] names the location */
+        private val throwable: Throwable?,
+        /** Names the location when no stack was captured */
+        private val origin: Class<*>?,
     ) {
         companion object {
             /** Creates a [CodeLocation] capturing the current stack trace */
             fun create(): CodeLocation {
                 return CodeLocation(
-                    throwable = Throwable()
+                    throwable = Throwable(),
+                    origin = null,
+                )
+            }
+
+            /** Creates a [CodeLocation] named by the class [origin], without capturing a stack */
+            internal fun of(origin: Class<*>): CodeLocation {
+                return CodeLocation(
+                    throwable = null,
+                    origin = origin,
                 )
             }
         }
 
-        /** The filtered stack trace, excluding Kontainer internals */
-        val stack: Array<StackTraceElement> by lazy {
+        /** Computed on first use; a race only computes the same stack twice */
+        @Volatile
+        private var stackCache: Array<StackTraceElement>? = null
+
+        /** Computed on first use from [stack] */
+        @Volatile
+        private var stackPrintedCache: String? = null
+
+        /** The filtered stack trace, excluding Kontainer internals; a single entry for a location named by a class */
+        val stack: Array<StackTraceElement>
+            get() = stackCache ?: computeStack().also { stackCache = it }
+
+        /** The filtered stack trace as a formatted string */
+        val stackPrinted: String
+            get() = stackPrintedCache ?: computeStackPrinted().also { stackPrintedCache = it }
+
+        /** Returns the first (most relevant) stack trace element, or null */
+        fun first(): StackTraceElement? {
+            return stack.firstOrNull()
+        }
+
+        private fun computeStack(): Array<StackTraceElement> {
+
+            if (throwable == null) {
+                return arrayOf(
+                    StackTraceElement(origin?.name ?: "n/a", "invoke", null, -1)
+                )
+            }
+
             val originalStack = throwable.stackTrace
 
             val excludes = listOf(
@@ -57,7 +96,7 @@ class ServiceDefinition internal constructor(
                 it.className !in excludes
             }
 
-            when (firstIdx) {
+            return when (firstIdx) {
                 -1 -> originalStack
 
                 else -> originalStack.toList()
@@ -66,17 +105,11 @@ class ServiceDefinition internal constructor(
             }
         }
 
-        /** The filtered stack trace as a formatted string */
-        val stackPrinted: String by lazy {
+        private fun computeStackPrinted(): String {
             val newThrowable = Throwable()
             newThrowable.stackTrace = stack
 
-            newThrowable.stackTraceToString()
-        }
-
-        /** Returns the first (most relevant) stack trace element, or null */
-        fun first(): StackTraceElement? {
-            return stack.firstOrNull()
+            return newThrowable.stackTraceToString()
         }
     }
 
