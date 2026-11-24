@@ -292,8 +292,8 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         }
     }
 
-    // Pinned as it is; the fix is ticket ULTRA-00329.
-    "CURRENT BEHAVIOUR: a global singleton's Lookup stays bound to the first kontainer, which records every prototype" {
+    // ULTRA-00329: this pin said "CURRENT BEHAVIOUR" while the Lookup stayed bound to kontainer one.
+    "A global singleton's Lookup is bound to the blueprint-wide kontainer, not to the kontainer that created it" {
 
         abstract class Base : Counted()
         class ProtoImpl : Base()
@@ -315,9 +315,10 @@ class InjectionFormsCharacterizationSpec : StringSpec({
 
             repeat(3) { two.get(Holder::class).lookup.get(ProtoImpl::class) }
 
-            withClue("the prototypes are created by kontainer one's provider, although used through kontainer two") {
-                one.getProvider(ProtoImpl::class).instances.size shouldBe 3
-                two.getProvider(ProtoImpl::class).instances.size shouldBe 0
+            withClue("the prototypes are created by the blueprint-wide kontainer's provider, by no request's") {
+                one.getProvider(ProtoImpl::class).created.count shouldBe 0L
+                two.getProvider(ProtoImpl::class).created.count shouldBe 0L
+                blueprint.globalKontainer.getProvider(ProtoImpl::class).created.count shouldBe 3L
             }
         }
     }

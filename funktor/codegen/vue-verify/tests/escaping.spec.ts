@@ -18,10 +18,10 @@ import RoutingTab from '../src/funktorsdk/insights/RoutingTab.vue'
 import RuntimeTab from '../src/funktorsdk/insights/RuntimeTab.vue'
 import UserTab from '../src/funktorsdk/insights/UserTab.vue'
 import VaultTab from '../src/funktorsdk/insights/VaultTab.vue'
-import { highlighted, mount, PAYLOAD, recorded, sliceOf } from './support.ts'
+import { click, highlighted, KONTAINER_GRAPH_PATH, mount, PAYLOAD, recorded, recordedGraphs, sliceOf } from './support.ts'
 import type { Mounted } from './support.ts'
 
-vi.mock('vis-network/standalone', () => ({ Network: class {} }))
+vi.mock('vis-network/standalone', () => ({ Network: class { destroy(): void {} } }))
 
 let mounted: Mounted | null = null
 
@@ -111,12 +111,23 @@ describe('a recorded <img onerror> renders as text', () => {
         expect(card.querySelectorAll('details pre .token').length).toBeGreaterThan(0)
     })
 
-    it('kontainer: a class name and a code location', async () => {
-        const slice = sliceOf(recorded.fat(), 'kontainer')
-        slice.info.services[0].cls = { fqn: `io.example.${PAYLOAD}` }
-        slice.info.services[0].definition.codeLocation = { location: PAYLOAD }
+    it('kontainer: a class name, and a code location from the graph', async () => {
+        const slice = sliceOf(recorded.slim(), 'kontainer')
+        const graph: any = recorded.kontainerGraph()
+        const planted = graph.data.services.find((it: { cls: string }) => it.cls === slice.services[0].cls)
 
-        await expectEscaped(KontainerTab, slice, 2)
+        slice.services[0].cls = `io.example.${PAYLOAD}`
+        planted.cls = slice.services[0].cls
+        planted.definition.codeLocation = PAYLOAD
+
+        const { graphs } = recordedGraphs({ [KONTAINER_GRAPH_PATH]: { status: 200, body: graph } })
+        mounted = await mount(KontainerTab, { data: slice }, graphs)
+        await click(mounted.host, 'Show instances Graph')
+
+        const host = mounted.host
+        expect(host.querySelector('img'), 'the payload reached the DOM as markup').toBeNull()
+        expect(host.textContent, 'the graph was joined: its code location is shown').toContain(PAYLOAD)
+        expect((host.textContent?.split(PAYLOAD).length ?? 1) - 1, 'the class name and the code location').toBe(2)
     })
 
     it('app-config: a config value', async () => {

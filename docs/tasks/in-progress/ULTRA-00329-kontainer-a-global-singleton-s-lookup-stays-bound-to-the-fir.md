@@ -1,6 +1,6 @@
 # ULTRA-00329: Kontainer: a global singleton's Lookup stays bound to the first kontainer and keeps every prototype it creates
 
-> **Status (2026-11-24): DESIGNED.** Plan written by track D, every question answered by the maintainer (see Plan answers); the build starts on the maintainer's word.
+> **Status (2026-11-24): IN PROGRESS.** track D builds K3a and K3b; gate 1 next
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
@@ -100,6 +100,88 @@ Track D's plan (2026-11-23) asked five questions; answered one at a time.
   While the Fable credits are used up (week of 2026-11-24), each Fable rung runs on Opus one level higher: rung 2 as
   Opus high, rung 3 as Opus xhigh (maintainer, 2026-11-24).
 
+## Progress (track D, `wt/kontainer`)
+
+| Batch | What | State |
+|---|---|---|
+| K3a | counters (`ServiceProvider.created`), lock-free `ForPrototype`, `ForSingleton` time beside the instance, `ForOverride` constants, `ServiceProviderFactory` on `ConcurrentHashMap`; `ultra/log` compile edit | committed, mutants 10/10 RED |
+| K3c, JVM half | `KontainerCollector.Data` v3 `{cls, type, count, firstCreatedAt, lastCreatedAt}`, Slumber spec, `funktor/all` slice spec | committed ahead of K3b (K3a removed the API the collector read, and the change 2 suites need `funktor/insights` to compile); mutants 6/6 RED |
+| K3b | blueprint-wide kontainer (`KontainerBlueprint.globalKontainer`, lazy, untracked); `ForSingleton` with kind Static creates in it | mutants 7/7 RED |
+| gate 1 | strict, kontainer and the JVM wire | PASS in round 1; MINOR batch applied once (ledger below) |
+| K3d | GUIs (`funktor/inspect`, `funktor/codegen` TS and Vue, fixtures), `TAB-SPECS.md` | committed, mutants 12/12 RED |
+| gate 2 | strict, GUIs and `TAB-SPECS.md` | PASS in round 1; final batch applied once (ledger below) |
+
+Deviation from the batches of the plan: the JVM half of K3c moved before K3b, for the reason in the table.
+K3d reads v3 only (Q3): an older record's instance list is not read, and `readInstantMillis` reads only Slumber's
+`{ts}` object (a bare number is no longer taken for epoch seconds). After gate 2 (maintainer, 2026-11-24: "drop the
+v1 path too, no backward compat") the v1 (fat) shape is not read at all and shows as the raw tree; a v2 record reads
+as services without creations. A `DynamicOverride` names no class: it shows as "handed in at create".
+The plan's `ForPrototype` counter is one `AtomicReference` snapshot updated by CAS with first = min and last = max:
+lock-free as Q5 asks, and the snapshot never has `lastAt < firstAt`.
+
+## Gate 1 ledger (strict; round 1, Opus high standing in for rung 2)
+
+Result: PASS in round 1, zero CRITICAL, zero MAJOR. The MINORs were applied once as a batch, not re-reviewed.
+
+| Charter | Severity | Finding | Disposition |
+|---|---|---|---|
+| impl | MINOR | docs show the removed instance API (`introspection.astro`, `docs-site/src/data/llms/kontainer.md`, the stale `ultra/kontainer/docs/ultra::docs/index.md` copy) | out of scope: DOCS follow-up at archive |
+| impl | MINOR | KDoc of `globalKontainerLazy` said none of its creations show in a request's dump; the global singletons do (shared providers) | fix (M1) |
+| impl | surplus | duplicate test in `ServiceProviderCreatedSpec` ("same creation in every kontainer") | fix (M4): removed, the characterization test stays |
+| impl, security | surplus | `globalKontainerLazy` plus a getter | reject: reviewers split, the domain reviewer argues to keep it; a one-line convenience |
+| impl, security | surplus | `DebugInfo.CreatedDebugInfo` mirrors `ServiceProvider.Created` | reject: the `DebugInfo` mirror pattern of the module (domain reviewer) |
+| security | MINOR | no concurrency test of the blueprint-wide lazy | fix (M2) |
+| security | surplus | JVM defaults on `KontainerCollector.Data.Service` | reject: Q3 decision |
+| domain | MINOR | docs, as the impl docs finding | as above |
+| domain | MINOR | the "everything a Static service reaches is Static" guard checks the kinds against their own announcements | fix (M3): a runtime check that the blueprint-wide kontainer provides no non-Static class |
+
+CLEAN (verified by the reviewers):
+- No request data reaches the blueprint-wide kontainer.
+- The Static premise holds for every parameter form.
+- No deadlock: the lazy initializer runs no service code, and there is no reentrant `computeIfAbsent`.
+- The counter CAS is exact and side-effect free.
+- The singleton's `createdAt` and `instance` are published safely.
+- No unbounded growth.
+- The insights wire leaks nothing new.
+
+Fix-batch mutants:
+- M2, `SYNCHRONIZED` to `PUBLICATION`: survives, as an equivalent mutant. `PUBLICATION` hands every caller the one published value, and the initializer has no side effect but an allocation, so no test can tell them apart.
+- M2, `SYNCHRONIZED` to `NONE`: RED (the concurrency test; prototypes counted in a kontainer other than the published one).
+- M3, `ForLazyService` announces nothing: RED, but on the announcement guard, which runs first.
+- M3, `ForLazyService` also resolves the unannounced dynamic `Kontainer`: RED on the runtime check only, the one test in the suite that sees it.
+
+## Gate 2 ledger (strict; round 1, Opus high standing in for rung 2)
+
+Result: PASS in round 1, zero CRITICAL, zero MAJOR; the security charter had no findings. The final batch was applied
+once, not re-reviewed.
+
+| Charter | Severity | Finding | Disposition |
+|---|---|---|---|
+| impl | MINOR | the instances graph of a full (v1) record is empty, since v1 instance lists are not read | fix, by removing the v1 path (maintainer decision below) |
+| impl | MINOR | no-op counter reset when graph-only services are joined (`slices.kt`, `slices.ts`) | fix: removed |
+| impl | MINOR | long lines (`KontainerTab.kt:34`, `KontainerTab.vue:10`) | fix: re-wrapped |
+| domain | MINOR | a `DynamicOverride` names `UserProvider`, an interface, as the class it creates | fix: no class named, "handed in at create" in both GUIs and `TAB-SPECS.md` |
+| domain | MINOR | `TAB-SPECS.md` "Three shapes on disk; the readers read two." | fix: two shapes read, v1 as the raw tree |
+| domain | surplus | no-op counter reset | same as the impl finding |
+| domain | question | keep the v1 reading path? | maintainer decision, 2026-11-24: "drop the v1 path too, no backward compat": removed from both readers and tabs, `record-fat.json` and the v1-only cases deleted |
+| domain | note | a v2 record shows "0 instantiated" and "-" cells | reject: Q3 decision ("reads as a service with no creations") |
+| security | none | no findings | |
+
+CLEAN (verified by the reviewers):
+- No raw HTML sink in either tab or in the graph labels.
+- The readers survive wrong types, NaN, Infinity, negative counts and `__proto__`.
+- The per-instance DOM growth is gone.
+- The fixtures carry no local paths or secrets.
+- Writer and readers agree on every field: `{ts}` millis, count 0 absent, nulls.
+- Kraft/Vue parity of the cell, the sort, the summary and the graph pools.
+- The fixture drift is attributed correctly: `TemplateInsightsCollector` removed, `InsightsConfig` in `FunktorConfig`.
+
+Final-batch mutants:
+- Kraft reads v1 again: RED on the raw-tree pin of `InsightsPagesSpec`.
+- Vue reads v1 again: RED on four cases (both v1 pins, both "neither shape" cases).
+- Kraft names the override's class: RED on the new "handed in at create" test.
+- Vue names the override's class: RED on the parity definition sort.
+
 ## History
 
 - 2026-11-14: created on the maintainer's word.
@@ -107,3 +189,7 @@ Track D's plan (2026-11-23) asked five questions; answered one at a time.
   including the change of the insights wire shape (lists of instances become a count and two times); track D writes
   a plan without code first.
 - 2026-11-24: the plan's five questions, the lock check and the area edits answered (Plan answers).
+- 2026-11-24: IN PROGRESS. track D builds K3a and K3b; gate 1 next
+- 2026-11-24: K3a, the JVM half of K3c and K3b committed; gate 1 PASS in round 1, MINOR batch M1 to M4 applied.
+- 2026-11-24: K3c (TAB-SPECS) and K3d committed; gate 2 PASS in round 1, final batch applied (v1 path dropped on the
+  maintainer's word, override names no class).

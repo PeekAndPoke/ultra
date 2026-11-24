@@ -4,7 +4,7 @@
     "description": "OK"
   },
   "data": {
-    "fingerprint": "3b1b01c0fd88a9450b703424f12b05d6bd4e4a0972125ad4f2710d79637b9cbf",
+    "fingerprint": "8b6e6c2ca4d2d73667b349a634a61fe6008b8ce618e238a88293e1fd556b7951",
     "services": [
       {
         "cls": "com.arangodb.ArangoDatabaseAsync",
@@ -25,6 +25,25 @@
           "injectionType": "Dynamic",
           "injects": [],
           "codeLocation": "io.peekandpoke.funktor.core.Core_moduleKt.Funktor_Core$lambda$0(core_module.kt:251)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.EncryptedTestFiles",
+        "type": "Dynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.EncryptedTestFiles",
+          "injectionType": "Dynamic",
+          "injects": [
+            {
+              "name": "p1",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.depot.crypto.DepotKeyStore"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint$lambda$0(index_testJvm.kt:139)",
           "overwrites": null
         }
       },
@@ -61,7 +80,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.FunktorKt.Funktor$lambda$0(funktor.kt:34)",
+          "codeLocation": "io.peekandpoke.funktor.FunktorKt.Funktor$lambda$0(funktor.kt:33)",
           "overwrites": null
         }
       },
@@ -476,7 +495,7 @@
           "creates": "io.peekandpoke.funktor.cluster.FunktorClusterApiFeature",
           "injectionType": "Singleton",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:90)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:95)",
           "overwrites": null
         }
       },
@@ -526,7 +545,7 @@
               "name": "depot",
               "provisionType": "Lazy",
               "classes": [
-                "io.peekandpoke.funktor.cluster.depot.DepotFacade"
+                "io.peekandpoke.ultra.depot.DepotFacade"
               ]
             },
             {
@@ -537,7 +556,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:88)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:93)",
           "overwrites": null
         }
       },
@@ -599,7 +618,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:95)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:100)",
           "overwrites": null
         }
       },
@@ -618,12 +637,12 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:207)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:215)",
           "overwrites": {
             "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$Archive$Null",
             "injectionType": "Singleton",
             "injects": [],
-            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:418)",
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:447)",
             "overwrites": null
           }
         }
@@ -635,7 +654,7 @@
           "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$DataCodec",
           "injectionType": "Singleton",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:96)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:101)",
           "overwrites": null
         }
       },
@@ -654,12 +673,12 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:195)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:203)",
           "overwrites": {
             "creates": "io.peekandpoke.funktor.cluster.backgroundjobs.BackgroundJobs$Queue$Null",
             "injectionType": "Singleton",
             "injects": [],
-            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:409)",
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:438)",
             "overwrites": null
           }
         }
@@ -679,7 +698,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:101)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:106)",
           "overwrites": null
         }
       },
@@ -698,7 +717,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:102)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:107)",
           "overwrites": null
         }
       },
@@ -717,7 +736,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:410)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:439)",
           "overwrites": null
         }
       },
@@ -736,7 +755,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:205)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:213)",
           "overwrites": null
         }
       },
@@ -755,7 +774,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:396)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:425)",
           "overwrites": null
         }
       },
@@ -774,7 +793,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:193)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:201)",
           "overwrites": null
         }
       },
@@ -793,26 +812,26 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:99)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:104)",
           "overwrites": null
         }
       },
       {
-        "cls": "io.peekandpoke.funktor.cluster.depot.DepotFacade",
+        "cls": "io.peekandpoke.funktor.cluster.depot.keys.VaultDepotKeyStore$Repo",
         "type": "SemiDynamic",
         "definition": {
-          "creates": "io.peekandpoke.funktor.cluster.depot.DepotFacade",
+          "creates": "io.peekandpoke.funktor.cluster.depot.keys.KarangoDepotKeyRepo",
           "injectionType": "Singleton",
           "injects": [
             {
-              "name": "drivers",
-              "provisionType": "Lazy",
+              "name": "p1",
+              "provisionType": "Direct",
               "classes": [
-                "io.peekandpoke.funktor.insights.InsightsRepository"
+                "io.peekandpoke.karango.vault.KarangoDriver"
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:107)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:537)",
           "overwrites": null
         }
       },
@@ -845,12 +864,12 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:438)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:467)",
           "overwrites": {
             "creates": "io.peekandpoke.funktor.cluster.locks.PrimitiveGlobalLocksProvider",
             "injectionType": "Dynamic",
             "injects": [],
-            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:427)",
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:465)",
             "overwrites": null
           }
         }
@@ -870,7 +889,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:113)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:120)",
           "overwrites": null
         }
       },
@@ -881,7 +900,7 @@
           "creates": "io.peekandpoke.funktor.cluster.locks.GlobalServerList",
           "injectionType": "Singleton",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:114)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:121)",
           "overwrites": null
         }
       },
@@ -907,7 +926,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:112)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:119)",
           "overwrites": null
         }
       },
@@ -926,12 +945,12 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:240)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:248)",
           "overwrites": {
             "creates": "io.peekandpoke.funktor.cluster.locks.ServerBeaconRepository$Null",
             "injectionType": "Dynamic",
             "injects": [],
-            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:436)",
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:474)",
             "overwrites": null
           }
         }
@@ -951,7 +970,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:125)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:132)",
           "overwrites": null
         }
       },
@@ -970,7 +989,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:424)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:453)",
           "overwrites": null
         }
       },
@@ -989,7 +1008,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:220)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:228)",
           "overwrites": null
         }
       },
@@ -1008,7 +1027,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:458)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:487)",
           "overwrites": null
         }
       },
@@ -1027,7 +1046,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:238)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:246)",
           "overwrites": null
         }
       },
@@ -1060,7 +1079,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:118)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:125)",
           "overwrites": null
         }
       },
@@ -1093,7 +1112,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:119)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:126)",
           "overwrites": null
         }
       },
@@ -1126,7 +1145,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:123)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:130)",
           "overwrites": null
         }
       },
@@ -1159,7 +1178,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:122)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:129)",
           "overwrites": null
         }
       },
@@ -1192,7 +1211,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:121)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:128)",
           "overwrites": null
         }
       },
@@ -1218,7 +1237,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:141)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:148)",
           "overwrites": null
         }
       },
@@ -1244,12 +1263,12 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:266)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:274)",
           "overwrites": {
             "creates": "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage$Adapter$Null",
             "injectionType": "Singleton",
             "injects": [],
-            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:454)",
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:492)",
             "overwrites": null
           }
         }
@@ -1276,7 +1295,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:490)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:519)",
           "overwrites": null
         }
       },
@@ -1295,7 +1314,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:133)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:140)",
           "overwrites": null
         }
       },
@@ -1314,12 +1333,12 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:255)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:263)",
           "overwrites": {
             "creates": "io.peekandpoke.funktor.cluster.storage.RandomDataStorage$Adapter$Null",
             "injectionType": "Singleton",
             "injects": [],
-            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:445)",
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:483)",
             "overwrites": null
           }
         }
@@ -1346,7 +1365,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:472)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:501)",
           "overwrites": null
         }
       },
@@ -1372,7 +1391,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:130)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:137)",
           "overwrites": null
         }
       },
@@ -1391,7 +1410,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:138)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:145)",
           "overwrites": null
         }
       },
@@ -1410,7 +1429,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:144)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:151)",
           "overwrites": null
         }
       },
@@ -1429,7 +1448,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:136)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:143)",
           "overwrites": null
         }
       },
@@ -1448,7 +1467,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:149)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:156)",
           "overwrites": null
         }
       },
@@ -1502,7 +1521,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:154)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:161)",
           "overwrites": null
         }
       },
@@ -1528,7 +1547,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:276)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:294)",
           "overwrites": null
         }
       },
@@ -1554,7 +1573,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:157)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:164)",
           "overwrites": null
         }
       },
@@ -1573,12 +1592,12 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:278)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:296)",
           "overwrites": {
             "creates": "io.peekandpoke.funktor.cluster.workers.services.WorkerHistory$Adapter$InMemory",
             "injectionType": "Singleton",
             "injects": [],
-            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:463)",
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:501)",
             "overwrites": null
           }
         }
@@ -1598,7 +1617,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:508)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:551)",
           "overwrites": null
         }
       },
@@ -1621,7 +1640,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:155)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:162)",
           "overwrites": null
         }
       },
@@ -1632,7 +1651,7 @@
           "creates": "io.peekandpoke.funktor.cluster.workers.services.WorkerTracker",
           "injectionType": "Singleton",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:156)",
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:163)",
           "overwrites": null
         }
       },
@@ -2078,6 +2097,7 @@
                 "io.peekandpoke.funktor.core.lifecycle.VaultHookScopeBinder",
                 "io.peekandpoke.funktor.core.repair.RepairManOnAppStartingHook",
                 "io.peekandpoke.funktor.insights.CollectorKeyUniquenessCheck",
+                "io.peekandpoke.funktor.insights.InsightsEnvironmentCheck",
                 "io.peekandpoke.funktor.rest.JwtSigningKeyOnAppStarting",
                 "io.peekandpoke.funktor.rest.ValidateRoutesOnAppStarting",
                 "io.peekandpoke.funktor.saas.EnsureOrganisationOnAppStarting"
@@ -2167,17 +2187,6 @@
         }
       },
       {
-        "cls": "io.peekandpoke.funktor.core.model.InsightsConfig",
-        "type": "Dynamic",
-        "definition": {
-          "creates": "io.peekandpoke.funktor.core.model.InsightsConfig",
-          "injectionType": "Dynamic",
-          "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:91)",
-          "overwrites": null
-        }
-      },
-      {
         "cls": "io.peekandpoke.funktor.core.repair.RepairMan",
         "type": "Dynamic",
         "definition": {
@@ -2257,13 +2266,12 @@
                 "io.peekandpoke.funktor.insights.collectors.ResponseCollector",
                 "io.peekandpoke.funktor.insights.collectors.RoutingCollector",
                 "io.peekandpoke.funktor.insights.collectors.RuntimeCollector",
-                "io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector",
                 "io.peekandpoke.funktor.insights.collectors.UserCollector",
                 "io.peekandpoke.funktor.insights.collectors.VaultCollector"
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:81)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:78)",
           "overwrites": null
         }
       },
@@ -2274,7 +2282,7 @@
           "creates": "io.peekandpoke.funktor.insights.HeaderLogging",
           "injectionType": "Singleton",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:64)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:62)",
           "overwrites": null
         }
       },
@@ -2289,25 +2297,18 @@
               "name": "p1",
               "provisionType": "Direct",
               "classes": [
-                "io.peekandpoke.funktor.core.model.InsightsConfig"
+                "io.peekandpoke.funktor.core.config.AppConfig"
               ]
             },
             {
               "name": "p2",
               "provisionType": "Direct",
               "classes": [
-                "io.peekandpoke.funktor.core.config.AppConfig"
-              ]
-            },
-            {
-              "name": "p3",
-              "provisionType": "Direct",
-              "classes": [
                 "io.peekandpoke.ultra.kontainer.Kontainer"
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:100)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:90)",
           "overwrites": null
         }
       },
@@ -2318,7 +2319,7 @@
           "creates": "io.peekandpoke.funktor.insights.InsightsCodec",
           "injectionType": "Singleton",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:59)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:57)",
           "overwrites": null
         }
       },
@@ -2337,7 +2338,26 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:61)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:59)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.funktor.insights.InsightsEnvironmentCheck",
+        "type": "Singleton",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.insights.InsightsEnvironmentCheck",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "appConfig",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.core.config.AppConfig"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:80)",
           "overwrites": null
         }
       },
@@ -2356,7 +2376,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:84)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:83)",
           "overwrites": null
         }
       },
@@ -2367,12 +2387,12 @@
           "creates": "io.peekandpoke.funktor.insights.InsightsFileRepository",
           "injectionType": "Dynamic",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint$lambda$0(index_testJvm.kt:94)",
+          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint$lambda$0(index_testJvm.kt:130)",
           "overwrites": {
             "creates": "io.peekandpoke.funktor.insights.InsightsFileRepository",
             "injectionType": "Dynamic",
             "injects": [],
-            "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:120)",
+            "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:105)",
             "overwrites": null
           }
         }
@@ -2384,7 +2404,7 @@
           "creates": "io.peekandpoke.funktor.insights.api.InsightsApiFeature",
           "injectionType": "Singleton",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:87)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:86)",
           "overwrites": null
         }
       },
@@ -2417,7 +2437,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:72)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:70)",
           "overwrites": null
         }
       },
@@ -2443,7 +2463,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:73)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:71)",
           "overwrites": null
         }
       },
@@ -2454,7 +2474,7 @@
           "creates": "io.peekandpoke.funktor.insights.collectors.LogCollector",
           "injectionType": "Dynamic",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:75)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:73)",
           "overwrites": null
         }
       },
@@ -2465,7 +2485,7 @@
           "creates": "io.peekandpoke.funktor.insights.collectors.LogCollector$Appender",
           "injectionType": "Dynamic",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:76)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:74)",
           "overwrites": null
         }
       },
@@ -2484,7 +2504,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:69)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:67)",
           "overwrites": null
         }
       },
@@ -2503,7 +2523,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:70)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:68)",
           "overwrites": null
         }
       },
@@ -2514,7 +2534,7 @@
           "creates": "io.peekandpoke.funktor.insights.collectors.RoutingCollector",
           "injectionType": "Dynamic",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:71)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:69)",
           "overwrites": null
         }
       },
@@ -2525,18 +2545,7 @@
           "creates": "io.peekandpoke.funktor.insights.collectors.RuntimeCollector",
           "injectionType": "Dynamic",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:74)",
-          "overwrites": null
-        }
-      },
-      {
-        "cls": "io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector",
-        "type": "Dynamic",
-        "definition": {
-          "creates": "io.peekandpoke.funktor.insights.collectors.TemplateInsightsCollector",
-          "injectionType": "Dynamic",
-          "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:78)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:72)",
           "overwrites": null
         }
       },
@@ -2555,7 +2564,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:68)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:66)",
           "overwrites": null
         }
       },
@@ -2574,7 +2583,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:77)",
+          "codeLocation": "io.peekandpoke.funktor.insights.Insights_moduleKt.Funktor_Insights$lambda$0(insights_module.kt:75)",
           "overwrites": null
         }
       },
@@ -3191,204 +3200,6 @@
         }
       },
       {
-        "cls": "io.peekandpoke.funktor.staticweb.flashsession.FlashSession",
-        "type": "Dynamic",
-        "definition": {
-          "creates": "io.peekandpoke.funktor.staticweb.flashsession.FlashSession",
-          "injectionType": "Dynamic",
-          "injects": [
-            {
-              "name": "p1",
-              "provisionType": "Direct",
-              "classes": [
-                "io.ktor.server.sessions.CurrentSession"
-              ]
-            }
-          ],
-          "codeLocation": "io.peekandpoke.funktor.staticweb.flashsession.Flash_session_moduleKt.Funktor_FlashSession$lambda$0(flash_session_module.kt:29)",
-          "overwrites": null
-        }
-      },
-      {
-        "cls": "io.peekandpoke.funktor.staticweb.resources.WebResources",
-        "type": "SemiDynamic",
-        "definition": {
-          "creates": "io.peekandpoke.funktor.staticweb.resources.WebResources",
-          "injectionType": "Singleton",
-          "injects": [
-            {
-              "name": "groups",
-              "provisionType": "Lazy",
-              "classes": [
-                "io.peekandpoke.funktor.staticweb.resources.common.FomanticUiWebResources",
-                "io.peekandpoke.funktor.staticweb.resources.common.JQueryWebResource",
-                "io.peekandpoke.funktor.staticweb.resources.common.LazySizesWebResource",
-                "io.peekandpoke.funktor.staticweb.resources.common.VisJsWebResource",
-                "io.peekandpoke.funktor.staticweb.resources.prismjs.PrismJsWebResources"
-              ]
-            },
-            {
-              "name": "cacheBuster",
-              "provisionType": "Direct",
-              "classes": [
-                "io.peekandpoke.funktor.core.model.CacheBuster"
-              ]
-            }
-          ],
-          "codeLocation": "io.peekandpoke.funktor.staticweb.resources.Resources_moduleKt.Funktor_Resources$lambda$0(resources_module.kt:20)",
-          "overwrites": null
-        }
-      },
-      {
-        "cls": "io.peekandpoke.funktor.staticweb.resources.common.FomanticUiWebResources",
-        "type": "SemiDynamic",
-        "definition": {
-          "creates": "io.peekandpoke.funktor.staticweb.resources.common.FomanticUiWebResources",
-          "injectionType": "Singleton",
-          "injects": [
-            {
-              "name": "cacheBuster",
-              "provisionType": "Direct",
-              "classes": [
-                "io.peekandpoke.funktor.core.model.CacheBuster"
-              ]
-            }
-          ],
-          "codeLocation": "io.peekandpoke.funktor.staticweb.resources.common.Common_resourcesKt.Funktor_CommonWebResources$lambda$0(common_resources.kt:16)",
-          "overwrites": null
-        }
-      },
-      {
-        "cls": "io.peekandpoke.funktor.staticweb.resources.common.JQueryWebResource",
-        "type": "SemiDynamic",
-        "definition": {
-          "creates": "io.peekandpoke.funktor.staticweb.resources.common.JQueryWebResource",
-          "injectionType": "Singleton",
-          "injects": [
-            {
-              "name": "cacheBuster",
-              "provisionType": "Direct",
-              "classes": [
-                "io.peekandpoke.funktor.core.model.CacheBuster"
-              ]
-            }
-          ],
-          "codeLocation": "io.peekandpoke.funktor.staticweb.resources.common.Common_resourcesKt.Funktor_CommonWebResources$lambda$0(common_resources.kt:17)",
-          "overwrites": null
-        }
-      },
-      {
-        "cls": "io.peekandpoke.funktor.staticweb.resources.common.LazySizesWebResource",
-        "type": "SemiDynamic",
-        "definition": {
-          "creates": "io.peekandpoke.funktor.staticweb.resources.common.LazySizesWebResource",
-          "injectionType": "Singleton",
-          "injects": [
-            {
-              "name": "cacheBuster",
-              "provisionType": "Direct",
-              "classes": [
-                "io.peekandpoke.funktor.core.model.CacheBuster"
-              ]
-            }
-          ],
-          "codeLocation": "io.peekandpoke.funktor.staticweb.resources.common.Common_resourcesKt.Funktor_CommonWebResources$lambda$0(common_resources.kt:18)",
-          "overwrites": null
-        }
-      },
-      {
-        "cls": "io.peekandpoke.funktor.staticweb.resources.common.VisJsWebResource",
-        "type": "SemiDynamic",
-        "definition": {
-          "creates": "io.peekandpoke.funktor.staticweb.resources.common.VisJsWebResource",
-          "injectionType": "Singleton",
-          "injects": [
-            {
-              "name": "cacheBuster",
-              "provisionType": "Direct",
-              "classes": [
-                "io.peekandpoke.funktor.core.model.CacheBuster"
-              ]
-            }
-          ],
-          "codeLocation": "io.peekandpoke.funktor.staticweb.resources.common.Common_resourcesKt.Funktor_CommonWebResources$lambda$0(common_resources.kt:19)",
-          "overwrites": null
-        }
-      },
-      {
-        "cls": "io.peekandpoke.funktor.staticweb.resources.prismjs.PrismJsWebResources",
-        "type": "SemiDynamic",
-        "definition": {
-          "creates": "io.peekandpoke.funktor.staticweb.resources.prismjs.PrismJsWebResources",
-          "injectionType": "Singleton",
-          "injects": [
-            {
-              "name": "cacheBuster",
-              "provisionType": "Direct",
-              "classes": [
-                "io.peekandpoke.funktor.core.model.CacheBuster"
-              ]
-            }
-          ],
-          "codeLocation": "io.peekandpoke.funktor.staticweb.resources.prismjs.IndexKt.Funktor_PrismJs$lambda$0(index.kt:20)",
-          "overwrites": {
-            "creates": "io.peekandpoke.funktor.staticweb.resources.prismjs.PrismJsWebResources",
-            "injectionType": "Singleton",
-            "injects": [
-              {
-                "name": "cacheBuster",
-                "provisionType": "Direct",
-                "classes": [
-                  "io.peekandpoke.funktor.core.model.CacheBuster"
-                ]
-              }
-            ],
-            "codeLocation": "io.peekandpoke.funktor.staticweb.resources.prismjs.IndexKt.Funktor_PrismJs$lambda$0(index.kt:20)",
-            "overwrites": null
-          }
-        }
-      },
-      {
-        "cls": "io.peekandpoke.funktor.staticweb.templating.TemplateTools",
-        "type": "Prototype",
-        "definition": {
-          "creates": "io.peekandpoke.funktor.staticweb.templating.TemplateToolsImpl",
-          "injectionType": "Prototype",
-          "injects": [
-            {
-              "name": "config",
-              "provisionType": "Direct",
-              "classes": [
-                "io.peekandpoke.funktor.core.config.AppConfig"
-              ]
-            },
-            {
-              "name": "flash",
-              "provisionType": "Direct",
-              "classes": [
-                "io.peekandpoke.funktor.staticweb.flashsession.FlashSession"
-              ]
-            },
-            {
-              "name": "resource",
-              "provisionType": "Direct",
-              "classes": [
-                "io.peekandpoke.funktor.staticweb.resources.WebResources"
-              ]
-            },
-            {
-              "name": "routes",
-              "provisionType": "Direct",
-              "classes": [
-                "io.peekandpoke.funktor.core.broker.TypedRouteRenderer"
-              ]
-            }
-          ],
-          "codeLocation": "io.peekandpoke.funktor.staticweb.templating.Templating_moduleKt.Funktor_Templating$lambda$0(templating_module.kt:24)",
-          "overwrites": null
-        }
-      },
-      {
         "cls": "io.peekandpoke.karango.slumber.KarangoCodec",
         "type": "Dynamic",
         "definition": {
@@ -3473,13 +3284,65 @@
         }
       },
       {
+        "cls": "io.peekandpoke.ultra.depot.DepotFacade",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.ultra.depot.DepotFacade",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "drivers",
+              "provisionType": "Lazy",
+              "classes": [
+                "io.peekandpoke.funktor.EncryptedTestFiles",
+                "io.peekandpoke.funktor.insights.InsightsRepository"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:112)",
+          "overwrites": null
+        }
+      },
+      {
+        "cls": "io.peekandpoke.ultra.depot.crypto.DepotKeyStore",
+        "type": "SemiDynamic",
+        "definition": {
+          "creates": "io.peekandpoke.funktor.cluster.depot.keys.VaultDepotKeyStore",
+          "injectionType": "Singleton",
+          "injects": [
+            {
+              "name": "repo",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.funktor.cluster.depot.keys.VaultDepotKeyStore$Repo"
+              ]
+            },
+            {
+              "name": "kronos",
+              "provisionType": "Direct",
+              "classes": [
+                "io.peekandpoke.ultra.datetime.Kronos"
+              ]
+            }
+          ],
+          "codeLocation": "io.peekandpoke.funktor.cluster.FunktorClusterBuilder.useKarango(index_jvm.kt:284)",
+          "overwrites": {
+            "creates": "io.peekandpoke.funktor.cluster.depot.keys.NoDepotKeyStore",
+            "injectionType": "Singleton",
+            "injects": [],
+            "codeLocation": "io.peekandpoke.funktor.cluster.Index_jvmKt.Funktor_Cluster$lambda$0(index_jvm.kt:456)",
+            "overwrites": null
+          }
+        }
+      },
+      {
         "cls": "io.peekandpoke.ultra.kontainer.InjectionContext",
         "type": "Dynamic",
         "definition": {
           "creates": "io.peekandpoke.ultra.kontainer.InjectionContext",
           "injectionType": "Dynamic",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint(index_testJvm.kt:24)",
+          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint(index_testJvm.kt:28)",
           "overwrites": null
         }
       },
@@ -3490,7 +3353,7 @@
           "creates": "io.peekandpoke.ultra.kontainer.Kontainer",
           "injectionType": "Dynamic",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint(index_testJvm.kt:24)",
+          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint(index_testJvm.kt:28)",
           "overwrites": null
         }
       },
@@ -3501,7 +3364,7 @@
           "creates": "io.peekandpoke.ultra.kontainer.KontainerBlueprint",
           "injectionType": "Singleton",
           "injects": [],
-          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint(index_testJvm.kt:24)",
+          "codeLocation": "io.peekandpoke.funktor.Index_testJvmKt.createBlueprint(index_testJvm.kt:28)",
           "overwrites": null
         }
       },
@@ -3527,7 +3390,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.ultra.log.Index_jvmKt.Ultra_Logging$lambda$0(index_jvm.kt:70)",
+          "codeLocation": "io.peekandpoke.ultra.log.Index_jvmKt.Ultra_Logging$lambda$0(index_jvm.kt:72)",
           "overwrites": null
         }
       },
@@ -3559,7 +3422,7 @@
               ]
             }
           ],
-          "codeLocation": "io.peekandpoke.ultra.log.Index_jvmKt.Ultra_Logging$lambda$0(index_jvm.kt:56)",
+          "codeLocation": "io.peekandpoke.ultra.log.Index_jvmKt.Ultra_Logging$lambda$0(index_jvm.kt:58)",
           "overwrites": null
         }
       },
@@ -3641,6 +3504,7 @@
                 "io.peekandpoke.funktor.auth.db.karango.KarangoAuthRecordsRepo",
                 "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsArchiveRepo",
                 "io.peekandpoke.funktor.cluster.backgroundjobs.karango.KarangoBackgroundJobsQueueRepo",
+                "io.peekandpoke.funktor.cluster.depot.keys.VaultDepotKeyStore$Repo",
                 "io.peekandpoke.funktor.cluster.locks.karango.KarangoGlobalLocksRepo",
                 "io.peekandpoke.funktor.cluster.locks.karango.KarangoServerBeaconRepo",
                 "io.peekandpoke.funktor.cluster.storage.RandomCacheStorage$Adapter$Vault$Repo",
@@ -3871,7 +3735,7 @@
   },
   "messages": null,
   "insights": {
-    "ts": 1794322692,
+    "ts": 1795545758,
     "method": "GET",
     "url": "http://insights.funktor.local:80/_/funktor/insights/graphs/kontainer",
     "server": "build-host",
@@ -3879,6 +3743,6 @@
       "value": 200,
       "description": "OK"
     },
-    "durationMs": 22.428426
+    "durationMs": 15.593484
   }
 }

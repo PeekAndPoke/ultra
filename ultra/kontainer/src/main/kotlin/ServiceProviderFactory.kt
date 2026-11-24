@@ -1,19 +1,18 @@
 package io.peekandpoke.ultra.kontainer
 
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 /**
  * Creates and caches [ServiceProvider] instances for a [Kontainer].
  *
- * Manages thread-safe access to providers and applies dynamic overrides.
+ * Creates each provider at most once, without a lock shared by all callers, and applies dynamic overrides.
  */
 class ServiceProviderFactory internal constructor(
     val blueprint: KontainerBlueprint,
     internal val dynamics: DynamicOverrides,
     providerProviders: Map<KClass<*>, ServiceProvider.Provider>,
 ) {
-    private val lock: Any = Any()
-
     private val providerProviders: Map<KClass<*>, ServiceProvider.Provider> = providerProviders
         .plus(
             dynamics.overrides.map { (cls, provider) ->
@@ -35,7 +34,7 @@ class ServiceProviderFactory internal constructor(
             }
         )
 
-    private val providers: MutableMap<KClass<*>, ServiceProvider> = mutableMapOf()
+    private val providers: ConcurrentHashMap<KClass<*>, ServiceProvider> = ConcurrentHashMap()
 
     /** Creates a new [Kontainer] for [Kontainer.clone], merging in [overrides]; checked like [KontainerBlueprint.create] */
     internal fun newKontainer(overrides: DynamicOverrides): Kontainer {
@@ -45,28 +44,19 @@ class ServiceProviderFactory internal constructor(
     }
 
     /**
-     * Get the [ServiceProducer] for the given [cls].
+     * Get the [ServiceProvider] for the given [cls], creating it on first use.
      */
-    fun getProvider(cls: KClass<*>): ServiceProvider = synchronized(lock) {
-        providers.getOrPut(cls) {
-            providerProviders.getValue(cls).provide()
-        }
+    fun getProvider(cls: KClass<*>): ServiceProvider = providers.computeIfAbsent(cls) {
+        providerProviders.getValue(cls).provide()
     }
 
     /**
      * Checks if the [ServiceProvider] for the given [cls] is created.
      */
-    fun isProviderCreated(cls: KClass<*>): Boolean = synchronized(lock) {
-        providers.contains(cls)
-    }
+    fun isProviderCreated(cls: KClass<*>): Boolean = providers.containsKey(cls)
 
     /** Gets all providers, creating any that haven't been instantiated yet */
-    fun getAllProviders(): Map<KClass<*>, ServiceProvider> = synchronized(lock) {
-
-        providerProviders.mapValues { (cls, provider) ->
-            providers.getOrPut(cls) {
-                provider.provide()
-            }
-        }
+    fun getAllProviders(): Map<KClass<*>, ServiceProvider> = providerProviders.mapValues { (cls, provider) ->
+        providers.computeIfAbsent(cls) { provider.provide() }
     }
 }

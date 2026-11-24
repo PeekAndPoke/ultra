@@ -158,7 +158,8 @@ private val vaultSlice = slice(
 private val kontainerSlice = slice(
     "kontainer",
     """{"graphFingerprint": "fp1", "services": [
-        {"cls": "com.example.UserRepo", "type": "Singleton", "instances": [{"cls": "com.example.UserRepo", "createdAt": {"ts": 1794000000000}}]}
+        {"cls": "com.example.UserRepo", "type": "Singleton", "count": 1,
+         "firstCreatedAt": {"ts": 1794000000000}, "lastCreatedAt": {"ts": 1794000000000}}
     ]}""",
 )
 
@@ -467,7 +468,7 @@ class InsightsPagesSpec : StringSpec() {
             }
         }
 
-        "older record shapes read: a full kontainer slice with epoch seconds, a Monko json entry" {
+        "older record shapes: a kontainer slice written before 2026-10-19 shows as the raw tree; a Monko json entry" {
             val server = FakeInsightsServer()
             server.records["records-2026-11-10/a.json"] = record(
                 "a.json",
@@ -488,17 +489,103 @@ class InsightsPagesSpec : StringSpec() {
             )
 
             withDetail(server, "a.json") { root, _ ->
-                eventually { root.textContent() shouldContain "full -- every definition inline" }
+                // Not read: the raw tree, as for any slice the reader does not understand
+                eventually { root.textContent() shouldContain "\"numOld\"" }
                 root.textContent() shouldContain "Clocks.kt:7"
-                root.textContent() shouldContain "1 / 0 / 1 -- not measured"
-                // Epoch SECONDS, as millis: not the year 58,000
-                root.textContent() shouldContain Date(1_700_000_000_500.0).toLocaleString()
+                root.textContent() shouldNotContain "instantiated"
+                root.selectCss(".button").filter { it.textContent?.trim() == "Show instances Graph" }.size shouldBe 0
+                root.selectCss("th").filter { it.textContent?.trim() == "Created" }.size shouldBe 0
 
                 root.tab("Database")
                 eventually { root.textContent() shouldContain "when Monko still put the bind values into its query text" }
                 // A stat card: its label above its value
                 root.textContent() shouldContain "Bind varsunknown"
 
+            }
+        }
+
+        "an instance handed in at create names no class: its definition says so, over the blueprint's" {
+            val server = FakeInsightsServer()
+            server.kontainerGraph = InsightsKontainerGraph(
+                fingerprint = "fp1",
+                services = listOf(
+                    InsightsKontainerGraph.Service(
+                        cls = "com.example.Greeter",
+                        type = "Dynamic",
+                        definition = InsightsKontainerGraph.Definition(
+                            creates = "com.example.DefaultGreeter",
+                            injectionType = "Dynamic",
+                            injects = listOf(InsightsKontainerGraph.Injection("db", "Direct", listOf("com.example.Database"))),
+                            codeLocation = "Module.kt:7",
+                            overwrites = null,
+                        ),
+                    ),
+                ),
+            )
+            server.records["records-2026-11-10/a.json"] = record(
+                "a.json",
+                slice(
+                    "kontainer",
+                    """{"graphFingerprint": "fp1", "services": [
+                        {"cls": "com.example.Greeter", "type": "DynamicOverride", "count": 1,
+                         "firstCreatedAt": {"ts": 1794000000000}, "lastCreatedAt": {"ts": 1794000000000}}
+                    ]}""",
+                ),
+            )
+
+            withDetail(server, "a.json") { root, _ ->
+                root.button("Show Full Graph")
+
+                eventually { root.textContent() shouldContain "Module.kt:7" }
+
+                val definition = root.selectCss("table tbody tr td").toList()[4].textContent?.replace(Regex("\\s+"), " ")
+                definition shouldBe "Dynamic - handed in at createOverwrites -> Dynamic - DefaultGreeterModule.kt:7"
+            }
+        }
+
+        "the kontainer table shows each service's count and creation times, sorts them by number" {
+            val first = 1_794_000_000_000L
+            val last = 1_794_000_360_000L
+            val server = FakeInsightsServer()
+            server.records["records-2026-11-10/a.json"] = record(
+                "a.json",
+                slice(
+                    "kontainer",
+                    """{"graphFingerprint": "fp1", "services": [
+                        {"cls": "com.example.Many", "type": "Prototype", "count": 12,
+                         "firstCreatedAt": {"ts": $first}, "lastCreatedAt": {"ts": $last}},
+                        {"cls": "com.example.Few", "type": "Prototype", "count": 3,
+                         "firstCreatedAt": {"ts": $first}, "lastCreatedAt": {"ts": $first}},
+                        {"cls": "com.example.One", "type": "Singleton", "count": 1,
+                         "firstCreatedAt": {"ts": $last}, "lastCreatedAt": {"ts": $last}},
+                        {"cls": "com.example.Old", "type": "Prototype",
+                         "instances": [{"cls": "com.example.Old", "createdAt": {"ts": 1700000000000}}]}
+                    ]}""",
+                ),
+            )
+
+            withDetail(server, "a.json") { root, _ ->
+                eventually { root.textContent() shouldContain "com.example.Many" }
+
+                suspend fun cells(): Map<String, String> = root.selectCss("table tbody tr").associate { row ->
+                    val tds = row.querySelectorAll("td")
+                    tds.item(0)?.textContent?.trim().orEmpty() to tds.item(2)?.textContent?.trim().orEmpty()
+                }
+
+                val at = { millis: Long -> Date(millis.toDouble()).toLocaleString() }
+
+                cells() shouldBe mapOf(
+                    "com.example.Few" to "3first ${at(first)}last ${at(first)}",
+                    "com.example.Many" to "12first ${at(first)}last ${at(last)}",
+                    "com.example.One" to "1${at(last)}",
+                    "com.example.Old" to "-",
+                )
+
+                KQuery(root.selectCss("th").filter { it.textContent?.trim() == "Created" }).click()
+                eventually { root.selectCss("th.ascending.sorted").count() shouldBe 1 }
+
+                root.selectCss("table tbody tr").map { it.querySelector("td")?.textContent?.trim() } shouldBe
+                    listOf("com.example.Old", "com.example.One", "com.example.Few", "com.example.Many")
             }
         }
 

@@ -156,15 +156,15 @@ class LoggingKontainerModuleSpec : StringSpec() {
             two.get(ServiceWithLog::class)
 
             assertSoftly {
-                one.getProvider(Log::class).instances.size shouldBe 4
-                two.getProvider(Log::class).instances.size shouldBe 1
+                one.getProvider(Log::class).created.count shouldBe 4L
+                two.getProvider(Log::class).created.count shouldBe 1L
 
                 twoLogs.first shouldNotBeSameInstanceAs twoLogs.second
                 one.get(ServiceWithLog::class).log shouldBeSameInstanceAs one.get(ServiceWithLog::class).log
                 one.get(ServiceWithLog::class) shouldNotBeSameInstanceAs two.get(ServiceWithLog::class)
 
-                one.getProvider(UltraLogManager::class).instances.size shouldBe 1
-                two.getProvider(UltraLogManager::class).instances.size shouldBe 1
+                one.getProvider(UltraLogManager::class).created.count shouldBe 1L
+                two.getProvider(UltraLogManager::class).created.count shouldBe 1L
                 one.get(UltraLogManager::class) shouldNotBeSameInstanceAs two.get(UltraLogManager::class)
             }
         }

@@ -206,7 +206,7 @@ class DynamicPrototypeSpec : StringSpec({
         }
     }
 
-    "Each kontainer has its own provider: the recorded instances are per kontainer" {
+    "Each kontainer has its own provider: the creations are counted per kontainer" {
 
         class DynProto
 
@@ -222,8 +222,8 @@ class DynamicPrototypeSpec : StringSpec({
 
         assertSoftly {
             one.getProvider(DynProto::class) shouldNotBeSameInstanceAs two.getProvider(DynProto::class)
-            one.getProvider(DynProto::class).instances.size shouldBe 3
-            two.getProvider(DynProto::class).instances.size shouldBe 1
+            one.getProvider(DynProto::class).created.count shouldBe 3L
+            two.getProvider(DynProto::class).created.count shouldBe 1L
         }
     }
 

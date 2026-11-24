@@ -10,12 +10,14 @@ import KontainerTab from '../src/funktorsdk/insights/KontainerTab.vue'
 import VaultTab from '../src/funktorsdk/insights/VaultTab.vue'
 import { buildFacts, readBuildInfo, serverBuildInfo } from '../src/funktorsdk/insights/slices.ts'
 import {
+    click,
     clientOver,
     highlighted,
     KONTAINER_GRAPH_PATH,
     mount,
     PAYLOAD,
     recorded,
+    recordedGraphs,
     RECORDS_PATH,
     SERVER_INFO_PATH,
     settle,
@@ -179,7 +181,10 @@ describe('the kontainer table', () => {
     })
 
     it('sorts the type and definition columns by what they show', async () => {
-        const host = await show(KontainerTab, { data: sliceOf(recorded.fat(), 'kontainer') })
+        // The definitions come from the graph, loaded by the first graph click
+        mounted = await mount(KontainerTab, { data: sliceOf(recorded.slim(), 'kontainer') }, recordedGraphs().graphs)
+        const host = mounted.host
+        await click(host, 'Show Full Graph')
         const byName = (a: string, b: string) => a.localeCompare(b)
 
         header(host, 'Type').querySelector('button')!.click()
@@ -197,18 +202,44 @@ describe('the kontainer table', () => {
             return first?.textContent?.replace(/\s+/g, ' ').trim() ?? ''
         })
         expect(definitions).toEqual([...definitions].sort(byName))
+        // An instance handed in at create names no class
+        expect(definitions).toContain('Dynamic - handed in at create')
     })
 
-    it('sorts the instances column by count, not by text', async () => {
-        const host = await show(KontainerTab, { data: sliceOf(recorded.fat(), 'kontainer') })
+    it('shows each service\'s count and creation times, and sorts the Created column by number, not by text', async () => {
+        const first = 1794000000000
+        const last = 1794000360000
+        const at = (millis: number) => new Date(millis).toLocaleString()
+        const host = await show(KontainerTab, {
+            data: {
+                graphFingerprint: 'fp1',
+                services: [
+                    { cls: 'com.example.Many', type: 'Prototype', count: 12, firstCreatedAt: { ts: first }, lastCreatedAt: { ts: last } },
+                    { cls: 'com.example.Few', type: 'Prototype', count: 3, firstCreatedAt: { ts: first }, lastCreatedAt: { ts: first } },
+                    { cls: 'com.example.One', type: 'Singleton', count: 1, firstCreatedAt: { ts: last }, lastCreatedAt: { ts: last } },
+                    { cls: 'com.example.Old', type: 'Prototype', instances: [{ cls: 'com.example.Old', createdAt: { ts: 1700000000000 } }] },
+                ],
+            },
+        })
 
-        header(host, 'Instances').querySelector('button')!.click()
+        // The same cells as the Kraft tab shows (InsightsPagesSpec): one line each, no space between them
+        const cells = Object.fromEntries(
+            [...host.querySelectorAll('.fk-services tbody tr')].map((row) => [
+                row.children[0]?.textContent?.trim(),
+                row.children[2]?.textContent?.trim(),
+            ]),
+        )
+        expect(cells).toEqual({
+            'com.example.Few': `3first ${at(first)}last ${at(first)}`,
+            'com.example.Many': `12first ${at(first)}last ${at(last)}`,
+            'com.example.One': `1${at(last)}`,
+            'com.example.Old': '-',
+        })
+
+        header(host, 'Created').querySelector('button')!.click()
         await settle()
 
-        const counts = [...host.querySelectorAll('.fk-services tbody tr')]
-            .map((row) => row.children[2]?.querySelectorAll(':scope > div:not(.fk-muted)').length ?? 0)
-        expect(counts).toEqual([...counts].sort((a, b) => a - b))
-        expect(new Set(counts).size).toBeGreaterThan(1)
+        expect(column(host, 0)).toEqual(['com.example.Old', 'com.example.One', 'com.example.Few', 'com.example.Many'])
         expect(header(host, 'Service').getAttribute('aria-sort')).toBe('none')
     })
 })

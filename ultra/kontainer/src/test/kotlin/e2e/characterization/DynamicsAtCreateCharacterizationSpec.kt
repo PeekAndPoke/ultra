@@ -78,7 +78,7 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
-    "An override that is never requested has its instance in instances, the debug info and the dump" {
+    "An override that is never requested counts one creation in its provider, the debug info and the dump" {
 
         class Dyn
 
@@ -87,10 +87,11 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }.create { with { Dyn() } }
 
         assertSoftly {
-            subject.getProvider(Dyn::class).instances.size shouldBe 1
+            subject.getProvider(Dyn::class).created.count shouldBe 1L
             subject.tools.getDebugInfo().services
-                .first { it.cls.fqn == Dyn::class.java.name }.instances.size shouldBe 1
-            subject.tools.dumpKontainer() shouldContain ": ${Dyn::class.getName()}"
+                .first { it.cls.fqn == Dyn::class.java.name }.created.count shouldBe 1L
+            subject.tools.dumpKontainer().lines()
+                .first { it.startsWith(Dyn::class.getName() + " ") } shouldContain "| 1, first "
         }
     }
 

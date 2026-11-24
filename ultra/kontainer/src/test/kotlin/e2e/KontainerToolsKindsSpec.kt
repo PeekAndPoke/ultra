@@ -169,7 +169,7 @@ class KontainerToolsKindsSpec : StringSpec() {
 
             assertSoftly {
                 lines[0] shouldBe "Kontainer dump:"
-                lines[2].split("|").map { it.trim() } shouldBe listOf("Service ID", "Type", "Kind", "Instances")
+                lines[2].split("|").map { it.trim() } shouldBe listOf("Service ID", "Type", "Kind", "Created")
 
                 row(KindsStatic::class) shouldBe listOf("Singleton", "Static")
                 row(KindsDyn::class) shouldBe listOf("Singleton", "Dynamic")

@@ -26,7 +26,8 @@ data class DebugInfo(
         /** The declared dynamic services that make it [ServiceKind.SemiDynamic]; empty otherwise */
         val semiDynamicBecauseOf: List<ClassInfo>,
         val definition: ServiceDefinitionInfo,
-        val instances: List<InstanceDebugInfo>,
+        /** What the provider created so far */
+        val created: CreatedDebugInfo,
     )
 
     /** Details about a service definition, including what it creates and its dependencies */
@@ -45,10 +46,11 @@ data class DebugInfo(
         )
     }
 
-    /** Debug information about a created service instance */
-    data class InstanceDebugInfo(
-        val createdAt: Instant,
-        val cls: ClassInfo,
+    /** How many instances a provider created, and when the first and the last one were made; null times for 0 */
+    data class CreatedDebugInfo(
+        val count: Long,
+        val firstAt: Instant?,
+        val lastAt: Instant?,
     )
 
     /** Represents a class by its fully qualified name */

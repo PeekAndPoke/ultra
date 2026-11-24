@@ -26,7 +26,10 @@ if (!source) throw new Error('usage: node refresh.mjs <INSIGHTS_WIRE_SAMPLES_DIR
 const here = fileURLToPath(new URL('.', import.meta.url))
 const files = readdirSync(source)
 
-/** The current record of InsightsRecordingSpec's request, as InsightsKontainerSliceSpec served it -- exactly one. */
+/**
+ * The current record of InsightsRecordingSpec's request, as InsightsKontainerSliceSpec served it -- exactly one. The
+ * spec also serves a frozen record of 2026-10-01, whose kontainer slice the GUIs no longer read: not a fixture.
+ */
 const slimCandidates = files.filter(
     (name) => /^record-response-\d{4}-\d{2}-\d{2}T.*\.json$/.test(name) && !name.includes('2026-10-01T12:00:00'),
 )
@@ -36,8 +39,6 @@ if (slimCandidates.length !== 1) {
 
 const targets = {
     'record-slim.json': slimCandidates[0],
-    // InsightsKontainerSliceSpec's frozen FAT_RECORD, as the API serves it
-    'record-fat.json': 'record-response-2026-10-01T12:00:00.000000000.json',
     // InsightsVaultBindValuesSpec: a session-token lookup on Arango and on Mongo, profiling and explain on
     'record-vault.json': 'record-response-vault-two-backends.json',
     'graph-kontainer.json': 'kontainer-graph.json',
