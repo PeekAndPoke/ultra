@@ -105,7 +105,7 @@ abstract class TypeLookup {
                 val map = getAllCandidatesFor(type)
                     .associateWith {
                         { kontainer: Kontainer, context: InjectionContext ->
-                            kontainer.get(it, context)
+                            kontainer.getCandidate(it, context)
                         }
                     }
 
