@@ -61,7 +61,7 @@ open class KontainerBenchmark {
     @Benchmark
     fun cloneOneOverride(): Kontainer = kontainer.clone { with(UserProvider::class) { user } }
 
-    /** A recorded request: create with the user, then the services an API call touches */
+    /** A typical request mix, hand-picked: create with the user, then services an API call would touch */
     @Benchmark
     fun request(bh: Blackhole) {
         request(blueprint.create { with(UserProvider::class) { user } }, bh)

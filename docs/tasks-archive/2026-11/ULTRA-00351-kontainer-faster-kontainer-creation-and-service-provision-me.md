@@ -65,7 +65,7 @@ says otherwise:
      dynamic, about 40 semi-dynamic through chains, 5 prototypes no-arg and with args, class and factory producers,
      one interface with 5 implementations, one overridable `UserProvider`-like dynamic). If the real funktor-demo
      blueprint builds without infrastructure, a second fixture with it.
-   - Benchmarks: `create()`, `create` with 1 and 2 overrides, `clone` with 1 override, a recorded request (create plus
+   - Benchmarks: `create()`, `create` with 1 and 2 overrides, `clone` with 1 override, a typical request mix, hand-picked, not recorded (create plus
      the services a real API call touches), hot `get` of a static and of a dynamic singleton, `getOrNull` of an
      interface, `getAll` of 5, prototype creation (no-arg, 3 args, factory), `LazyServiceLookup.get`; create, request
      and static get also at 8 threads.
