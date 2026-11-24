@@ -316,8 +316,8 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             repeat(3) { two.get(Holder::class).lookup.get(ProtoImpl::class) }
 
             withClue("the prototypes are created by kontainer one's provider, although used through kontainer two") {
-                one.getProvider(ProtoImpl::class).instances.size shouldBe 3
-                two.getProvider(ProtoImpl::class).instances.size shouldBe 0
+                one.getProvider(ProtoImpl::class).created.count shouldBe 3L
+                two.getProvider(ProtoImpl::class).created.count shouldBe 0L
             }
         }
     }
