@@ -108,10 +108,14 @@ Track D's plan (2026-11-23) asked five questions; answered one at a time.
 | K3c, JVM half | `KontainerCollector.Data` v3 `{cls, type, count, firstCreatedAt, lastCreatedAt}`, Slumber spec, `funktor/all` slice spec | committed ahead of K3b (K3a removed the API the collector read, and the change 2 suites need `funktor/insights` to compile); mutants 6/6 RED |
 | K3b | blueprint-wide kontainer (`KontainerBlueprint.globalKontainer`, lazy, untracked); `ForSingleton` with kind Static creates in it | mutants 7/7 RED |
 | gate 1 | strict, kontainer and the JVM wire | PASS in round 1; MINOR batch applied once (ledger below) |
-| K3d | GUIs (`funktor/inspect`, `funktor/codegen` TS and Vue, fixtures), `TAB-SPECS.md` | after gate 1 |
-| gate 2 | strict, GUIs | after K3d |
+| K3d | GUIs (`funktor/inspect`, `funktor/codegen` TS and Vue, fixtures), `TAB-SPECS.md` | committed, mutants 12/12 RED |
+| gate 2 | strict, GUIs and `TAB-SPECS.md` | next |
 
 Deviation from the batches of the plan: the JVM half of K3c moved before K3b, for the reason in the table.
+K3d reads v3 only (Q3): an older record's instance list is not read, and `readInstantMillis` reads only Slumber's
+`{ts}` object (a bare number is no longer taken for epoch seconds). A `DynamicOverride` now creates the service's
+own class, since no record names the instance handed in any more. The v1 (fat) shape keeps rendering its
+definitions; its services show no creations.
 The plan's `ForPrototype` counter is one `AtomicReference` snapshot updated by CAS with first = min and last = max:
 lock-free as Q5 asks, and the snapshot never has `lastAt < firstAt`.
 
@@ -155,3 +159,4 @@ Fix-batch mutants:
 - 2026-11-24: the plan's five questions, the lock check and the area edits answered (Plan answers).
 - 2026-11-24: IN PROGRESS. track D builds K3a and K3b; gate 1 next
 - 2026-11-24: K3a, the JVM half of K3c and K3b committed; gate 1 PASS in round 1, MINOR batch M1 to M4 applied.
+- 2026-11-24: K3c (TAB-SPECS) and K3d committed; gate 2 next.
