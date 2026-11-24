@@ -30,10 +30,31 @@
 ### Performance
 
 - `ultra/kontainer`: faster kontainer creation and service provision, no behaviour change (ULTRA-00351). Measured with
-  the new JMH harness (`:ultra:kontainer:jmh`) on a 254-service blueprint: `create` without overrides from 3.4 us and
-  12.7 KB to 15 ns and 264 B; a typical request mix (create, then ten typical gets) from 8.4 us and 20 KB to 3.9 us and
-  5.5 KB; a hot `get` from 29 ns to 14 ns with no allocation. A kontainer shares the blueprint's provider map and keeps
-  its overrides in a map of its own; the blueprint caches each type's single candidate.
+  the new JMH harness (`:ultra:kontainer-benchmarks:jmh`) on a 254-service blueprint: `create` without overrides from
+  3.4 us and 12.7 KB to 15 ns and 264 B; a typical request mix (create, then ten typical gets) from 8.4 us and 20 KB to
+  3.9 us and 5.5 KB; a hot `get` from 29 ns to 14 ns with no allocation. A kontainer shares the blueprint's provider map
+  and keeps its overrides in a map of its own; the blueprint caches each type's single candidate.
+- `ultra/kontainer`: an override at `create` or `clone` no longer captures a stack trace. Its code location in the debug
+  info names the override lambda's class instead of the useless `ServiceProviderFactory.<init>`. `create` with one
+  override from 1.3 us and 1.7 KB to 0.12 us and 1.0 KB (ULTRA-00353).
+
+### Fixes
+
+- `ultra/kontainer`, behaviour change (no compile signal): `getAll`, `List<T>` and `Lazy<List<T>>` injections and
+  `Lookup<T>.get` hand out each candidate's own service, in candidate order. A candidate that is a super type of another
+  registered candidate made them throw `ServiceAmbiguous`. `get` and `getOrNull` are unchanged. For an aliased primitive
+  key (`Int::class` and `java.lang.Integer`, e.g. `instance(5)`) the order of first use matters in both directions:
+  `getAll(Number::class)` after `getOrNull(Int::class)` now returns the instance (it threw `ServiceNotFound`), and
+  `getOrNull(Int::class)` or `get(Int::class)` after a first `getAll(Number::class)` or `Lookup` entry now find nothing
+  (they found it). Blueprints that inject a `List` or `Lookup` of the super type are unaffected. `getAll` of five from
+  104 ns to 65 ns (ULTRA-00352).
+- `ultra/kontainer`: `DynamicOverrides.Builder` hands out a copy of its overrides; a builder kept after `create` and
+  used again no longer changes what later clones of that kontainer get (ULTRA-00353).
+
+### Build
+
+- `ultra/kontainer`: the JMH harness lives in the unpublished module `ultra/kontainer-benchmarks` (`console/wt-gradle.sh
+  :ultra:kontainer-benchmarks:jmh`); the published `ultra/kontainer` applies no JMH plugin (ULTRA-00353).
 
 ## 0.119.0
 
