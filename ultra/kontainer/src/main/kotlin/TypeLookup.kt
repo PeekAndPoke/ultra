@@ -10,6 +10,8 @@ abstract class TypeLookup {
 
     /**
      * Get all matching types for the given [type]
+     *
+     * The answer for a type must not change: [getDistinctFor] keeps the distinct candidate it derives from it.
      */
     abstract fun getAllCandidatesFor(type: KClass<*>): Set<KClass<*>>
 

@@ -34,7 +34,7 @@ open class KontainerBenchmark {
     @Setup(Level.Trial)
     fun setup() {
         blueprint = funktorShapedBlueprint()
-        // Validates the blueprint and creates every global singleton once, as a running app has
+        // Validates the blueprint and creates the global singletons a request touches, as a running app has
         request(blueprint.create(), null)
 
         kontainer = blueprint.create { with(UserProvider::class) { user } }
