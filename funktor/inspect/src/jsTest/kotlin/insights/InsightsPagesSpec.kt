@@ -538,8 +538,12 @@ class InsightsPagesSpec : StringSpec() {
 
                 eventually { root.textContent() shouldContain "Module.kt:7" }
 
-                val definition = root.selectCss("table tbody tr td").toList()[4].textContent?.replace(Regex("\\s+"), " ")
+                val cells = root.selectCss("table tbody tr td").toList()
+                val definition = cells[4].textContent?.replace(Regex("\\s+"), " ")
                 definition shouldBe "Dynamic - handed in at createOverwrites -> Dynamic - DefaultGreeterModule.kt:7"
+
+                // The blueprint injects `db`; what was handed in injects nothing
+                cells[3].textContent?.trim() shouldBe "-"
             }
         }
 

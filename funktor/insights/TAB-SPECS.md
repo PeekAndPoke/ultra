@@ -11,8 +11,8 @@ node funktor/codegen/vue-verify/fixtures/refresh.mjs /some/dir
 
 The second line copies them into `funktor/codegen/vue-verify/fixtures/`, which the component tests read,
 so **those files are the current samples**: `record-slim.json` (the request `InsightsRecordingSpec` records),
-`record-vault.json` (queries on Arango and Mongo, profiling and explain on, two log lines), `record-fat.json`
-(a record written before 2026-10-19), and the graph endpoints' responses. Regenerate rather than trust
+`record-vault.json` (queries on Arango and Mongo, profiling and explain on, two log lines), and the graph
+endpoints' responses. Regenerate rather than trust
 this file once a collector moves.
 
 **Every string is attacker-controlled.** Headers, query parameters, paths and user agents come from

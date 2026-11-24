@@ -283,11 +283,11 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
 
                 val slice = record.kontainerSlice()
 
-                withClue("nothing reshapes an old slice on the way out: the frontend reads both shapes itself") {
+                withClue("nothing reshapes an old slice on the way out") {
                     slice shouldBe stored.kontainerSlice()
                 }
 
-                withClue("and it is unmistakably the fat shape, which a reader tells apart by `info`") {
+                withClue("and it is unmistakably the v1 shape (`info`), which both GUIs show as the raw tree") {
                     slice.keys shouldBe setOf("numOld", "numTotal", "info")
                     slice["info"]!!.jsonObject["services"]!!.jsonArray.size shouldBe 3
                 }
