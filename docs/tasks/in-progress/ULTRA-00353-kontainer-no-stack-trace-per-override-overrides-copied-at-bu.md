@@ -93,6 +93,29 @@ Reading: the stack capture was about 1.2 us and 850 B per override (-91% for one
 80 B per create with one override (a singleton map) and 216 B with two (a LinkedHashMap), about 35 ns for two.
 After the move, from the new module: `create` 17.4 +- 0.2 ns, 248 B; `getAll5` 59.2 +- 2.0 ns, 64 B.
 
+### Suites and compile sweep (after 8e65db73, counts from the XML, all written by this run)
+
+| Suite | Tests | Failures | Errors |
+|---|---:|---:|---:|
+| `:ultra:kontainer:test` | 624 | 0 | 0 |
+| `:ultra:log:jvmTest` | 74 | 0 | 0 |
+| `:ultra:vault:jvmTest` | 287 | 0 | 0 |
+| `:funktor:insights:jvmTest` | 119 | 0 | 0 |
+| `:funktor:cluster:jvmTest` | 162 | 0 | 0 |
+| `:funktor:all:jvmTest` | 289 | 0 | 0 |
+| `:funktor:core:jvmTest` | 775 (2 skipped) | 0 | 0 |
+| `:funktor:rest:jvmTest` | 124 | 0 | 0 |
+| `:funktor:auth:jvmTest` | 322 | 0 | 0 |
+| `:funktor:messaging:jvmTest` | 67 | 0 | 0 |
+| `:funktor:logging:jvmTest` | 14 | 0 | 0 |
+| `:funktor:codegen:test` | 104 | 0 | 0 |
+| `:funktor:saas:jvmTest` | 50 | 0 | 0 |
+| `:funktor-demo:server:test` | 52 | 0 | 0 |
+
+Compile sweep (`compileKotlinJvm compileTestKotlinJvm compileKotlinJs compileTestKotlinJs compileKotlin
+compileTestKotlin compileJmhKotlin --continue`): BUILD SUCCESSFUL, 0 lines `e:`, `compileJmhKotlin` now in
+`:ultra:kontainer-benchmarks`. These runs cover ULTRA-00352 as well.
+
 ## Acceptance
 
 - No stack walk on the override path; the override's location names the lambda's class; both changes pinned by tests.

@@ -72,6 +72,8 @@ service.
 | lazyLookupGet | 29.4 +- 0.2 | 18.1 +- 0.1 | -38% | 0 | 0 |
 | request | 4,746.5 +- 279.9 | 4,280.7 +- 68.5 | -10% | 5,496 | 5,512 |
 
+- Suites and compile sweep after both tickets: see ULTRA-00353 (all green, kontainer 624 / 0 / 0).
+
 ## Acceptance
 
 - The four forms return both candidates, in candidate order; every other kontainer and consumer suite green unchanged.
