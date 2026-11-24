@@ -55,6 +55,18 @@ object Deps {
     const val mavenPublishVersion = "0.37.0"
     // ///////////////////////////////////////////////////////////////////////////////////////////
 
+    // Benchmarks ////////////////////////////////////////////////////////////////////////////////
+    object Jmh {
+        // https://plugins.gradle.org/plugin/me.champeau.jmh
+        // checked 2026-11-24: latest 0.7.4
+        const val plugin_version = "0.7.4"
+
+        // https://repo1.maven.org/maven2/org/openjdk/jmh/jmh-core/maven-metadata.xml
+        // checked 2026-11-24: latest 1.37
+        const val jmh_version = "1.37"
+    }
+    // ///////////////////////////////////////////////////////////////////////////////////////////
+
     object KotlinLibs {
         // https://mvnrepository.com/artifact/com.github.ajalt.clikt/clikt
         // checked 2026-07-29: latest 5.1.0
