@@ -1,6 +1,6 @@
 # ULTRA-00353: Kontainer: no stack trace per override, overrides copied at build, JMH harness in its own module
 
-> **Status (2026-11-24): IN PROGRESS.** Track F: a, b and c done, tests first and mutation-checked, measured; waiting for the gate
+> **Status (2026-11-25): IN PROGRESS.** Merged into master (692e743a), gate PASS; open: strip the `$$Lambda` suffix (maintainer).
 
 ## Why this exists
 
