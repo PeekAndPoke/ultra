@@ -27,6 +27,14 @@
   count, the first and the last creation), and a `DynamicOverride` names no created class: "handed in at create"
   (ULTRA-00329).
 
+### Performance
+
+- `ultra/kontainer`: faster kontainer creation and service provision, no behaviour change (ULTRA-00351). Measured
+  with the new JMH harness (`:ultra:kontainer:jmh`) on a 254-service blueprint: `create` without overrides from 3.4 us
+  and 12.7 KB to 15 ns and 264 B; a recorded request from 8.4 us and 20 KB to 3.9 us and 5.5 KB; a hot `get` from
+  29 ns to 14 ns with no allocation. A kontainer shares the blueprint's provider map and keeps its overrides in a map
+  of its own; the blueprint caches each type's single candidate.
+
 ## 0.119.0
 
 ### Breaking changes
