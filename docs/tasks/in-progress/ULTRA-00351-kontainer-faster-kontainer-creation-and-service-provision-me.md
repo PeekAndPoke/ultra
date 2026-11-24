@@ -195,6 +195,19 @@ map costs more than the hash lookups it saves (an exact override costs one `Hash
 
 Reverted; the code stays as after finding 3.
 
+**Finding 6** (the constructor `createInstance` would pick, looked up once and lazily, then `callBy(emptyMap())`
+as `createInstance` does; checked against the kotlin-reflect 2.4.21 bytecode of `createInstance`. Without exactly
+one such constructor `createInstance` still runs on every instance and throws as before). Tests: 616 green; mutants
+of the new code: `firstOrNull` for `singleOrNull`, 1 RED (two all-optional constructors); a Java constructor made
+accessible, 1 RED (private constructor). A small gain: the time goes to kotlin-reflect's call itself. "before" is
+after finding 3 (request) and after finding 7 (prototypeNoArg); the request's B/op moves within its run-to-run
+spread of about 250 B.
+
+| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+|---|---:|---:|---:|---:|---:|
+| request | 4,515.5 +- 37.9 | 4,495.1 +- 39.1 | 0% | 5,728 | 5,840 |
+| prototypeNoArg | 75.2 +- 0.4 | 70.0 +- 1.9 | -7% | 104 | 104 |
+
 ## Coverage map (before any change)
 
 New spec `ProvisionPathsCharacterizationSpec` (17 tests), green on today's code. Every mutant below was applied to

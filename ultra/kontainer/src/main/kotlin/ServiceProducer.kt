@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.kontainer
 
 import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.primaryConstructor
@@ -58,8 +59,19 @@ class ServiceProducer<T : Any> internal constructor(
             val ctorParams = ctor.parameters.map { ParameterProvider.of(it) }
 
             return when {
-                ctorParams.isEmpty() -> ServiceProducer(emptyList(), cls) { _, _ ->
-                    cls.createInstance()
+                ctorParams.isEmpty() -> {
+                    // The constructor createInstance picks, looked up once; without exactly one, createInstance
+                    // runs on every instance and throws as it always did
+                    val noArgsCtor by lazy(LazyThreadSafetyMode.PUBLICATION) {
+                        cls.constructors.singleOrNull { it.parameters.all(KParameter::isOptional) }
+                    }
+
+                    ServiceProducer(emptyList(), cls) { _, _ ->
+                        when (val found = noArgsCtor) {
+                            null -> cls.createInstance()
+                            else -> found.callBy(emptyMap())
+                        }
+                    }
                 }
 
                 else -> ServiceProducer(ctorParams, cls) { _, params ->
