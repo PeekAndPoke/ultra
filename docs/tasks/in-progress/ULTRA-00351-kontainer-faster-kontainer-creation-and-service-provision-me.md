@@ -208,6 +208,25 @@ spread of about 250 B.
 | request | 4,515.5 +- 37.9 | 4,495.1 +- 39.1 | 0% | 5,728 | 5,840 |
 | prototypeNoArg | 75.2 +- 0.4 | 70.0 +- 1.9 | -7% | 104 | 104 |
 
+**Finding 5** (a blueprint-level cache from a requested class to its distinct candidate, and one for
+`getDistinctForOrNull` with a marker for "none"; failures are not cached and throw every time; the per-kontainer
+provider map is untouched, so `isProviderCreated` reads as before). Tests: 616 green; mutants of the new code: a
+failure cached after its first throw, 5 RED (among them both "on every call" tests); the OrNull cache storing "none"
+for everything, 167 RED. "before" is the latest number of each benchmark from the steps above.
+
+| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+|---|---:|---:|---:|---:|---:|
+| request | 4,495.1 +- 39.1 | 3,978.0 +- 40.6 | -12% | 5,840 | 5,840 |
+| getStaticHot | 25.5 +- 0.7 | 15.4 +- 0.6 | -40% | 0 | 0 |
+| getDynamicHot | 23.8 +- 0.2 | 14.3 +- 0.1 | -40% | 0 | 0 |
+| getOrNullInterface | 26.8 +- 0.4 | 14.7 +- 0.1 | -45% | 0 | 0 |
+| getAll5 | 137.0 +- 1.7 | 95.8 +- 1.7 | -30% | 64 | 64 |
+| prototypeNoArg | 70.0 +- 1.9 | 58.9 +- 1.8 | -16% | 104 | 104 |
+| prototype3Args | 154.2 +- 1.4 | 110.5 +- 4.6 | -28% | 176 | 176 |
+| prototypeFactory | 142.3 +- 1.7 | 87.5 +- 0.9 | -39% | 104 | 104 |
+| lazyLookupGet | 33.2 +- 0.3 | 29.5 +- 1.2 | -11% | 0 | 0 |
+| getStaticHotT8 | 26.6 +- 0.4 | 16.4 +- 1.6 | -38% | 0 | 0 |
+
 ## Coverage map (before any change)
 
 New spec `ProvisionPathsCharacterizationSpec` (17 tests), green on today's code. Every mutant below was applied to
