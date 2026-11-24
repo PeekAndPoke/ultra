@@ -1,9 +1,9 @@
 # ULTRA-00351: Kontainer: faster kontainer creation and service provision, measured, no behaviour change
 
-> **Status (2026-11-24): IN PROGRESS.** Track E (wt/kontainer). Findings 1, 4, 7, 3 (getOrNull only), 6, 5, 10
-> applied and measured; 9 measured as a regression and not applied; suites and compile sweep green. Waiting for the
-> `/feature-review` gate. Open for the maintainer: finding 2, the getAll / List / Lookup throw of finding 3, the
-> `DynamicOverrides.Builder` copy.
+> **Status (2026-11-24): IN PROGRESS.** Track E (wt/kontainer). Gate round 1 PASS (no CRITICAL/MAJOR); MINOR batch
+> applied: finding 3 reverted (aliased keys), finding 6 dropped. In place: findings 1, 4, 7, 5, 10. Waiting for the
+> coordinator's delta review. Open for the maintainer: finding 2, the getAll / List / Lookup throw, the
+> `DynamicOverrides.Builder` copy, where the JMH harness lives.
 
 ## Why this exists
 
@@ -151,6 +151,38 @@ regression). No benchmark regresses.
 | requestT8 | 11,128.4 +- 827.1 | 4,330.3 +- 58.1 | -61% | 19,984 | 5,328 |
 | getStaticHotT8 | 31.8 +- 0.4 | 16.2 +- 0.2 | -49% | 40 | 0 |
 
+### After the gate batch (c893a64d..761dbbdf: finding 3 reverted, finding 6 dropped)
+
+Kontainer suite 618 / 0 / 0 (XML). Production changes only in `Kontainer.kt`, `ServiceProducer.kt` (both equal
+master again) and a KDoc line in `TypeLookup.kt`, so no consumer suites. Affected benchmarks, against the final full
+run above (the reverted findings' gains go back, as expected):
+
+| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+|---|---:|---:|---:|---:|---:|
+| request | 3,592.6 +- 32.4 | 3,852.1 +- 29.4 | +7% | 5,520 | 5,496 |
+| getStaticHot | 13.6 +- 0.1 | 14.4 +- 0.1 | +6% | 0 | 0 |
+| getOrNullInterface | 14.9 +- 0.3 | 21.5 +- 0.3 | +45% | 0 | 0 |
+| getAll5 | 94.7 +- 1.3 | 95.7 +- 1.7 | +1% | 64 | 64 |
+| prototypeNoArg | 61.3 +- 1.2 | 68.3 +- 1.5 | +11% | 104 | 104 |
+| prototype3Args | 109.5 +- 4.0 | 136.0 +- 2.0 | +24% | 176 | 176 |
+| prototypeFactory | 82.1 +- 3.4 | 99.9 +- 2.3 | +22% | 104 | 104 |
+| lazyLookupGet | 26.8 +- 0.2 | 24.0 +- 3.4 | -10% | 0 | 0 |
+| requestT8 | 4,330.3 +- 58.1 | 4,473.2 +- 40.1 | +3% | 5,328 | 5,496 |
+
+The same run against the baseline (what ships):
+
+| Benchmark | ns/op before | ns/op after | delta | B/op before | B/op after |
+|---|---:|---:|---:|---:|---:|
+| request | 8,432.6 +- 118.5 | 3,852.1 +- 29.4 | -54% | 20,264 | 5,496 |
+| getStaticHot | 28.8 +- 1.2 | 14.4 +- 0.1 | -50% | 40 | 0 |
+| getOrNullInterface | 44.9 +- 0.4 | 21.5 +- 0.3 | -52% | 40 | 0 |
+| getAll5 | 164.3 +- 6.8 | 95.7 +- 1.7 | -42% | 264 | 64 |
+| prototypeNoArg | 81.6 +- 0.7 | 68.3 +- 1.5 | -16% | 144 | 104 |
+| prototype3Args | 227.4 +- 1.7 | 136.0 +- 2.0 | -40% | 384 | 176 |
+| prototypeFactory | 165.2 +- 1.4 | 99.9 +- 2.3 | -40% | 264 | 104 |
+| lazyLookupGet | 40.4 +- 0.2 | 24.0 +- 3.4 | -40% | 40 | 0 |
+| requestT8 | 11,128.4 +- 827.1 | 4,473.2 +- 40.1 | -60% | 19,984 | 5,496 |
+
 ### Suites and compile sweep (after 96a4f863, counts from the XML, all written by this run)
 
 | Suite | Tests | Failures | Errors |
@@ -226,9 +258,14 @@ green; mutant of the new code (prototype arguments reversed): 23 RED. "before" i
 | prototype3Args | 208.1 +- 1.4 | 202.0 +- 3.3 | -3% | 224 | 176 |
 | prototypeFactory | 150.4 +- 1.3 | 142.3 +- 1.7 | -5% | 144 | 104 |
 
-**Finding 3** (`getOrNull` only: the provider of the one candidate directly; getAll, List and Lookup unchanged, their
+**Finding 3: applied, then reverted at the gate (round 1, see the ledger): not behaviour-neutral for aliased keys.**
+As first applied (`getOrNull` only: the provider of the one candidate directly; getAll, List and Lookup unchanged, their
 pins stay). Behaviour-neutral by construction: when `service` has exactly one candidate `T`, every candidate of `T` is
 a candidate of `service`, so `T`'s candidates are exactly `{T}` and the second resolution can only return `T`.
+That argument is wrong for aliased keys: `Int::class` (Java `int`) and `java.lang.Integer` are equal `KClass` keys
+of the candidate cache with different Java assignability, and the second resolution read and filled that shared
+entry. Pinned by two tests in `ProvisionPathsCharacterizationSpec` (RED on the shortcut, green on 912f035c and
+after the revert).
 Tests: 616 green; mutant of the new code (provider of the requested class): 4 RED, and generateDocs fails on the
 examples. "before" is after finding 7.
 
@@ -254,7 +291,8 @@ a later run of the code without finding 9 (after finding 5, which does not touch
 
 Reverted; the code stays as after finding 3.
 
-**Finding 6** (the constructor `createInstance` would pick, looked up once and lazily, then `callBy(emptyMap())`
+**Finding 6: applied, then dropped at the gate (round 1): about 5 ns per no-arg instance for a copy of kotlin-reflect's
+`createInstance` internals that a later kotlin-reflect could diverge from. Its tests stay.** As first applied (the constructor `createInstance` would pick, looked up once and lazily, then `callBy(emptyMap())`
 as `createInstance` does; checked against the kotlin-reflect 2.4.21 bytecode of `createInstance`. Without exactly
 one such constructor `createInstance` still runs on every instance and throws as before). Tests: 616 green; mutants
 of the new code: `firstOrNull` for `singleOrNull`, 1 RED (two all-optional constructors); a Java constructor made
@@ -331,6 +369,26 @@ tests pin today's behaviour, so finding 3 is applied only to `getOrNull` (every 
 injection): there the one candidate's own candidates are always exactly itself, so the second resolution cannot
 change the result.
 
+## Review ledger
+
+Round 1, standard gate, three charters (implementation and code style, domain, security), Opus high (rung 1).
+Zero CRITICAL, zero MAJOR: PASS. Security: no findings.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MINOR (domain) | `Kontainer.kt:131` | Finding 3's getOrNull shortcut is not behaviour-neutral for aliased keys (`Int::class` and `java.lang.Integer`): which form asks first decides the shared cache entry, and the second resolution read and filled it | fix | Reverted to `get(type, context)`; two pins, RED on the shortcut, green on 912f035c and after the revert (c893a64d) |
+| 1 | MINOR (impl) | `KontainerBenchmark.kt:37` | The setup comment says every global singleton is created; only those a request touches are | fix | Comment corrected (761dbbdf) |
+| 1 | MINOR (impl) | `TypeLookup.kt` | A public, subclassable base now caches `getDistinctFor` successes | fix | KDoc line on `getAllCandidatesFor`: its answer must be stable per type (761dbbdf) |
+| 1 | surplus (impl) | `ServiceProducer.kt` | Finding 6 copies kotlin-reflect internals for about 5 ns per instance | fix, dropped | Production change reverted, tests kept (3f541b04) |
+| 1 | surplus (impl, domain) | `ServiceProviderFactory.kt` | Finding 10 makes `create` slower | reject | Measured: request -11%, requestT8 -9% against create +4% (0.7 ns, same B/op), see Finding 10 |
+| 1 | surplus (impl) | `ProvisionPathsCharacterizationSpec.kt` | The "object as class service" test pins something no finding touches | reject | A harmless pin of today's behaviour, cheap and green |
+| 1 | surplus (security) | `ultra/kontainer/build.gradle.kts` | The JMH plugin is applied on a published module | maintainer-decision | Whether the harness moves to its own module is the maintainer's call |
+
+CLEAN in round 1: nothing writes the shared provider map; override isolation at create and clone; the new caches hold
+only types and constructors, successes only; `getProvider` read-then-`computeIfAbsent` creates each provider once;
+the init order of `createProvider`; failures never cached; cache keys bounded by loaded classes; identity of
+providers and singletons unchanged; ordering of `getAllProviders` unchanged.
+
 ## Acceptance
 
 - Baseline and after numbers for every benchmark recorded here; no benchmark regresses beyond noise.
@@ -348,3 +406,5 @@ change the result.
 - 2026-11-24: Track E, after the go: findings 1, 4, 7, 3 (getOrNull), 6, 5, 10 committed one by one with their
   deltas; 9 implemented, measured as a regression, reverted; a finding 4 variant measured and dropped. Final full
   run, 14 suites and the compile sweep green. Stopped for the gate.
+- 2026-11-24: gate round 1 PASS. MINOR batch: finding 3 reverted (aliased `Int` / `Integer` keys, two pins), finding 6
+  dropped, KDoc on `getAllCandidatesFor`, benchmark comment fixed; ledger recorded. Affected benchmarks re-run.
