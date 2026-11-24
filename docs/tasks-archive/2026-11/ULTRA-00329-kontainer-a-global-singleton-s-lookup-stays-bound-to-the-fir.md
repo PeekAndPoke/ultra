@@ -1,6 +1,6 @@
 # ULTRA-00329: Kontainer: a global singleton's Lookup stays bound to the first kontainer and keeps every prototype it creates
 
-> **Status (2026-11-24): DONE.** track D builds K3a and K3b; gate 1 next
+> **Status (2026-11-24): DONE.** Merged into master (cc71f47d); gates 1 and 2 passed in round 1 each.
 >
 > **Part of:** ULTRA-00255 (Epic: Ultra libraries (module scans and defects))
 
