@@ -29,13 +29,11 @@ collection.find(Filters.gt("age", 18))
 
     <Code code={`// With Monko
 repo.find { r ->
-    filter(r.address.city.eq("Berlin"))
-    filter(r.age.gt(18))
+    filter(and(r.address.city.eq("Berlin"), r.age.gt(18)))
     sort(r.name.asc)
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <Aside>Rename a field? The compiler tells you every query that needs updating.
-        No silent breakage, no runtime surprises.
+    <Aside>Rename a field? The compiler tells you every typed query that needs updating.
     </Aside>
 
     <h2>What you get</h2>
@@ -48,8 +46,8 @@ repo.find { r ->
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Repository Pattern</h3>
-            <p class="text-sm text-gray-400">Full CRUD with lifecycle hooks, batch operations, and atomic
-                read-modify-write.</p>
+            <p class="text-sm text-gray-400">CRUD with lifecycle hooks, typed queries, cursors, and a
+                read-modify-write helper.</p>
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Index DSL</h3>
@@ -120,7 +118,7 @@ repo.find { r ->
     </div>
 
     <Aside>Choose your database. Keep your domain code.
-        Monko and Karango are interchangeable at the repository layer.
+        Both implement Vault's <code>Repository&lt;T&gt;</code>; typed queries are written per database.
     </Aside>
 
     <div class="mt-12">

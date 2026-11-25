@@ -18,7 +18,8 @@ import {Code} from 'astro:components';
     <h2>Defining indexes</h2>
 
     <p>Override <code>buildIndexes()</code> in your repository. Index fields use the same
-        KSP-generated property paths as queries.</p>
+        KSP-generated property paths as queries. This example assumes <code>Person</code> also has
+        <code>expiresAt</code> and <code>middleName</code> fields.</p>
 
     <Code code={`class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
     name = "persons",
@@ -43,7 +44,7 @@ import {Code} from 'astro:components';
             field { it.email }
         }
 
-        // TTL index — auto-delete expired documents
+        // TTL index: MongoDB deletes expired documents (the field must hold a BSON Date)
         ttlIndex {
             field { it.expiresAt }
             expireAfter(0)  // delete when expiresAt is in the past
@@ -90,12 +91,17 @@ import {Code} from 'astro:components';
         </table>
     </div>
 
+    <p>A TTL index only expires documents whose field holds a BSON Date. Slumber stores an
+        <code>MpInstant</code> as an object and an epoch timestamp as a number, so a TTL index on such a field
+        deletes nothing.</p>
+
     <h2>Index management</h2>
 
-    <Code code={`// Ensure indexes exist (create if missing, skip if present)
+    <Code code={`// Create missing indexes, drop and re-create one whose definition changed.
+// A failed create is logged as a warning, not thrown.
 repo.ensureIndexes()
 
-// Drop and recreate all indexes
+// Drop all indexes except _id_, then ensure
 repo.recreateIndexes()
 
 // Validate without creating
@@ -111,7 +117,8 @@ val info = repo.validateIndexes()`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>Timestamped</h3>
 
-    <p>The most common hook. Automatically sets <code>createdAt</code> and <code>updatedAt</code>.</p>
+    <p>The most common hook. Sets <code>createdAt</code> and <code>updatedAt</code> on insert and save, in
+        every repository that has <code>timestamped.onBeforeSave()</code> among its hooks.</p>
 
     <Code code={`@Vault
 data class Article(
@@ -126,13 +133,13 @@ data class Article(
 
     <h3>Custom hooks</h3>
 
-    <Code code={`class ArticlesRepo(driver: MonkoDriver) : MonkoRepository<Article>(
+    <Code code={`class ArticlesRepo(driver: MonkoDriver, timestamped: TimestampedHook) : MonkoRepository<Article>(
     name = "articles",
     storedType = kType(),
     driver = driver,
     // Hooks.of takes hooks directly — it sorts them by type for you.
     hooks = Hooks.of(
-        TimestampedOnBeforeSaveHook(),
+        timestamped.onBeforeSave(),
         MyAfterSaveHook(),
         MyAfterDeleteHook(),
     ),
@@ -158,8 +165,12 @@ data class Article(
                 <td class="py-2 text-gray-400">OnBeforeSave &rarr; persist &rarr; OnAfterSave</td>
             </tr>
             <tr class="border-b border-white/10">
-                <td class="py-2 text-white"><code>remove()</code></td>
+                <td class="py-2 text-white"><code>remove(stored)</code></td>
                 <td class="py-2 text-gray-400">delete &rarr; OnAfterDelete</td>
+            </tr>
+            <tr class="border-b border-white/10">
+                <td class="py-2 text-white"><code>remove(idOrKey)</code></td>
+                <td class="py-2 text-gray-400">delete (no hooks)</td>
             </tr>
             </tbody>
         </table>
