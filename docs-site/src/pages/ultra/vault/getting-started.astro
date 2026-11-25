@@ -2,7 +2,6 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import {vaultSidebar} from '../../../data/vault-sidebar';
 import {Code} from 'astro:components';
-import {dep} from '../../../data/site';
 ---
 
 <DocsLayout title="Getting Started with Vault" sidebar={vaultSidebar}
@@ -17,13 +16,9 @@ import {dep} from '../../../data/site';
 
     <h2>Dependency</h2>
 
-    <p>Add Vault next to <a href="/ultra/karango/">Karango</a> or <a href="/ultra/monko/">Monko</a>: they depend on
-        it at runtime only, so your code cannot name <code>@Vault</code>, <code>Stored</code> or
-        <code>Repository</code> without it. Funktor already exposes it.</p>
-
-    <Code code={`dependencies {
-    implementation("${dep.vault}")
-}`} lang="kotlin" theme="vitesse-dark"/>
+    <p><a href="/ultra/karango/">Karango</a>, <a href="/ultra/monko/">Monko</a> and Funktor expose Vault, so
+        <code>@Vault</code>, <code>Stored</code> and <code>Repository</code> come with them. You do not add it
+        yourself.</p>
 
     <h2>1. Define your entity</h2>
 

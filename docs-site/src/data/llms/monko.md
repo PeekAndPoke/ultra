@@ -83,7 +83,6 @@ plugins {
 
 dependencies {
     implementation("io.peekandpoke.monko:core:{{ultraVersion}}")
-    implementation("io.peekandpoke.ultra:vault:{{ultraVersion}}")  // @Vault, Stored, kType(): monko core does not expose it
     ksp("io.peekandpoke.monko:ksp:{{ultraVersion}}")  // KSP processor for type-safe property paths
 }
 ```
