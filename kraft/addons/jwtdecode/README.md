@@ -6,18 +6,20 @@ token decoding in Kraft applications.
 ## Features
 
 - Decode JWT header and payload without signature verification
-- Access token claims (subject, expiration, custom fields) in a type-safe way
+- Read token claims (subject, expiration, custom fields) as a map or a raw object
 - Lightweight, no cryptographic dependencies
 
 ## Example
 
 ```kotlin
+private val jwt: JwtDecodeAddon? by subscribingTo(addons.jwtDecode)
+
 val token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
-val decoded = JwtDecode.decode(token)
+val claims = jwt?.decodeJwtAsMap(token)
 
-println(decoded.subject)
-println(decoded.expiration)
+println(claims?.get("sub"))
+println(claims?.get("exp"))
 ```
 
 ## Installation

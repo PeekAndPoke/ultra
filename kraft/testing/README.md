@@ -33,4 +33,4 @@ dependencies {
 
 ## Documentation
 
-Full docs at [peekandpoke.io/ultra/kraft/utilities](https://peekandpoke.io/ultra/kraft/utilities).
+Full docs at [peekandpoke.io/ultra/kraft/testing](https://peekandpoke.io/ultra/kraft/utilities).

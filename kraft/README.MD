@@ -1,7 +1,7 @@
 # Kraft — Build SPAs in Pure Kotlin
 
 A component-based framework for building single-page applications.
-Kotlin all the way down — no JavaScript, no template engines, no compromises.
+Written in Kotlin, with no JavaScript and no template engines.
 
 Kraft compiles to JavaScript and uses [Preact](https://preactjs.com) (a 3KB React alternative) as its rendering engine —
 but you never touch Preact directly.
@@ -13,7 +13,7 @@ but you never touch Preact directly.
 - **Routing** — Type-safe routes with params, middleware, and nested layouts
 - **Forms & Validation** — Two-way binding, field validation, draft/commit pattern
 - **SemanticUI DSL** — `ui.blue.button { +"Click" }` — a fluent API for FomanticUI
-- **13 Addons** — ChartJS, PDF viewer, syntax highlighting, signature pad, and more
+- **14 Addons** — ChartJS, PDF viewer, syntax highlighting, signature pad, and more
 
 ## Quick example
 

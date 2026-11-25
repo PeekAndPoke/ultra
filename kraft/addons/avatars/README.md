@@ -12,11 +12,9 @@ deterministic SVG avatar generation in Kraft applications.
 ## Example
 
 ```kotlin
-minidenticon {
-    identity = "user@example.com"
-    saturation = 50
-    lightness = 50
-}
+private val avatars: AvatarsAddon? by subscribingTo(addons.avatars)
+
+img { src = avatars?.getDataUrl("user@example.com", saturation = 50, lightness = 50) ?: "" }
 ```
 
 ## Installation

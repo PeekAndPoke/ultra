@@ -1,6 +1,6 @@
 # Kraft Addon: NX Compile
 
-Kotlin/JS wrapper for [@nx-js/compiler-util](https://github.com/nicksrandall/nx-compile), providing sandboxed JavaScript
+Kotlin/JS wrapper for [@nx-js/compiler-util](https://github.com/nx-js/compiler-util), providing sandboxed JavaScript
 code execution in Kraft applications.
 
 ## Features
@@ -12,12 +12,10 @@ code execution in Kraft applications.
 ## Example
 
 ```kotlin
-val code = "return x + y"
-val compiled = NxCompile.compile(code)
+private val nx: NxCompileAddon? by subscribingTo(addons.nxCompile)
 
-val result = compiled.exec(
-    mapOf("x" to 10, "y" to 20)
-)
+val compiled = nx?.compileCode("x + y")
+val result = compiled?.invoke(js("({ x: 10, y: 20 })"))
 // result: 30
 ```
 
@@ -33,5 +31,5 @@ val result = compiled.exec(
 
 ## Links
 
-- [npm: @aspect-build/rules_js](https://www.npmjs.com/package/@aspect-build/rules_js)
+- [npm: @nx-js/compiler-util](https://www.npmjs.com/package/@nx-js/compiler-util)
 - [Documentation](https://peekandpoke.io/ultra/kraft/addons)

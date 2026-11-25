@@ -7,17 +7,15 @@ with [DOMPurify](https://github.com/cure53/DOMPurify) sanitization, providing Ma
 
 - Convert Markdown to HTML using the marked parser
 - Sanitize output with DOMPurify to prevent XSS
-- Render Markdown content directly as Kraft components
+- Call `markdown2html()` from a component that subscribes to the addon
 
 ## Example
 
 ```kotlin
-markdown {
-    content = """
-        ## Hello
+private val marked: MarkedAddon? by subscribingTo(addons.marked)
 
-        This is **bold** and this is a [link](https://example.com).
-    """.trimIndent()
+unsafe {
+    +marked?.markdown2html("## Hello\n\nThis is **bold**.").orEmpty()
 }
 ```
 
