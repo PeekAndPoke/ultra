@@ -97,8 +97,8 @@ val updated = address.copy(street = "456 Oak Ave")`} lang="kotlin" theme="vitess
     <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Sub-Mutators</h3>
-            <p class="text-sm text-gray-400">Every property of a mutator is itself a mutator. Changes propagate
-                automatically from leaf to root via <code>onChange</code>.</p>
+            <p class="text-sm text-gray-400">A property whose type gets a mutator, or a list, set or map of such a
+                type, is itself a mutator. Changes propagate automatically from leaf to root via <code>onChange</code>.</p>
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Dirty Tracking</h3>
@@ -122,8 +122,8 @@ val updated = address.copy(street = "456 Oak Ave")`} lang="kotlin" theme="vitess
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Structural Equality</h3>
-            <p class="text-sm text-gray-400">Setting a field to its current value is a no-op. Reverting all changes
-                returns the exact same instance (identity equality).</p>
+            <p class="text-sm text-gray-400">Setting a field to its current value is a no-op. Reverting all changes to a
+                data class returns the exact same instance (identity equality).</p>
         </div>
     </div>
 
@@ -132,7 +132,6 @@ val updated = address.copy(street = "456 Oak Ave")`} lang="kotlin" theme="vitess
     <Code code={`val person = Person(
     firstName = "John",
     lastName = "Doe",
-    age = 42,
     address = Address(street = "Main St", city = "Springfield", zip = "62701")
 )
 
@@ -143,7 +142,7 @@ val updated = person.mutate {
         city = "Shelbyville"
     }
 }
-// updated == Person("Jane", "Doe", 42, Address("Main St", "Shelbyville", "62701"))
+// updated == Person("Jane", "Doe", Address("Main St", "Shelbyville", "62701"))
 
 // Long-lived mutator — for forms, editors, stateful UIs
 val mutator = person.mutator()

@@ -5,7 +5,7 @@
 KSP-generated mutable wrappers for immutable Kotlin data classes. Inspired
 by [immer.js](https://immerjs.github.io/immer/).
 
-Nested mutations, automatic change propagation, dirty tracking — zero boilerplate.
+Nested mutations, automatic change propagation, dirty tracking, without `copy()` chains.
 
 ## The problem
 
@@ -40,9 +40,9 @@ knows something changed.
 
 - **Nested mutation** — Mutate any depth without nested `copy()` calls
 - **Change tracking** — `isModified()` tells you if anything changed
-- **Commit / reset** — `commit()` accepts the current state, enabling undo/reset
+- **Commit / reset** — `commit()` accepts the current state as the baseline, `reset()` goes back to it
 - **onChange propagation** — Sub-mutators notify parents automatically (ideal for form components)
-- **Collections** — `ListMutator`, `SetMutator`, `MapMutator` with full mutation support
+- **Collections** — `ListMutator`, `SetMutator`, `MapMutator`: add, remove, iterate and modify elements
 - **Sealed classes** — `cast()` and `filterMutatorsOf<T>()` for polymorphic editing
 - **KSP code generation** — Annotate with `@Mutable`, get type-safe mutators at compile time
 - **Kotlin Multiplatform** — JVM and JS targets
@@ -53,7 +53,7 @@ Mutator shines when your data classes are **3+ levels deep** and you need to:
 
 - Edit nested form state without wiring callbacks through every component
 - Track dirty state across a complex object graph
-- Provide undo/reset on deeply nested structures
+- Reset deeply nested structures to the last committed state
 
 ## When NOT to use Mutator
 
@@ -86,4 +86,4 @@ mutator.commit()      // accept changes, isModified() resets to false
 ## More examples
 
 See the [documentation](https://peekandpoke.io/ultra/mutator/) and the
-[test suite](core/src/jvmTest/kotlin) for more examples.
+[test suite](core/src/sharedTest/kotlin) for more examples.
