@@ -60,7 +60,8 @@ codec.slumber(Event.UserCreated("alice"))
     companion object : Polymorphic.Parent {
         override val discriminator = "kind"
 
-        // childTypes has no default. Sealed subclasses are found without it.
+        // childTypes has no default. Sealed subclasses are found without it;
+        // a non-sealed parent lists its children here.
         override val childTypes: Set<KClass<*>> = emptySet()
     }
 

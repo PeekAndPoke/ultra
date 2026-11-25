@@ -405,7 +405,8 @@ sealed class Vehicle {
     companion object : Polymorphic.Parent {
         override val discriminator = "kind"
 
-        // childTypes has no default. Sealed subclasses are found without it.
+        // childTypes has no default. Sealed subclasses are found without it;
+        // a non-sealed parent lists its children here.
         override val childTypes: Set<KClass<*>> = emptySet()
     }
 
@@ -713,6 +714,8 @@ Ultra's own multiplatform datetime types use the same formats:
 ```kotlin
 import io.peekandpoke.ultra.datetime.MpLocalDate
 import io.peekandpoke.ultra.datetime.MpTimezone
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.slumber
 import kotlinx.datetime.Month
 
 val codec = Codec.default
