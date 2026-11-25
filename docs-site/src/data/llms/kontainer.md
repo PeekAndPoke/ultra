@@ -17,7 +17,7 @@ runtime surprises.
 val blueprint = kontainer {
     singleton(UserRepository::class)
     singleton(UserService::class)
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
 }
 
 val kontainer = blueprint.create()
@@ -254,7 +254,9 @@ println(k1.get(Counter::class).next())  // 2  (same instance within k1)
 println(k2.get(Counter::class).next())  // 1  (fresh instance in k2)
 ```
 
-Dynamic services are the key to per-request scoping.
+Dynamic services are the key to per-request scoping. A dynamic must be creatable without an override, by a
+constructor whose parameters are all injectable services or by a default factory, because the blueprint is validated
+without overrides.
 
 ## Prototype
 
@@ -367,7 +369,7 @@ val blueprint = kontainer {
     singleton(AuditLogRepository::class)
 
     // Fresh per request — carry request-scoped state
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext(userId = "anonymous", traceId = "none") }
     dynamic(RequestInsights::class)
     dynamic(AuditLog::class)
 }
@@ -535,7 +537,7 @@ a dynamic service, getting a fresh instance per container.
 
 ```kotlin
 val blueprint = kontainer {
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
 
     // Defined as singleton, but Kontainer detects that it injects
     // a dynamic service and promotes it to semi-dynamic automatically.
@@ -659,7 +661,8 @@ If two services implement the same interface, injection becomes **ambiguous** an
 `List<T>` injection instead (see below).
 
 A decorator counts as a candidate too: `CachingRepo(inner: Repo) : Repo` next to `RealRepo : Repo` makes `inner`
-ambiguous. Let the decorator inject the concrete class, `inner: RealRepo`.
+ambiguous. Let the decorator inject the concrete class, `inner: RealRepo`. Consumers injecting `Repo` still see two
+candidates, so they inject the decorator's class.
 
 ## Nullable injection
 
@@ -950,7 +953,7 @@ class UserService(val ctx: RequestContext) {
 }
 
 val blueprint = kontainer {
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
     singleton(UserService::class)
 }
 
@@ -963,6 +966,8 @@ println(kontainer.get(UserService::class).currentUser())
 // "User: user-42"
 ```
 
+- The default factory, here `RequestContext("anonymous")`, is needed: the blueprint is validated without overrides, so
+  every dynamic must be creatable without one.
 - Only `dynamic` services can be overridden. An override of anything else, a `dynamicPrototype` included, makes
   `create` throw `KontainerInconsistent` before any override lambda runs.
 - The lambda runs at `create`, once per container. A caller who needs laziness builds it into the value it hands in,
@@ -986,7 +991,7 @@ class RequestContext(val userId: String)
 class UserService(val ctx: RequestContext)
 
 val blueprint = kontainer {
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
     singleton(UserService::class)  // automatically becomes semi-dynamic
 }
 ```
@@ -1125,7 +1130,7 @@ debugInfo.services.forEach { service ->
     }
 }
 
-// One provider: how often it created its service (a singleton counts 0 or 1)
+// One provider: how often it created its service (a global singleton counts across all kontainers of the blueprint)
 val count = kontainer.getProvider(MyService::class).created.count
 ```
 

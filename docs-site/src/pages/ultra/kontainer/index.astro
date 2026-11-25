@@ -35,7 +35,7 @@ import { Code } from 'astro:components';
 <Code code={`val blueprint = kontainer {
     singleton(UserRepository::class)
     singleton(UserService::class)
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
 }
 
 val kontainer = blueprint.create()

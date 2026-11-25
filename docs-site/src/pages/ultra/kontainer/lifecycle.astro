@@ -35,7 +35,7 @@ val blueprint = kontainer {
     singleton(AuditLogRepository::class)
 
     // Fresh per request — carry request-scoped state
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext(userId = "anonymous", traceId = "none") }
     dynamic(RequestInsights::class)
     dynamic(AuditLog::class)
 }
@@ -201,7 +201,7 @@ class OrderService(val ctx: RequestContext)  // singleton — shared globally?`}
 <p>Kontainer prevents this automatically. When a service is defined as <code>singleton</code> but injects a <code>dynamic</code> or <code>dynamicPrototype</code> service (directly or transitively), Kontainer <strong>promotes</strong> it to <strong>semi-dynamic</strong> — it behaves like a dynamic service, getting a fresh instance per container.</p>
 
 <Code code={`val blueprint = kontainer {
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
 
     // Defined as singleton, but Kontainer detects that it injects
     // a dynamic service and promotes it to semi-dynamic automatically.

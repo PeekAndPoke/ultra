@@ -93,3 +93,12 @@ ULTRA-00329 removed the instance API and changed the dump; these spots describe 
   Deleted the stale `ultra/kontainer/docs/ultra::docs/index.md`; one reference remains, the EXAMPLES link in
   `ultra/README.MD` (line 28), which already resolved to a path that does not exist (`ultra/ultra/kontainer/...`), as
   does its mutator neighbour; left for the coordinator. `pnpm astro build`: 118 pages, green.
+- 2026-11-25: review round 1 fixes. Every `dynamic(RequestContext::class)` whose class takes a `String` got a default
+  factory (validation builds a kontainer without overrides): `index`, `introspection`, `advanced` (two), `lifecycle`
+  (two), mirror (five). The other `dynamic(` registrations were checked: their constructors take only injectable
+  services. One sentence on why, in `services` (Dynamic) and in the `advanced` override list, mirror alike. The
+  introspection comment on `created.count` names the global singleton; the decorator advice says consumers of `Repo`
+  inject the decorator's class (the second alternative proposed, "registered under its own type only", left out: a
+  decorator is a `Repo` under any key that is one, and under any other key `Repo` consumers get the undecorated
+  service); the Kontainer card on `ultra/tools` no longer says "three lifecycles". Override precedence wording
+  untouched (with the maintainer). `pnpm astro build`: 118 pages, green.

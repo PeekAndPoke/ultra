@@ -20,7 +20,7 @@ import {Code} from 'astro:components';
         built-ins included: each one's type, its kind, and what its provider created (count, first and last time):</p>
 
     <Code code={`val blueprint = kontainer {
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
     singleton(Config::class)
     singleton(UserService::class)  // injects RequestContext
 }
@@ -131,7 +131,7 @@ factory.getAllProviders().forEach { (cls, provider) ->
     println("  dependencies: ${'$'}{provider.definition.producer.params.map { it.name }}")
 }
 
-// Has MyService been created in this kontainer? A singleton counts 0 or 1
+// Has MyService been created? A global singleton counts across all kontainers of the blueprint
 val isCreated = kontainer.getProvider(MyService::class).created.count > 0`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Tracking overrides</h2>

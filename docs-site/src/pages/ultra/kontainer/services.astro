@@ -48,7 +48,7 @@ println(k1.get(Counter::class).next())  // 1
 println(k1.get(Counter::class).next())  // 2  (same instance within k1)
 println(k2.get(Counter::class).next())  // 1  (fresh instance in k2)`} lang="kotlin" theme="vitesse-dark" />
 
-<p>Dynamic services are the key to <a href="/ultra/kontainer/lifecycle">per-request scoping</a>.</p>
+<p>Dynamic services are the key to <a href="/ultra/kontainer/lifecycle">per-request scoping</a>. A dynamic must be creatable without an override, by a constructor whose parameters are all injectable services or by a default factory, because the blueprint is validated without overrides.</p>
 
 <h2>Prototype</h2>
 

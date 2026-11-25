@@ -77,7 +77,7 @@ val blueprint = kontainer {
 
 <p>If two services implement the same interface, injection becomes <strong>ambiguous</strong> and Kontainer reports an error. Use <code>List&lt;T&gt;</code> injection instead (see below).</p>
 
-<p>A decorator counts as a candidate too: <code>CachingRepo(inner: Repo) : Repo</code> next to <code>RealRepo : Repo</code> makes <code>inner</code> ambiguous. Let the decorator inject the concrete class, <code>inner: RealRepo</code>.</p>
+<p>A decorator counts as a candidate too: <code>CachingRepo(inner: Repo) : Repo</code> next to <code>RealRepo : Repo</code> makes <code>inner</code> ambiguous. Let the decorator inject the concrete class, <code>inner: RealRepo</code>. Consumers injecting <code>Repo</code> still see two candidates, so they inject the decorator's class.</p>
 
 <h2>Nullable injection</h2>
 
