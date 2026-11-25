@@ -93,8 +93,8 @@ val updated = book.mutate {
 
 Generated collection mutators: `List<T>.mutator()`, `Set<T>.mutator()`, `Map<K, T>.mutator()`.
 
-`subList()` returns a read-only snapshot, not a view. An element mutator held across a reorder or the removal of its
-row drops its writes. Each access of a generated list property builds a new `ListMutator`, so an element mutator kept
+`subList()` returns a read-only snapshot, not a view. An element mutator drops its writes when its row was
+reordered, removed or written by something else (another element mutator, `set`, a reset or a replaced list). Each access of a generated list property builds a new `ListMutator`, so an element mutator kept
 from an earlier access can bring back a row removed through a later one.
 
 ## @Mutable(deep = true | false)

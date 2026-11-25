@@ -47,8 +47,9 @@ val updated = book.copy(
 
     <p>KSP generates <code>List&lt;T&gt;.mutator()</code> and <code>List&lt;T&gt;.mutate {'{ }'}</code> for every <code>@Mutable</code>
         class. The <code>ListMutator</code> implements <code>MutableList&lt;Mutator&lt;T&gt;&gt;</code>, so the familiar
-        list operations work on it. Two differences: <code>subList()</code> returns a read-only snapshot, not a view,
-        and an element mutator held across a reorder or the removal of its row drops its writes.</p>
+        list operations work on it. Differences include: <code>subList()</code> returns a read-only snapshot, not a view,
+        and an element mutator drops its writes when its row was reordered, removed or written by something else
+        (another element mutator, <code>set</code>, a reset or a replaced list).</p>
 
     <h3>Iterating and modifying elements</h3>
 
