@@ -59,3 +59,4 @@ no security surface. Not part of this ticket: a loader that throws is never retr
 - 2026-11-25: built in wt/kraft-lazy, tests first (RED before, mutant RED), core-tests 593 / 0.
 - 2026-11-25: gate PASS round 1; MINORs applied by the coordinator (read-trigger test, KDoc example, KDocs name
   the read); read-trigger mutant RED; core-tests 594 / 0 (XML).
+- 2026-11-25: DONE.
