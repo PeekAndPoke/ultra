@@ -15,8 +15,8 @@ import {karangoSidebar} from '../../../data/karango-sidebar';
 
     <p>
         Use them inside any query block — <code>FILTER</code>, <code>LET</code>,
-        <code>RETURN</code>, etc. Names match the AQL spec one-to-one (uppercase),
-        so the
+        <code>RETURN</code>, etc. Names match the AQL functions (uppercase), apart from two
+        Karango helpers marked below, so the
         <a href="https://docs.arangodb.com/stable/aql/functions/" target="_blank"
            rel="noopener" class="text-brand-400 hover:text-brand-300">official AQL reference</a>
         applies directly.
@@ -102,7 +102,7 @@ import {karangoSidebar} from '../../../data/karango-sidebar';
         </tr>
         <tr class="border-b border-white/5">
             <td class="py-2"><code>ATAN2(x, y)</code></td>
-            <td class="py-2">Arctangent of <code>y / x</code></td>
+            <td class="py-2">Arctangent of <code>x / y</code>: the first argument is AQL's <code>y</code></td>
         </tr>
         <tr class="border-b border-white/5">
             <td class="py-2"><code>DEGREES(value)</code></td>
@@ -337,7 +337,8 @@ import {karangoSidebar} from '../../../data/karango-sidebar';
         </tr>
         <tr class="border-b border-white/5">
             <td class="py-2"><code>CONTAINS_ARRAY_IDX(anyArray, search)</code></td>
-            <td class="py-2">Index of value in the array, or <code>-1</code></td>
+            <td class="py-2">Index of value in the array, or <code>-1</code> (helper: <code>CONTAINS_ARRAY</code> with
+                <code>returnIndex</code>)</td>
         </tr>
         <tr class="border-b border-white/5">
             <td class="py-2"><code>APPEND(anyArray, values, …)</code></td>
@@ -475,7 +476,7 @@ import {karangoSidebar} from '../../../data/karango-sidebar';
         </tr>
         <tr class="border-b border-white/5">
             <td class="py-2"><code>IS_NOT_NULL(expr)</code></td>
-            <td class="py-2">Value is not <code>null</code></td>
+            <td class="py-2">Value is not <code>null</code> (helper: <code>NOT(IS_NULL(expr))</code>)</td>
         </tr>
         <tr class="border-b border-white/5">
             <td class="py-2"><code>IS_BOOL(expr)</code></td>

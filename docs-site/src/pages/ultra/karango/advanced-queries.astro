@@ -16,18 +16,18 @@ import {Code} from 'astro:components';
     <h2>COLLECT (aggregation)</h2>
 
     <Code code={`// Count documents
-repo.findList {
+repo.queryList {
     FOR(repo) { person ->
-        COLLECT_WITH(COUNT) AS "total"
-        RETURN("total")
+        val total = COLLECT_WITH(COUNT, "total")
+        RETURN(total)
     }
 }
 
 // Group by a field
-repo.findList {
+repo.queryList {
     FOR(repo) { person ->
-        COLLECT(city, person.address.city)
-        RETURN(city)
+        val city = COLLECT("city", person.address.city)
+        RETURN(city.assignee)
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
@@ -87,11 +87,9 @@ val claimed = repo.findFirst {
 
     <Code code={`suspend fun search(query: String, page: Int, epp: Int): Cursor<Stored<LogEntry>> {
     return repo.find {
-        val searchLower = LET("search", query.lowercase())
-
         FOR(repo) { entry ->
             if (query.isNotBlank()) {
-                val parts = query.trim().lowercase().split(" ")
+                val parts = query.trim().lowercase().split(" ").filter { it.isNotBlank() }
                 FILTER(
                     parts.map { part ->
                         listOf(
@@ -109,8 +107,8 @@ val claimed = repo.findFirst {
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>This is from the Funktor logging module — it searches log entries across message and logger name fields,
-        splitting the search query into words and matching each independently.</p>
+    <p>This is adapted from the Funktor logging module, which also searches the stack trace. It splits the search
+        query into words and keeps an entry when any word is in its message or logger name.</p>
 
     <h2>UPSERT</h2>
 
@@ -121,11 +119,11 @@ repo.find {
 
     <h2>Arithmetic in queries</h2>
 
-    <Code code={`repo.findList {
+    <Code code={`repo.queryList {
     val a = LET("a", 10)
     val b = LET("b", 20)
 
-    RETURN((a + b) / 2.aql)  // → 15
+    RETURN((a + b) / 2.aql)  // (10 + 20) / 2
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>Operators <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%</code> work on AQL expressions
@@ -173,7 +171,8 @@ FOR(repo) { team ->
 
     <h2>Real-world example: complete repository</h2>
 
-    <p>A production repository combining CRUD, custom queries, indexes, hooks, and TTL:</p>
+    <p>Simplified from the Funktor auth records repository, combining CRUD, custom queries, indexes, hooks, and
+        TTL:</p>
 
     <Code code={`@Vault
 data class AuthRecord(
