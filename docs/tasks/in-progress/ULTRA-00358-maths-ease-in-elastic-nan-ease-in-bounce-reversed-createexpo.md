@@ -1,6 +1,6 @@
 # ULTRA-00358: Maths: Ease.In.elastic NaN, Ease.In.bounce reversed, createExponential ignores lambda
 
-> **Status (2026-11-25): IN PROGRESS.** All three fixed, with tests, mutants and docs; the review gate is next.
+> **Status (2026-11-25): DONE.** Gate PASS in round 1 (no findings); merged into master.
 
 ## Why this exists
 
@@ -35,6 +35,18 @@ Found by the ULTRA-00356 truth audit, confirmed by its reviewer (ultra/maths/src
 - Docs: drop the defect notes on docs-site/src/pages/ultra/maths/easing.astro, distributions.astro and the LLM mirror
   docs-site/src/data/llms/maths.md, and describe lambda as it then is.
 - Mutation check; `:ultra:maths` tests green.
+
+## Review ledger
+
+Round 1, standard gate, one reviewer covering the three charters (implementation and code style, domain, security),
+rung 1 reviewer-opus-high (Opus high while the Fable credits are out). Verdict: PASS, NO FINDINGS.
+
+CLEAN: In.elastic and In.bounce equal the easings.net curves (7 and 5 points checked by hand, mirror identities exact);
+the default createExponential equals the old default PDF up to one ulp of ln; every new test's expected value is
+computed independently (constants, closed-form truncated mean, 8 sigma margin, one Random); extreme finite lambda gives
+no NaN or loop; NaN, zero, negative and infinite lambda are rejected; docs true, no tailCut or defect text left.
+Kept beyond the decision: the `isFinite()` check (fails at the call instead of later). The docs were updated in this
+ticket, so no DOCS follow-up is needed.
 
 ## Acceptance
 
@@ -119,3 +131,4 @@ The proposal as handed to the maintainer:
 - 2026-11-25: easing defect notes dropped from the docs and LLM mirror; createExponential proposal recorded.
 - 2026-11-25: maintainer chose option A; createExponential is lambda only (default ln(1000)), tailCut removed, tests,
   mutants and docs done.
+- 2026-11-25: gate PASS round 1, no findings; merged into master.
