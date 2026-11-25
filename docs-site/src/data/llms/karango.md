@@ -589,7 +589,7 @@ cursor.firstOrNull()
 cursor.groupBy { it().author }
 
 // Flow-based streaming
-cursor.asFlow().collect { ... }
+cursor.asFlow().collect { ... }  // Flow needs kotlinx-coroutines-core on your classpath
 ```
 
 Results are deserialized on the first collection. `Stored<T>` entities are automatically cached in the `EntityCache` for deduplication.

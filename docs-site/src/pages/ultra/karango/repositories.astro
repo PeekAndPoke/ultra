@@ -148,7 +148,7 @@ cursor.firstOrNull()
 cursor.groupBy { it().author }
 
 // Flow-based streaming
-cursor.asFlow().collect { ... }`} lang="kotlin" theme="vitesse-dark"/>
+cursor.asFlow().collect { ... }  // Flow needs kotlinx-coroutines-core on your classpath`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>Results are deserialized on the first collection. <code>Stored&lt;T&gt;</code> entities are automatically cached in the <code>EntityCache</code>
         for deduplication. All cursor convenience methods (<code>map</code>, <code>filter</code>,
