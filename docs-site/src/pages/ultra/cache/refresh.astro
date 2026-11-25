@@ -61,7 +61,7 @@ cache.put("user:42", initialProfile)
     <Code code={`val cache = fastCache<String, String> {
     refreshAfterWrite(
         ttl = 5.minutes,          // start refreshing after 5 minutes
-        hardTtl = 30.minutes,     // evict completely after 30 minutes
+        hardTtl = 30.minutes,     // evict 30 minutes after the last write
     ) { key ->
         fetchFromApi(key)
     }

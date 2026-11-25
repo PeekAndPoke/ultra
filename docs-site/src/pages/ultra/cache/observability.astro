@@ -81,6 +81,8 @@ import {Code} from 'astro:components';
 
     <Code code={`import io.peekandpoke.ultra.cache.FastCache
 import io.peekandpoke.ultra.cache.fastCache
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
 lateinit var stats: FastCache.StatisticsBehaviour<String, String>
@@ -97,7 +99,9 @@ cache.getOrPut("b") { "2" }   // records a MISS and a PUT: a lookup first, then 
 cache.get("a")                // hit
 cache.get("missing")          // miss
 
-// Take a snapshot, after the background loop's next pass (50ms by default) has counted the above
+// Counting happens on the background loop (50ms by default): wait for its next pass
+delay(100.milliseconds)  // inside a coroutine
+
 val snapshot = stats.snapshot()
 println(snapshot.hitCount)       // 1
 println(snapshot.missCount)      // 2

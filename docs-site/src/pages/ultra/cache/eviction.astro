@@ -42,8 +42,8 @@ cache.get("session")  // resets the 5-minute timer
     <h2>Expire after write</h2>
 
     <p>Evicts entries that haven't been <em>written</em> within a TTL window. Unlike <code>expireAfterAccess</code>,
-        reading an entry does NOT reset the timer — only a write does (<code>put()</code>, or <code>getOrPut()</code>
-        on a miss):</p>
+        reading an entry does NOT reset the timer — only a write does (<code>put()</code>, <code>getOrPut()</code>
+        on a miss, or a stored refresh result):</p>
 
     <Code code={`val cache = fastCache<String, String> {
     expireAfterWrite(5.minutes)

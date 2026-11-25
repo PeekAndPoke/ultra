@@ -69,8 +69,8 @@ val cache = fastCache<String, String> {
 
 ### Expire After Write (TTL)
 
-Evicts entries not written within a TTL window. Reads do NOT reset the timer; a write (`put`, `getOrPut` on a miss)
-does.
+Evicts entries not written within a TTL window. Reads do NOT reset the timer; a write (`put`, `getOrPut` on a miss, a stored
+refresh result) does.
 
 ```kotlin
 val cache = fastCache<String, String> {
