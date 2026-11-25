@@ -63,6 +63,7 @@ import {Code} from 'astro:components';
     <h2>Switching language</h2>
 
     <Code code={`// inside a component; setLang is suspend, so call it from a coroutine
+// launch: io.peekandpoke.kraft.utils.launch
 launch { i18nCtrl.setLang(Locale("de")) }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>The controller maps the chosen tag through <code>Locale.parse</code> onto a fresh <code>I18n</code>

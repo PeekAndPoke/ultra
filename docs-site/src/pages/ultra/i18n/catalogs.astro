@@ -55,7 +55,8 @@ configure<I18nExtension> {
 
     <h2>What gets generated</h2>
 
-    <p>Two things: a baked catalog object holding every locale's strings, and typed accessors hanging off
+    <p>Two things: a baked catalog object holding every locale's strings, named <code>&lt;moduleName&gt;Catalog</code>
+        (here <code>AppCatalog</code>), and typed accessors hanging off
         the open translation surface.</p>
 
     <Code code={`// Generated — accessors named after your namespaces
