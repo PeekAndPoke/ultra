@@ -1,7 +1,6 @@
 # ULTRA-00356: Docs: light cleanup of the README files and LLM mirror files
 
-> **Status (2026-11-25): DONE.** Truth audit of every library except datetime (waits for ULTRA-00343, then ULTRA-00339)
-> and kontainer (ULTRA-00338); every library reviewed until clean; `pnpm astro build` green (118 pages).
+> **Status (2026-11-25): DONE.** Truth audit of every library except datetime (waits for ULTRA-00343, then ULTRA-00339) and kontainer (ULTRA-00338); every library reviewed until clean; `pnpm astro build` green (118 pages).
 
 **Part of:** ULTRA-00260 (Epic: Docs backlog)
 
@@ -77,3 +76,4 @@ sdkgen-app and b2b-app dev servers share port 36591. Each is documented as it is
   module index. Maintainer: "The docs need to be truthful." Scope widened to a truth audit; wave 1 started.
 - 2026-11-25: truth audit done for streams, slumber, mutator, i18n, maths, cache, vault, monko, funktor, karango,
   kraft and the remaining READMEs; ledger above. Site builds (118 pages). Ready to merge.
+- 2026-11-25: DONE.
