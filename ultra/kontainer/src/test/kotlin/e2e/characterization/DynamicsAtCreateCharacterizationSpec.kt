@@ -419,7 +419,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
-    "Override lambdas run in the order of their first with per service; a second with replaces in place" {
+    // Until ULTRA-00355 a second with replaced in place, keeping the first one's position
+    "Override lambdas run in the order given; a class given again replaces its earlier lambda and moves to the end" {
 
         class DynA
         class DynB
@@ -440,8 +441,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
 
         assertSoftly {
-            withClue("A2 replaces A1 at A's position; A1 never runs") {
-                log shouldBe listOf("A2", "B")
+            withClue("A2 replaces A1 and moves to the end; A1 never runs") {
+                log shouldBe listOf("B", "A2")
             }
 
             log.clear()
@@ -450,8 +451,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
                 with { log.add("A3"); DynA() }
             }
 
-            withClue("a clone runs the parent's order first, its own override for A at A's position, new keys last") {
-                log shouldBe listOf("A3", "B", "C")
+            withClue("a clone runs the parent's remaining overrides first, then its own in the order given") {
+                log shouldBe listOf("B", "C", "A3")
             }
         }
     }
@@ -506,8 +507,8 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         }
     }
 
-    // Decided to stay (ULTRA-00345), the clone flavour of the case above.
-    "A clone's override under the base class runs, but the parent's later override under a subclass wins" {
+    // The clone flavour of the case above; until ULTRA-00355 the parent's override under the subclass won.
+    "A clone's override under the base class is given last and wins over the parent's override under a subclass" {
 
         open class Base
         class Sub : Base()
@@ -525,10 +526,10 @@ class DynamicsAtCreateCharacterizationSpec : StringSpec({
         val clone = original.clone { with(Base::class) { log.add("x"); Base() } }
 
         assertSoftly {
-            withClue("merged order: Base with the clone's lambda, then Sub with the parent's") {
-                log shouldBe listOf("x", "b")
+            withClue("merged order: Sub with the parent's lambda, then Base with the clone's") {
+                log shouldBe listOf("b", "x")
             }
-            clone.get(Base::class)::class shouldBe Sub::class
+            clone.get(Base::class)::class shouldBe Base::class
             clone.get(Base::class) shouldNotBeSameInstanceAs original.get(Base::class)
         }
     }

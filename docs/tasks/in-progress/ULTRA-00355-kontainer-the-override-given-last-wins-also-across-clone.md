@@ -1,6 +1,6 @@
 # ULTRA-00355: Kontainer: the override given last wins, also across clone
 
-> **Status (2026-11-25): DESIGNED.** Maintainer chose the fix; implementation next.
+> **Status (2026-11-25): IN PROGRESS.** Maintainer chose the fix; implementation next.
 
 ## Why this exists
 
@@ -35,3 +35,4 @@ take precedence over the parent's. This makes the docs' "the later one wins" and
 ## History
 
 - 2026-11-25: created on the maintainer's decision.
+- 2026-11-25: IN PROGRESS.
