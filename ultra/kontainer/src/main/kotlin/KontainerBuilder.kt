@@ -15,6 +15,30 @@ internal val builtInServices: Set<KClass<*>> = setOf(
 )
 
 /**
+ * The value types that cannot be services, by Java class.
+ *
+ * `Int::class` is Java `int`, while a boxed value's class is `java.lang.Integer`: equal as [KClass], different as Java
+ * classes. So each primitive is listed in both forms.
+ */
+internal val valueTypes: Set<Class<*>> = listOf(
+    Boolean::class, Byte::class, Short::class, Int::class, Long::class, Float::class, Double::class, Char::class,
+).flatMap { listOfNotNull(it.javaPrimitiveType, it.javaObjectType) }.toSet() + setOf(
+    UByte::class.java, UShort::class.java, UInt::class.java, ULong::class.java, String::class.java, Unit::class.java,
+)
+
+/** Whether [cls] is one of the [valueTypes]. */
+internal fun isValueType(cls: KClass<*>): Boolean = cls.java in valueTypes
+
+/**
+ * Refuses a registration of one of the [valueTypes], at the defining call.
+ */
+private fun refuseValueType(cls: KClass<*>) {
+    if (isValueType(cls)) {
+        throw KontainerInconsistent("${cls.getName()} is a value type and cannot be registered")
+    }
+}
+
+/**
  * Builder for defining services and modules in a [Kontainer].
  *
  * Used internally by [kontainer] and [KontainerModule] to collect service definitions
@@ -74,6 +98,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     ) {
         @PublishedApi
         internal fun add(cls: KClass<out Any>, producer: ServiceProducer<out Any>) {
+            refuseValueType(cls)
             fn(cls, producer)
         }
 
@@ -85,7 +110,9 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         operator fun <SRV : Any> invoke(
             srv: KClass<SRV>,
         ) {
-            add(srv, ServiceProducer.forClass(srv))
+            // Before the producer: a value type is named as such, not as a class without a primary constructor
+            refuseValueType(srv)
+            fn(srv, ServiceProducer.forClass(srv))
         }
 
         /**
@@ -97,7 +124,9 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
             srv: KClass<SRV>,
             impl: KClass<IMPL>,
         ) {
-            return fn(srv, ServiceProducer.forClass(impl))
+            refuseValueType(srv)
+            refuseValueType(impl)
+            fn(srv, ServiceProducer.forClass(impl))
         }
 
         /**
@@ -716,6 +745,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         instance: SRV,
     ): KontainerBuilder {
         refuseBuiltIn(instance::class)
+        refuseValueType(instance::class)
 
         @Suppress("UNCHECKED_CAST")
         return addSingleton(
@@ -735,6 +765,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         instance: IMPL,
     ): KontainerBuilder {
         refuseBuiltIn(srv)
+        refuseValueType(srv)
 
         return addSingleton(srv, ServiceProducer.forInstance(instance))
     }

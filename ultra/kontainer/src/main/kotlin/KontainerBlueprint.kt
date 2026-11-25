@@ -230,6 +230,13 @@ class KontainerBlueprint internal constructor(
             )
         }
 
+        overridden.firstOrNull { isValueType(it) }?.let { valueType ->
+            throw KontainerInconsistent(
+                "${valueType.getName()} is a value type and cannot be overridden; " +
+                        "name the service class instead: with(Service::class) { ... }"
+            )
+        }
+
         val unexpectedDynamics = dynamicsChecker.getUnexpected(overridden)
 
         if (unexpectedDynamics.isNotEmpty()) {

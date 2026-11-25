@@ -23,6 +23,9 @@ class NeedsUserProvider(val users: UserProvider)
 open class Mailer
 class SmtpMailer : Mailer()
 
+open class Quantity
+class Count : Quantity()
+
 /**
  * Pins the exact override match (ULTRA-00345): an override whose class is itself a registered dynamic replaces that
  * service; otherwise the one registered dynamic it fits, as before.
@@ -184,26 +187,28 @@ class ExactOverrideMatchSpec : StringSpec({
         }
     }
 
-    "Primitives: with Int and Number registered, with<Int> replaces Int, by class equality" {
+    // Moved from Int and Number to types of their own: value types cannot be services (ULTRA-00354)
+
+    "A base registered by factory after its subclass: with<Count> replaces Count, by class equality" {
 
         val subject = kontainer {
-            dynamic(Int::class)
-            dynamic(Number::class) { 0.5 }
+            dynamic(Count::class)
+            dynamic(Quantity::class) { Quantity() }
         }.create {
-            with<Int> { 5 }
+            with<Count> { Count() }
         }
 
         assertSoftly {
-            subject.providerOf(Int::class).reported shouldBe Reported.OverriddenDynamicSingleton
-            subject.providerOf(Number::class).reported shouldBe Reported.DynamicSingleton
+            subject.providerOf(Count::class).reported shouldBe Reported.OverriddenDynamicSingleton
+            subject.providerOf(Quantity::class).reported shouldBe Reported.DynamicSingleton
         }
     }
 
-    "Primitives: with Int alone registered, with { 5 } is refused as unexpected, the checker asks Java assignability" {
+    "With Count alone registered, with { Quantity() } is refused as unexpected, the checker asks Java assignability" {
 
         shouldThrow<KontainerInconsistent> {
-            kontainer { dynamic(Int::class) }.create { with { 5 } }
-        }.message shouldBe "Unexpected dynamics were provided: kotlin.Int"
+            kontainer { dynamic(Count::class) }.create { with { Quantity() } }
+        }.message shouldBe "Unexpected dynamics were provided: io.peekandpoke.ultra.kontainer.e2e.Quantity"
     }
 
     "Injection is not changed: injecting the base type stays ambiguous" {
