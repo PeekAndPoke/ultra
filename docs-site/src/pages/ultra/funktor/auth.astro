@@ -42,7 +42,7 @@ import {githubRepo} from '../../../data/site';
             frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://admin.example.com/auth"),
             capabilities = setOf(Capability.SignIn, Capability.SignUp),
         ),
-        // null, so left out, when the client id and secret are not in the config's keys
+        // null, so left out, when its keys are missing from the config
         googleSso.fromAppConfig(Capability.SignIn, Capability.SignUp),
         githubSso.fromAppConfig(Capability.SignIn, Capability.SignUp),
     )
@@ -358,7 +358,8 @@ val blueprint = kontainer {
     <Code code={`// Frontend: the token is refreshed automatically by AuthState.
 // You can also call it manually:
 val response = api.auth.refreshToken().firstOrNull()
-// The new JWT. \`bearerToken\` is an extension on Success: the session is sealed, so a client narrows first.
+// The new JWT. \`bearerToken\` is an extension on Success; the response is sealed
+// (Success or OrgSelectionRequired), so narrow it first.
 val token = (response?.data as? AuthSignInResponse.Success)?.bearerToken`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>API access matrix (ApiAcl)</h2>

@@ -98,8 +98,9 @@ if (result.success) {
         adds a banner to the body and, when its <code>destination</code> is set, redirects every email to that
         inbox. <code>disableEmails</code> sends nothing at all.</p>
 
-    <Aside>Without a dev config the real sender is used directly. With one, the emails go to the address
-        you configure, with the original recipient recorded in the send result.
+    <Aside>Without a dev config the real sender is used directly. With one that sets a
+        <code>destination</code> email, the emails go to that address, with the original recipient recorded in the send
+        result.
     </Aside>
 
     <h2>Tests capture instead of sending</h2>

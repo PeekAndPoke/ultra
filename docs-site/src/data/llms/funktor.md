@@ -153,9 +153,11 @@ a request, powering the API access matrix and admin dashboards.
 ### API features
 
 Group related routes into `ApiFeature` implementations and register them in Kontainer. Funktor finds them
-there (boot validation, the API access matrix, the code generator); the app mounts their routes itself:
+there (boot validation, the API access matrix, the code generator
+when `funktorCodegen()` is registered); the app mounts their routes itself:
 
 ```kotlin
+// inside app.module(this) { app, config, init -> routing { ... } }
 authenticate(AUTH_JWT, AUTH_ANON) {
     init.getAll(ApiFeature::class).flatMap { it.getRouteGroups() }.flatMap { it.all }.forEach { handle(it) }
 }

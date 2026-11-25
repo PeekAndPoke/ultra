@@ -233,7 +233,8 @@ val sseEvents = SseEvents.mount(Unit::class) {
     <h2>API features</h2>
 
     <p>Group related routes into <code>ApiFeature</code> implementations and register them in Kontainer. Funktor
-        finds them there for boot validation, the API access matrix and the code generator; the app mounts their
+        finds them there for boot validation, the API access matrix and the code generator
+        (<code>funktorCodegen()</code>); the app mounts their
         routes with <code>handle(route)</code> (see <a href="/ultra/funktor/getting-started">Getting Started</a>).</p>
 
     <Code code={`class UserApiFeature : ApiFeature {

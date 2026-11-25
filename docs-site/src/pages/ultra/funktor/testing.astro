@@ -68,7 +68,7 @@ import {Code} from 'astro:components';
 
         "order processing" - {
             "calculates total" {
-                val order = orderFixtures.sampleOrder.get()
+                val order = orderFixtures.sampleOrder.get().value
                 order.total shouldBe 42.0
             }
         }

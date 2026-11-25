@@ -107,7 +107,7 @@ app.use(router).mount('#app')`} lang="ts" theme="vitesse-dark"/>
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">KontainerCollector</h3>
-            <p class="text-sm text-gray-400">The services the request's kontainer created: per service a count and the first and last creation time.</p>
+            <p class="text-sm text-gray-400">Per service a count and the first and last creation time; singletons are process-wide, so another request or the boot may have created them.</p>
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">UserCollector</h3>
