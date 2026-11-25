@@ -102,3 +102,4 @@ CLEAN in round 1, one line each:
 - 2026-11-25: MINOR batch hand-checked by the coordinator (message hint, literal names); merged into master
   (143328c3); CHANGELOG written. Docs: the services page and the mirror carry the value-type sentence.
   No DOCS follow-up needed.
+- 2026-11-25: DONE.

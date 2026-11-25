@@ -114,3 +114,4 @@ ULTRA-00329 removed the instance API and changed the dump; these spots describe 
 - 2026-11-25: round 2 clean; its older MINOR (UserRepository under "shared") fixed; README and mirror light pass
   (ULTRA-00356); README version back to `<version>`. Merged into master (9199a9ea) after ULTRA-00355, which makes
   "the later one wins" true.
+- 2026-11-25: DONE.
