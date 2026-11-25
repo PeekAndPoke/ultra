@@ -561,8 +561,7 @@ A TTL index only expires documents whose field holds a BSON Date. Slumber stores
 // Create missing indexes. An index whose name exists with other fields, unique, sparse or
 // partial filter is dropped and re-created; a changed TTL expiry is not detected. Default names
 // come from the index type and the fields, so changing either creates a new index and leaves the
-// old one
-// (use recreateIndexes()).
+// old one (use recreateIndexes()).
 // A failed create is logged as a warning, not thrown.
 repo.ensureIndexes()
 
