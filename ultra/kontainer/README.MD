@@ -1,7 +1,7 @@
-# Kontainer — Dependency Injection, Done Right
+# Kontainer: Dependency Injection
 
 A lightweight DI container built around per-request scoping. Fresh containers per unit of work, stateful dynamic
-services, and validated dependency graphs — no annotations, no surprises.
+services, and validated dependency graphs.
 
 ## Why Kontainer?
 
@@ -30,8 +30,8 @@ val logger = kontainer.get(RequestLogger::class)
 
 - **Two service types, four declarations**: Singleton and Prototype; declared as `singleton` (global), `dynamic`
   (per-container), `prototype` and `dynamicPrototype` (per-call)
-- **Constructor injection** — No annotations, no magic. Just primary constructors.
-- **Blueprint validation** — Dependency graph is validated before any container is created
+- **Constructor injection**: services declare their dependencies in the primary constructor
+- **Blueprint validation**: the dependency graph is validated on the first `create`
 - **Per-request containers** — Fresh Dynamic services per unit of work, automatic cleanup
 - **Semi-dynamic promotion** — Singletons that depend on Dynamic services are automatically promoted
 - **Modules** — Group related services into reusable modules
@@ -45,6 +45,6 @@ Full docs at **[peekandpoke.io/ultra/kontainer](https://peekandpoke.io/ultra/kon
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.peekandpoke.ultra:kontainer:<version>")
+    implementation("io.peekandpoke.ultra:kontainer:0.119.0")
 }
 ```

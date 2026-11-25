@@ -102,3 +102,12 @@ ULTRA-00329 removed the instance API and changed the dump; these spots describe 
   decorator is a `Repo` under any key that is one, and under any other key `Repo` consumers get the undecorated
   service); the Kontainer card on `ultra/tools` no longer says "three lifecycles". Override precedence wording
   untouched (with the maintainer). `pnpm astro build`: 118 pages, green.
+- 2026-11-25: round 2 clean; last batch. `lifecycle` and mirror: the repository that writes insights is
+  `MeteredUserRepository`, with a comment that injecting a dynamic makes it semi-dynamic, so the "Shared" list of the
+  first example holds nothing that injects a dynamic. Light pass of ULTRA-00356 on the two kontainer files:
+  `ultra/kontainer/README.MD` (heading without "Done Right", slogans "no surprises" and "no magic" gone, validation on
+  the first `create`, version snippet `0.119.0`) and the mirror ("no reflection tricks" gone, as Kontainer reads
+  constructors with Kotlin reflection; "Not another Dagger clone", "powerful", "The real power", a duplicate "No
+  classpath scanning" bullet, a bold broken across two lines); the two page sentences the mirror shares
+  (`lifecycle`, `injection`) moved with it. Override precedence wording untouched (ULTRA-00355).
+  `pnpm astro build`: 118 pages, green.

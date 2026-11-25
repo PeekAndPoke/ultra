@@ -16,7 +16,7 @@ import { Code } from 'astro:components';
 
 <h2 id="per-request-containers">Per-request containers</h2>
 
-<p>The real power of Kontainer's lifecycle model shows up on the server side. The pattern is simple and inspired by PHP's request model:</p>
+<p>Kontainer's lifecycle model matters most on the server side. The pattern is simple and inspired by PHP's request model:</p>
 
 <ol>
   <li>Define a <strong>blueprint once</strong> at application startup</li>
@@ -105,8 +105,8 @@ class OrderService(
     )
 }
 
-// Any service in the request can record metrics
-class UserRepository(private val insights: RequestInsights) {
+// Any service in the request can record metrics; injecting a dynamic makes it semi-dynamic (one per container)
+class MeteredUserRepository(private val insights: RequestInsights) {
     fun findById(id: String): User {
         val start = System.currentTimeMillis()
         val result = db.query("SELECT * FROM users WHERE id = ?", id)

@@ -10,8 +10,8 @@ and validation at startup.
 ## What is Kontainer?
 
 Kontainer is a dependency injection container that uses a **two-stage architecture**: you define a blueprint, then
-create container instances from it. Services are injected via constructors — no annotations, no reflection tricks, no
-runtime surprises.
+create container instances from it. Services are injected via constructors, without
+annotations.
 
 ```kotlin
 val blueprint = kontainer {
@@ -28,15 +28,15 @@ That's it. Define services, create a container, get what you need.
 
 ## The core idea: stateful, scoped containers
 
-Most DI containers give you a single, long-lived container. Kontainer is different — it's built around the idea that *
-*you create a fresh container for every unit of work**.
+Most DI containers give you a single, long-lived container. Kontainer is different: it's built around the idea that
+**you create a fresh container for every unit of work**.
 
 On the server side, every incoming HTTP request, CLI command, or scheduled job gets its own container instance, created
 from a shared blueprint. Singletons (database pools, configuration) are shared. But **dynamic services are fresh per
 container** — they can carry state that lives exactly as long as the request does, then gets garbage collected. Clean
 slate, every time.
 
-This unlocks powerful patterns:
+This enables patterns like these:
 
 - **Inject the current user everywhere** — set it once when the request starts, every service that needs it gets it via
   constructor injection. No parameter threading.
@@ -50,15 +50,14 @@ per-request.
 
 ## Why Kontainer?
 
-**Not another Dagger clone.** Kontainer doesn't generate code at compile time or scan classpath at runtime. Instead, it
+Kontainer doesn't generate code at compile time or scan the classpath at runtime. Instead, it
 validates the entire dependency graph on first use and gives you clear error messages when something doesn't wire up.
 
-- **Pure Kotlin DSL** — no annotations, no XML, no YAML. Your DI config is code.
+- **Pure Kotlin DSL**: your DI config is code, not annotations or XML.
 - **Lifecycles**: Singleton (global), Dynamic (per-container), Prototype and Dynamic Prototype (per-injection).
 - **Validated on first use** — missing dependencies, ambiguous services, and inconsistencies are caught immediately with
   clear messages.
 - **Constructor injection** — services declare what they need in their constructor. Kontainer fills it in.
-- **No classpath scanning** — you control exactly what goes into the container.
 
 ## What you get
 
@@ -347,7 +346,7 @@ manual wiring.
 
 ## Per-request containers
 
-The real power of Kontainer's lifecycle model shows up on the server side. The pattern is simple and inspired by PHP's
+Kontainer's lifecycle model matters most on the server side. The pattern is simple and inspired by PHP's
 request model:
 
 1. Define a **blueprint once** at application startup
@@ -446,8 +445,8 @@ class RequestInsights {
     )
 }
 
-// Any service in the request can record metrics
-class UserRepository(private val insights: RequestInsights) {
+// Any service in the request can record metrics; injecting a dynamic makes it semi-dynamic (one per container)
+class MeteredUserRepository(private val insights: RequestInsights) {
     fun findById(id: String): User {
         val start = System.currentTimeMillis()
         val result = db.query("SELECT * FROM users WHERE id = ?", id)
@@ -689,7 +688,7 @@ one.
 
 ## Inject all implementations
 
-Inject all services that implement a given type as a `List`. This is powerful for building extensible, plugin-style
+Inject all services that implement a given type as a `List`. This suits extensible, plugin-style
 architectures:
 
 ```kotlin
