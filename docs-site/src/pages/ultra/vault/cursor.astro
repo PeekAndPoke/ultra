@@ -30,7 +30,8 @@ cursor.asFlow().collect { stored ->
 // Metadata
 cursor.count      // number of results returned
 cursor.fullCount  // total matches (when using pagination)
-cursor.timeMs     // query time in milliseconds (always 0.0 with Monko)`} lang="kotlin" theme="vitesse-dark"/>
+cursor.timeMs     // 0.0 unless VaultConfig(profile = true); with Karango and profiling on it
+                  // sums query, (de)serialization and explain time. Always 0.0 with Monko.`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Convenience extensions</h2>
 
@@ -127,13 +128,16 @@ val (adults, minors) = cursor.partition { it().age >= 18 }`} lang="kotlin" theme
 
     <h3>Sorting, distinct, take/drop</h3>
 
-    <Code code={`// sortedBy / sortedByDescending
-val byAge: List<Stored<Person>> = cursor.sortedBy { it().age }
-val oldest: List<Stored<Person>> = cursor.sortedByDescending { it().age }
+    <Code code={`// sortedBy, sortedByDescending and distinctBy take a non-suspend selector, so it()
+// cannot be called inside. Select on metadata, or resolve the values first.
+val byKey: List<Stored<Person>> = cursor.sortedBy { it._key }
+val byKeyDesc: List<Stored<Person>> = cursor.sortedByDescending { it._key }
+val byAge: List<Person> = cursor.map { it() }.sortedBy { it.age }
 
 // distinct / distinctBy
 val unique: List<Stored<Person>> = cursor.distinct()
-val uniqueNames: List<Stored<Person>> = cursor.distinctBy { it().name }
+val uniqueIds: List<Stored<Person>> = cursor.distinctBy { it._id }
+val uniqueNames: List<Person> = cursor.map { it() }.distinctBy { it.name }
 
 // take / drop
 val firstFive: List<Stored<Person>> = cursor.take(5)

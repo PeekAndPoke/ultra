@@ -129,7 +129,8 @@ repo.removeAll()`} lang="kotlin" theme="vitesse-dark"/>
             <tr>
                 <td class="px-3 py-2 border border-white/10"><code>OnAfterDelete&lt;T&gt;</code></td>
                 <td class="px-3 py-2 border border-white/10">After <code>remove(entity)</code> completes; not after
-                    <code>remove(idOrKey)</code> or <code>removeAll()</code>.</td>
+                    <code>remove(idOrKey)</code> or <code>removeAll()</code>. With Monko, a call through a
+                    <code>Repository&lt;T&gt;</code> reference runs no hook.</td>
                 <td class="px-3 py-2 border border-white/10">Yes</td>
             </tr>
             </tbody>
@@ -138,9 +139,11 @@ repo.removeAll()`} lang="kotlin" theme="vitesse-dark"/>
 
     <p><code>OnBeforeSave</code> runs synchronously and returns the (potentially modified) entity.
         <code>OnAfterSave</code> and <code>OnAfterDelete</code> run after the database operation, through the
-        driver's <code>VaultHookScope</code>: awaited by default (<code>VaultHookScope.Inline</code>), or launched in
-        the background by <code>DeferredVaultHookScope</code> once it is bound to an application scope. Their
-        failures are logged, never thrown.</p>
+        driver's <code>VaultHookScope</code>. A driver you construct yourself awaits them
+        (<code>VaultHookScope.Inline</code>). A driver from the Kontainer module gets
+        <code>DeferredVaultHookScope</code>, which runs them inline until something binds it to an application
+        scope. Funktor binds it at app start, so in a Funktor app they run in the background, and a read right
+        after a save may not yet see what a hook writes. Hook failures are logged, never thrown.</p>
 
     <Code code={`// A custom hook
 class MyCustomHook : Repository.Hooks.OnBeforeSave<MyEntity> {
@@ -194,6 +197,7 @@ repo.ensure()
 // Or separately
 repo.ensureRepository()  // create the collection if missing
 repo.ensureIndexes()     // create missing indexes, drop and re-create changed ones
+                         // (Karango: only when the fields of a named index change)
 
 // Validate index state
 val info: IndexesInfo = repo.validateIndexes()

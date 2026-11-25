@@ -18,6 +18,8 @@ once, persist them in either database.
 
 Vault is not a standalone library. It is the shared foundation used by
 [Karango](https://peekandpoke.io/llms/karango.md) and [Monko](https://peekandpoke.io/llms/monko.md).
+They depend on it at runtime only: add `implementation("io.peekandpoke.ultra:vault:{{ultraVersion}}")` next to them
+(Funktor already exposes it).
 
 ---
 
@@ -141,7 +143,8 @@ val cursor = repo.findAll()
 
 cursor.count      // number of results returned
 cursor.fullCount  // total count (when using pagination)
-cursor.timeMs     // query time in ms (always 0.0 with Monko)
+cursor.timeMs     // 0.0 unless VaultConfig(profile = true); with Karango and profiling on it
+                  // sums query, (de)serialization and explain time. Always 0.0 with Monko.
 
 // Stream results
 cursor.asFlow(): Flow<T>
@@ -152,8 +155,8 @@ cursor.toList(): List<T>  // suspend
 
 ## Suspend convenience extensions
 
-Cursor provides 29 suspend convenience extensions (counting the predicate overloads of `first` and `firstOrNull`).
-Each collects the cursor and returns a List, Map or value, never a Flow:
+Cursor provides 29 suspend convenience extensions (counting the predicate overloads of `first` and `firstOrNull`),
+plus `cache()`. Each collects the cursor and returns a List, Map or value, never a Flow:
 
 **Transform:** `map`, `mapNotNull`, `mapIndexed`, `flatMap`
 
@@ -170,6 +173,9 @@ Each collects the cursor and returns a List, Map or value, never a Flow:
 **Order:** `sortedBy`, `sortedByDescending`
 
 **Deduplicate:** `distinct`, `distinctBy`
+
+The selectors of `sortedBy`, `sortedByDescending` and `distinctBy` are not suspend, so `it()` cannot be called in
+them: select on metadata (`it._key`) or resolve first (`cursor.map { it() }.sortedBy { it.age }`).
 
 **Slice:** `take`, `drop`
 
@@ -220,18 +226,22 @@ Hooks run during entity lifecycle events. Three hook interfaces:
 |-----------------|-----------------------|--------------------|
 | `OnBeforeSave`  | Before insert or save | Yes                |
 | `OnAfterSave`   | After insert or save  | No (read-only)     |
-| `OnAfterDelete` | After remove(entity)  | No (read-only)     |
+| `OnAfterDelete` | After remove(entity)* | No (read-only)     |
+
+\* With Monko, `remove(entity)` called through a `Repository<T>` reference runs no hook.
 
 ### Hook execution order
 
 - **insert()**: OnBeforeSave -> persist -> OnAfterSave
 - **save()**: OnBeforeSave -> persist -> OnAfterSave
-- **remove(entity)**: delete -> OnAfterDelete (`remove(idOrKey)` and `removeAll()` run no hooks)
+- **remove(entity)**: delete -> OnAfterDelete (`remove(idOrKey)` and `removeAll()` run no hooks; with Monko, neither
+  does a call through a `Repository<T>` reference)
 - **batchInsert()** (Karango): OnBeforeSave (each) -> persist all -> OnAfterSave (each)
 
-OnAfterSave and OnAfterDelete run through the driver's `VaultHookScope`: awaited by default
-(`VaultHookScope.Inline`), launched in the background by `DeferredVaultHookScope` once it is bound to an application
-scope. Hook failures are logged, never thrown.
+OnAfterSave and OnAfterDelete run through the driver's `VaultHookScope`. A driver you construct yourself awaits them
+(`VaultHookScope.Inline`). A driver from the Kontainer module gets `DeferredVaultHookScope`, which runs them inline
+until something binds it to an application scope. Funktor binds it at app start, so in a Funktor app they run in the
+background, and a read right after a save may not yet see what a hook writes. Hook failures are logged, never thrown.
 
 ## EntityCache
 

@@ -17,9 +17,9 @@ import {dep} from '../../../data/site';
 
     <h2>Dependency</h2>
 
-    <p>You rarely add Vault directly &mdash; <a href="/ultra/karango/">Karango</a> and
-        <a href="/ultra/monko/">Monko</a> bring it in. Add it explicitly only when you are writing
-        backend-agnostic code against the shared abstractions.</p>
+    <p>Add Vault next to <a href="/ultra/karango/">Karango</a> or <a href="/ultra/monko/">Monko</a>: they depend on
+        it at runtime only, so your code cannot name <code>@Vault</code>, <code>Stored</code> or
+        <code>Repository</code> without it. Funktor already exposes it.</p>
 
     <Code code={`dependencies {
     implementation("${dep.vault}")
