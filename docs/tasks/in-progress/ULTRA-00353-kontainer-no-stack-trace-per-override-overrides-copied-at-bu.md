@@ -1,6 +1,6 @@
 # ULTRA-00353: Kontainer: no stack trace per override, overrides copied at build, JMH harness in its own module
 
-> **Status (2026-11-25): IN PROGRESS.** Merged into master (692e743a), gate PASS; open: strip the `$$Lambda` suffix (maintainer).
+> **Status (2026-11-25): DONE.** Merged into master (692e743a, 2adf2df0), gate PASS; the `$$Lambda` suffix is dropped (maintainer decision).
 
 ## Why this exists
 
@@ -46,7 +46,9 @@ of 554fc10c saved 80 B per override, `createOneOverride` 976 B with the lazies, 
 reads `io.peekandpoke.ultra.kontainer.e2e.ServiceDefinitionsSpec$4$$Lambda$770/0x000075b0a8375a50.invoke(Unknown
 Source)`, not `ApiKontainerKt$createApi$1$1` as this ticket expected. It names the class or file facade where
 `with { }` was written, not the function, and carries a per-JVM suffix. Nothing better is available without a stack
-walk. To the maintainer: keep as is, or strip the `$$Lambda...` suffix to show only the enclosing class.
+walk. Maintainer decision (2026-11-25): "Yes drop the suffix". The location now reads
+`io.peekandpoke.ultra.kontainer.e2e.ServiceDefinitionsSpec$4.invoke(Unknown Source)`: stable across restarts, no
+native address.
 
 The dump shows no code location (`KontainerTools.dumpKontainer` has no such column); the debug info
 (`ServiceDefinitionInfo.codeLocation`) and `CodeLocation.stack` / `first()` show it. Validation messages use only
@@ -128,7 +130,7 @@ aliasing row):
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
 | 1 | MINOR (security, impl) | `funktor/all/src/jvmTest/kotlin/InsightsGraphsApiSpec.kt:191` | `codeLocation shouldNotContain "ServiceProviderFactory"` no longer tells a request's graph from the blueprint's | fix | Asserts the UserProvider definition's `overwrites` is null (an override always overwrites the blueprint definition; field checked on `InsightsKontainerGraph.Definition`), soft with the type check; mutant (graph from a kontainer with the UserProvider override): RED on the new assertion, restored |
-| 1 | MINOR (security) | `ServiceProviderFactory.kt` | The hidden-class suffix carries a native address (`/0x...`) into the debug info | maintainer-decision | Whether to strip the `$$Lambda...` suffix is asked; not stripped |
+| 1 | MINOR (security) | `ServiceProviderFactory.kt` | The hidden-class suffix carries a native address (`/0x...`) into the debug info | fixed | Maintainer: "Yes drop the suffix"; `CodeLocation.of` cuts the name at `$$Lambda`; test pins it, mutant RED |
 | 1 | MINOR (impl) | `ServiceDefinition.kt` | `stackPrinted` has no test after the cache rewrite | fix | Reverted to `by lazy` as before |
 | 1 | surplus (impl) | `ServiceDefinition.kt` | Hand-written `@Volatile` caches for 80 B | fix | Reverted; `createOneOverride` re-measured (976 B) |
 | 1 | surplus (impl) | `ServiceDefinitionsSpec.kt` | `println` in a new test | fix | Removed |
@@ -150,3 +152,5 @@ is unpublished and `ultra/kontainer` has no JMH plugin.
 - 2026-11-24: IN PROGRESS. Track F: a, b and c done, tests first and mutation-checked, measured; waiting for the gate
 - 2026-11-25: gate round 1 PASS (0 CRITICAL, 0 MAJOR); MINOR batch applied: CodeLocation back to `by lazy`, println removed, InsightsGraphsApiSpec asserts `overwrites`; the `$$Lambda` suffix is with the maintainer. Kontainer 626 / 0 / 0, funktor/all 289 / 0 / 0 (XML).
 - 2026-11-25: merged into master (692e743a); gate PASS in round 1. Open: strip the `$$Lambda...` suffix from the override location (maintainer).
+- 2026-11-25: the `$$Lambda...` suffix is dropped from the override location (maintainer). Hand-checked; the mutant
+  without the cut is RED (4 assertions in ServiceDefinitionsSpec). Kontainer 626 / 0 / 0 (XML). Merged (2adf2df0).

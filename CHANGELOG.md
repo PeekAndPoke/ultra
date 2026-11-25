@@ -35,8 +35,9 @@
   3.9 us and 5.5 KB; a hot `get` from 29 ns to 14 ns with no allocation. A kontainer shares the blueprint's provider map
   and keeps its overrides in a map of its own; the blueprint caches each type's single candidate.
 - `ultra/kontainer`: an override at `create` or `clone` no longer captures a stack trace. Its code location in the debug
-  info names the override lambda's class instead of the useless `ServiceProviderFactory.<init>`. `create` with one
-  override from 1.3 us and 1.7 KB to 0.12 us and 1.0 KB (ULTRA-00353).
+  info names the class where the override lambda was written (without the per-run `$$Lambda...` suffix) instead of the
+  useless `ServiceProviderFactory.<init>`. `create` with one override from 1.3 us and 1.7 KB to 0.12 us and 1.0 KB
+  (ULTRA-00353).
 
 ### Fixes
 
