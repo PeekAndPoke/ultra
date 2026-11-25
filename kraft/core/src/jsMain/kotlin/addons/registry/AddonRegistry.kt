@@ -9,7 +9,7 @@ import io.peekandpoke.ultra.common.TypedKey
  *
  * Access from a component via:
  * ```
- * val marked by subscribingTo(addons.marked.ready)
+ * val marked by subscribingTo(addons.marked)
  * ```
  */
 class AddonRegistry constructor(
@@ -38,7 +38,7 @@ class AddonRegistry constructor(
     /** Triggers loading of all non-lazy addons. Called after the registry is built. */
     fun loadEager() {
         addons.values.forEach { addon ->
-            addon.load()
+            addon.loadIfEager()
         }
     }
 }

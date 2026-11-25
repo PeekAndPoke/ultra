@@ -114,6 +114,82 @@ class AddonRegistrySpec : StringSpec() {
             unsub()
         }
 
+        // ULTRA-00357: loadEager must not start a lazy addon; reading or subscribing starts it, once
+        "loadEager does not call the loader of a lazy addon" {
+            val builder = AddonRegistryBuilder()
+            var calls = 0
+
+            val addon = builder.register(
+                key = testAddonKey,
+                name = "test",
+                lazy = true,
+            ) {
+                calls++
+                TestAddon("lazy")
+            }
+
+            builder.build().loadEager()
+            delay(50)
+
+            calls shouldBe 0
+
+            val unsub = addon.subscribeToStream { }
+            addon.subscribeToStream { }()
+            addon()
+
+            eventually {
+                addon()?.greeting shouldBe "lazy"
+            }
+            calls shouldBe 1
+
+            unsub()
+        }
+
+        "a read alone starts loading a lazy addon" {
+            val builder = AddonRegistryBuilder()
+            var calls = 0
+
+            val addon = builder.register(
+                key = testAddonKey,
+                name = "test",
+                lazy = true,
+            ) {
+                calls++
+                TestAddon("read")
+            }
+
+            builder.build().loadEager()
+
+            addon() shouldBe null
+
+            eventually {
+                addon()?.greeting shouldBe "read"
+            }
+            calls shouldBe 1
+        }
+
+        "loadEager calls the loader of a non-lazy addon once" {
+            val builder = AddonRegistryBuilder()
+            var calls = 0
+
+            builder.register(
+                key = testAddonKey,
+                name = "test",
+                lazy = false,
+            ) {
+                calls++
+                TestAddon("eager")
+            }
+
+            val registry = builder.build()
+            registry.loadEager()
+            registry.loadEager()
+
+            eventually {
+                calls shouldBe 1
+            }
+        }
+
         "accessing unregistered addon throws" {
             val registry = AddonRegistryBuilder().build()
 

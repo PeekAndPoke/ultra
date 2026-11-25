@@ -19,7 +19,7 @@ class AddonRegistryBuilder {
      *
      * @param key    the unique key for this addon
      * @param name   human-readable name (used in error messages)
-     * @param lazy   if true, the addon is loaded on first subscription; otherwise loaded eagerly
+     * @param lazy   if true, the addon is loaded on first read or subscription; otherwise loaded eagerly
      * @param loader suspend function that performs the dynamic import and returns the addon facade
      * @return the [Addon] handle (useful for storing a reference)
      */
