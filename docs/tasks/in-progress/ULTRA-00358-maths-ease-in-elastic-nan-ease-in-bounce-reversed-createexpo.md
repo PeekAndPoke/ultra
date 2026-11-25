@@ -1,6 +1,6 @@
 # ULTRA-00358: Maths: Ease.In.elastic NaN, Ease.In.bounce reversed, createExponential ignores lambda
 
-> **Status (2026-11-25): IN PROGRESS.** easing fixes landed; createExponential awaits the maintainer's decision
+> **Status (2026-11-25): IN PROGRESS.** All three fixed, with tests, mutants and docs; the review gate is next.
 
 ## Why this exists
 
@@ -20,6 +20,9 @@ Found by the ULTRA-00356 truth audit, confirmed by its reviewer (ultra/maths/src
 - Maintainer (2026-11-25): fix all three. Behaviour change for callers of the broken curves.
 - createExponential's new meaning: to be settled with the maintainer before that part is implemented (the implementer
   proposes; samples stay in 0..1).
+- Maintainer (2026-11-25), via the coordinator, verbatim: option A, "lambda only, default ln(1000)". pdf proportional
+  to exp(-lambda * x) on [0, 1]; tailCut is removed (breaking); the default lambda = ln(1000) so the default curve
+  stays exactly as today.
 
 ## The work
 
@@ -56,7 +59,21 @@ Docs (easings only): docs-site/src/pages/ultra/maths/easing.astro:99,103 and doc
 drop the In.elastic and In.bounce defect notes. `pnpm astro build`: 118 pages, clean. The createExponential notes on
 distributions.astro and maths.md stay until item 3 lands.
 
-createExponential (item 3): not implemented; proposal for the maintainer:
+createExponential (item 3), implemented as option A (see Decisions):
+- ultra/maths/src/commonMain/kotlin/stochastic/BucketedDistribution.kt:77: `createExponential(lambda = ln(1000.0),
+  count)`, pdf `exp(-lambda * xs[i])` on the [0, 1] grid; `tailCut` removed (breaking); `require(lambda > 0.0 &&
+  lambda.isFinite())` (Infinity used to reach an IllegalStateException from the CDF).
+- Tests: BucketedDistributionSpec.kt:183 (pdf equals exp(-lambda x) for lambda 0.5, 3, 12), :198 (default equals the
+  former default curve 1e-3^x on 100 buckets; a regression guard, green before and after), :210 (replaces the vacuous
+  test: larger lambda gives a strictly lower pdf at every x > 0, and over 50k samples from ONE Random(42) each mean
+  is within 0.01 of the analytic truncated mean and the means differ by more than 0.1).
+  BucketedDistributionEdgeCasesSpec.kt:63 (replaces the tailCut range checks: NaN and Infinity lambda throw
+  IllegalArgumentException).
+- Docs: distributions.astro:84-118 (lambda as the rate on [0, 1], default about 6.91, tailCut row replaced by count),
+  maths.md:80-83. index.astro:72 and distributions.astro:146 (`lambda = 2.0`) stay as they are: valid code, and
+  lambda now does what they suggest. `pnpm astro build`: 118 pages, clean.
+
+The proposal as handed to the maintainer:
 - The shape on 0..1 is exp(-k x), one degree of freedom. Today k = ln(1 / tailCut) (default 6.91, mean 0.144) and
   `lambda` cancels. Any two parameter form stays redundant.
 - A (recommended): pdf proportional to exp(-lambda x) on [0, 1]; `lambda` is the rate on the unit interval; `tailCut`
@@ -83,6 +100,16 @@ createExponential (item 3): not implemented; proposal for the maintainer:
   - In.bounce as `Out.bounce(x)` (right endpoints, wrong curve): killed (table, mirror test).
   - In.bounce back to `Out.bounce(1.0 - x)`: killed (table, mirror test, EaseCalcEdgeCasesSpec endpoints).
 
+- createExponential RED before the change (jvmTest, XML: 135 tests, 3 failures): pdf at x = 0.02 was 0.871 where
+  exp(-0.5 * 0.02) = 0.990 (lambda ignored); lambda 1 and 5 gave identical pdfs; Infinity threw IllegalStateException.
+- createExponential mutants (jvmTest, cp backup, restored, cmp identical), all killed:
+  - lambda ignored (rate fixed at ln(1000)): 2 failures (pdf formula, steeper and smaller mean).
+  - default 1.0: 1 failure (default curve).
+  - no isFinite check: 1 failure (non-finite lambda).
+  - sign flipped, exp(+lambda x): 4 failures.
+- After item 3, from the XML (`console/wt-gradle.sh :ultra:maths:allTests`): jvmTest 135/135, linuxX64Test 135/135,
+  jsBrowserTest 136/136 (135 plus the Kotest placeholder).
+
 ## History
 
 - 2026-11-25: created on the maintainer's decision.
@@ -90,3 +117,5 @@ createExponential (item 3): not implemented; proposal for the maintainer:
 - 2026-11-25: IN PROGRESS. Easing fixes (In.elastic, In.bounce) with tests and mutants; createExponential proposal
   pending the maintainer.
 - 2026-11-25: easing defect notes dropped from the docs and LLM mirror; createExponential proposal recorded.
+- 2026-11-25: maintainer chose option A; createExponential is lambda only (default ln(1000)), tailCut removed, tests,
+  mutants and docs done.

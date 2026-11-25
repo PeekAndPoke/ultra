@@ -79,9 +79,9 @@ normal.sample(Random, from = 10.0, to = 50.0)      // mapped to a range (extensi
 ```
 
 Factories (`count` defaults to 100 buckets): `createUniform(count)`, `createTruncatedNormal(mean = 0.5,
-std = 0.15, count)`, `createExponential(lambda = 1.0, count, tailCut = 1e-3)`, `createTriangular(min, mode,
-max, count)`. In `createExponential` the curve is rescaled onto `0..1`, so `lambda` cancels out and does not
-change the shape; a smaller `tailCut` (allowed `1e-12..1e-1`) makes the decay steeper.
+std = 0.15, count)`, `createExponential(lambda = ln(1000), count)`, `createTriangular(min, mode, max, count)`.
+`createExponential` has density proportional to `exp(-lambda * x)` on `0..1`: `lambda` is the rate on that
+interval (finite, > 0; default about 6.91, where the density at 1 is 1/1000 of that at 0), larger is steeper.
 
 Combinators, all returning a new `BucketedDistribution`:
 
