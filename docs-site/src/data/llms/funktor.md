@@ -60,8 +60,8 @@ Under Ktor's default `FirstSuccessful` strategy the first provider to return a p
 revoked key) silently fall through to `Caller.AnonymousCaller` rather than producing a 401 —
 routes that require real auth check `User.isAnonymous()`.
 
-`currentUserProvider()` (extension on `ApplicationCall`) dispatches the `Caller` into a sealed
-`UserRecord`:
+`currentUserProvider()` (extension on `ApplicationCall`) dispatches the `Caller` into a `UserProvider`
+whose `User` carries a sealed `UserRecord`:
 
 ```kotlin
 when (record) {
@@ -95,9 +95,13 @@ at group construction, so a malformed one aborts app start.
 
 ```kotlin
 class OrgsApi : ApiRoutes("orgs", authFloor = { isSuperUser() }) {
-    val list = ApiRoute.Get("", ...)
+    val list = OrgsApiClient.List.mount {
+        handle { ApiResponse.ok(funktorSaas.findAll().map { it.asApiModel() }) }
+    }
 }
 ```
+
+A public group declares `authFloor = { public() }`.
 
 ### Authorization DSL
 
@@ -116,7 +120,8 @@ Rules are STATEMENTS, not values. Each call appends to the chain and the chain i
         forGroup("staff")
     }
 
-    forCall("owns resource") { params -> user.id == params.ownerId }
+    // receiver carries call, params and body
+    forCall("owns resource") { params.ownerId == user.record.userId }
 }
 ```
 
@@ -129,11 +134,13 @@ Rules are STATEMENTS, not values. Each call appends to the chain and the chain i
 | `forGroup(g)` / `forAnyGroup(…)` | group members |
 | `forPermission(p)` / `forAnyPermission(…)` | permission holders |
 | `forCall(desc) { }` | a custom predicate over params/body |
-| `public()` / `forbidden()` | everyone / nobody — SOLE rule only |
+| `public()` / `forbidden()` | everyone / nobody — SOLE rule only, so in practice a group floor |
 
 **`public()` and `forbidden()` must be the SOLE rule of a chain.** Combined with (or nested inside)
-anything else they silently become a no-op or an always-allow, so the builder throws at BOOT. To serve
-both a public and a protected audience, split into separate `ApiRoutes` groups each with its own floor.
+anything else they silently become a no-op or an always-allow, so the builder throws at BOOT. Every route
+starts with its group's floor, so a route's `authorize {}` can never hold them alone: a public route belongs
+in a group with `authFloor = { public() }`. To serve both a public and a protected audience, split into
+separate `ApiRoutes` groups each with its own floor.
 An empty `forAll {}`/`forAny {}` is rejected too — an empty AND allows everyone, an empty OR denies
 everyone.
 
@@ -145,7 +152,14 @@ a request, powering the API access matrix and admin dashboards.
 
 ### API features
 
-Group related routes into `ApiFeature` implementations. Registered in Kontainer, auto-discovered and mounted.
+Group related routes into `ApiFeature` implementations and register them in Kontainer. Funktor finds them
+there (boot validation, the API access matrix, the code generator); the app mounts their routes itself:
+
+```kotlin
+authenticate(AUTH_JWT, AUTH_ANON) {
+    init.getAll(ApiFeature::class).flatMap { it.getRouteGroups() }.flatMap { it.all }.forEach { handle(it) }
+}
+```
 
 ## Auth Module
 
@@ -271,7 +285,7 @@ refresh keeps the SAME org and never silently changes it.
 
 ```kotlin
 class B2bRealm(...) : AuthRealm<B2bUser> {
-    override val orgPolicy = OrgPolicy.Required()
+    override val orgPolicy = OrgPolicy.Required
 
     override suspend fun getMemberships(user: Stored<B2bUser>): Set<OrgMembership> =
         orgMembers.sessionMembershipsOf(UserId(user._id))
@@ -490,8 +504,8 @@ substitutes a capturing sender and never touches the app's provider — so a tes
 mail by forgetting to override something.
 
 ```kotlin
-funktorMessaging {
-    useSender(devConfig) { awsSes(sesConfig) }
+funktorMessaging(config) {
+    useSender(devConfig) { AwsSesSender.of(sesConfig) }
 }
 ```
 
@@ -582,7 +596,8 @@ funktor(
 ```
 
 Registers the org/membership repositories, the `orgs` API, AND the isolation boot check + request
-guard. The marker interfaces below are inert without this registration.
+guard. The check and guard come with the saas module itself (`funktorSaas`, which `funktor(...)` always
+installs); the marker interfaces below are inert in a blueprint without it.
 
 ### Storage
 

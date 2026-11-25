@@ -32,34 +32,35 @@ dependencies {
 
     <h2>Define your app</h2>
 
-    <p>A Funktor app starts with <code>funktorApp</code>. You configure the server modules and define your Kontainer
-        blueprint.</p>
+    <p>A Funktor app starts with <code>funktorApp</code>, typed by your config class. It reads the config Ktor
+        loads, builds your Kontainer blueprint from it, and then starts the server, or with <code>--cli</code> runs a
+        CLI command instead.</p>
 
-    <Code code={`fun main(args: Array<String>) = funktorApp {
-    server {
-        // Wire up funktor modules
-        funktorCore()
-        funktorRest()
-        funktorAuth {
-            useKarango()
-        }
+    <Code code={`val app = funktorApp<MyConfig>(
+    kontainers = { config -> AppKontainers(createBlueprint(config)) },
+)
 
-        // Your own modules
-        module(MyAppModule)
-    }
-
-    cli {
-        // CLI commands run with --cli flag
-    }
-}`} lang="kotlin" theme="vitesse-dark"/>
+fun main(args: Array<String>) = app.run(args)`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Define your Kontainer blueprint</h2>
 
-    <p>Services are registered in <a href="/ultra/kontainer/">Kontainer</a> modules. Each Funktor module registers its
-        own
-        services. You add your application services alongside them.</p>
+    <p>Services are registered in <a href="/ultra/kontainer/">Kontainer</a> modules. <code>funktor(...)</code>
+        registers every Funktor module; each one's block picks its storage backend. You add your application services
+        alongside them.</p>
 
-    <Code code={`val MyAppModule = module {
+    <Code code={`fun createBlueprint(config: MyConfig) = kontainer {
+    funktor(
+        config = config,
+        rest = { jwt() },           // needs funktor.auth.jwt in the config
+        auth = { useKarango() },
+    )
+
+    karango(config = config.arangodb)
+
+    module(MyAppModule)
+}
+
+val MyAppModule = module {
     // Your services
     singleton(UserRepository::class)
     dynamic(UserService::class)
@@ -71,13 +72,12 @@ dependencies {
     <h2>Define API routes</h2>
 
     <p>Routes use the typed API system from the <a href="/ultra/funktor/rest">REST module</a>. Define endpoints with
-        type-safe parameters, request bodies, and response types.</p>
+        type-safe parameters, request bodies, and response types. Every group declares who may reach it.</p>
 
-    <Code code={`class MyApi : ApiRoutes("my-api") {
+    <Code code={`class MyApi : ApiRoutes("my-api", authFloor = { public() }) {
 
     val getUsers = MyApiClient.GetUsers.mount {
         docs { name = "List users" }
-        .authorize { public() }
         .handle {
             val users = userService.listAll()
             ApiResponse.ok(users)
@@ -87,7 +87,8 @@ dependencies {
 
     <h2>Configure the server</h2>
 
-    <p>The Ktor server module configures routing, CORS, and mounts your API features.</p>
+    <p>The Ktor server module installs the auth providers, a kontainer per request, and mounts the routes of every
+        <code>ApiFeature</code> in the kontainer.</p>
 
     <Code code={`fun Application.module() = app.module(this) { app, config, init ->
     install(SSE)
@@ -95,14 +96,29 @@ dependencies {
         // your CORS config
     }
 
+    authentication {
+        jwtCaller(AUTH_JWT)
+        anonymous(AUTH_ANON)
+    }
+
     routing {
-        // API features are auto-discovered from Kontainer
-        apiApp.mountAll(this)
+        // A kontainer per request, carrying the caller
+        installKontainer { call ->
+            app.kontainers.create { with { call.currentUserProvider() } }
+        }
+
+        authenticate(AUTH_JWT, AUTH_ANON) {
+            init.getAll(ApiFeature::class)
+                .flatMap { it.getRouteGroups() }
+                .flatMap { it.all }
+                .forEach { handle(it) }
+        }
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <Aside>All <code>ApiFeature</code> instances registered in Kontainer are automatically discovered and mounted.
-        You never manually wire route groups.
+    <Aside>The mounting loop is yours, not the framework's. Funktor finds every <code>ApiFeature</code> in the
+        kontainer (for boot validation, the API access matrix and the code generator); where its routes go is up to
+        the app.
     </Aside>
 
     <div class="mt-12">

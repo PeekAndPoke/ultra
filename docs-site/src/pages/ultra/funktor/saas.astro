@@ -90,9 +90,9 @@ data class InvoiceParams(
         landmine rather than a data leak, which is the right direction to be wrong in &mdash; but it is a
         confusing outage, so get it right.</p>
 
-    <Aside>Enforcement lives in the saas module, not in the marker interfaces. An app that uses
-        <code>OrgAware</code> without installing <code>funktor(saas = &#123; … &#125;)</code> gets the interfaces and
-        none of the checks.
+    <Aside>Enforcement lives in the saas module (<code>funktorSaas</code>, which <code>funktor(...)</code> always
+        installs), not in the marker interfaces. A blueprint without that module gets the interfaces and none of the
+        checks.
     </Aside>
 
     <div class="not-prose mt-8">
