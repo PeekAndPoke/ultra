@@ -26,6 +26,13 @@
   record written before 2026-10-19 (v1) is shown as the raw tree. The tab's "Instances" column is "Created" (the
   count, the first and the last creation), and a `DynamicOverride` names no created class: "handed in at create"
   (ULTRA-00329).
+- `ultra/kontainer`: value types cannot be services. Registering `Boolean`, `Byte`, `Short`, `Int`, `Long`, `Float`,
+  `Double`, `Char` (both JVM forms), `UByte`, `UShort`, `UInt`, `ULong`, `String` or `Unit` in any form (`singleton`,
+  `prototype`, `dynamic`, `dynamicPrototype`, `instance`, either side of a two-type form, in a module or `extend`)
+  throws `KontainerInconsistent` at the call. Overriding one with `with` throws at `create` or `clone`, so per request,
+  with a hint to name the service class (`with(Number::class) { 5 }`). `Number`, `CharSequence` and arrays stay
+  allowed; `get(Int::class)` and friends answer as before (not found, null, empty). This also ends the aliased
+  `Int::class` / `java.lang.Integer` lookups (ULTRA-00354).
 
 ### Performance
 
@@ -43,14 +50,15 @@
 
 - `ultra/kontainer`, behaviour change (no compile signal): `getAll`, `List<T>` and `Lazy<List<T>>` injections and
   `Lookup<T>.get` hand out each candidate's own service, in candidate order. A candidate that is a super type of another
-  registered candidate made them throw `ServiceAmbiguous`. `get` and `getOrNull` are unchanged. For an aliased primitive
-  key (`Int::class` and `java.lang.Integer`, e.g. `instance(5)`) the order of first use matters in both directions:
-  `getAll(Number::class)` after `getOrNull(Int::class)` now returns the instance (it threw `ServiceNotFound`), and
-  `getOrNull(Int::class)` or `get(Int::class)` after a first `getAll(Number::class)` or `Lookup` entry now find nothing
-  (they found it). Blueprints that inject a `List` or `Lookup` of the super type are unaffected. `getAll` of five from
+  registered candidate made them throw `ServiceAmbiguous`. `get` and `getOrNull` are unchanged. Blueprints that inject a `List` or `Lookup` of the super type are unaffected. `getAll` of five from
   104 ns to 65 ns (ULTRA-00352).
 - `ultra/kontainer`: `DynamicOverrides.Builder` hands out a copy of its overrides; a builder kept after `create` and
   used again no longer changes what later clones of that kontainer get (ULTRA-00353).
+- `ultra/kontainer`, behaviour change (no compile signal): the override given last wins. A class given again with
+  `with` moves to the end, and a clone's overrides take precedence over the parent's. Before, with two overrides for
+  one service under different classes, `create { with(Base){A}; with(Derived){B} }.clone { with(Base){C} }` kept B.
+  Override lambdas also run in the order given: at `clone` the parent's remaining lambdas first, then the clone's
+  (ULTRA-00355).
 
 ### Build
 
