@@ -72,7 +72,8 @@ val service = kontainer.get(UserService::class)`} lang="kotlin" theme="vitesse-d
 
 <ul>
     <li><strong>Pure Kotlin DSL</strong> — your DI config is code, not annotations or XML.</li>
-    <li><strong>Three lifecycles</strong> — Singleton (global), Dynamic (per-container), Prototype (per-injection).</li>
+    <li><strong>Lifecycles</strong> — Singleton (global), Dynamic (per-container), Prototype and Dynamic Prototype
+        (per-injection).</li>
     <li><strong>Validated on first use</strong> — missing dependencies and inconsistencies are caught with clear
         messages.
     </li>
@@ -84,7 +85,7 @@ val service = kontainer.get(UserService::class)`} lang="kotlin" theme="vitesse-d
 <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
   <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
     <h3 class="text-white font-semibold mb-1">Service Lifecycles</h3>
-    <p class="text-sm text-gray-400">Singleton, Dynamic, and Prototype — each with clear, predictable behavior.</p>
+    <p class="text-sm text-gray-400">Singleton, Dynamic, Prototype, and Dynamic Prototype — each with clear, predictable behavior.</p>
   </div>
   <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
     <h3 class="text-white font-semibold mb-1">Constructor Injection</h3>

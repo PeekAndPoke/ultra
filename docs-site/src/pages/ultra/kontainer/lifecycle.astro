@@ -123,7 +123,7 @@ metricsService.report(summary)`} lang="kotlin" theme="vitesse-dark" />
 
 <h2 id="lifecycles-side-by-side">Lifecycles side by side</h2>
 
-<p>The best way to understand the three lifecycles is to see them running together. Here we register one counter as each type and create three container instances, calling each counter three times per container:</p>
+<p>The best way to understand the lifecycles is to see them running together. Here we register one counter each as <code>singleton</code>, <code>dynamic</code> and <code>prototype</code>, and create three container instances, calling each counter three times per container (a <code>dynamicPrototype</code> counts like the prototype):</p>
 
 <Code code={`abstract class Counter {
     private var count = 0
@@ -198,7 +198,7 @@ class OrderService(val ctx: RequestContext)  // singleton — shared globally?`}
 
 <p>If <code>OrderService</code> were a true singleton, it would be created once and hold a reference to the <code>RequestContext</code> from the <em>first</em> request forever. Every subsequent request would see the wrong user. That's a bug.</p>
 
-<p>Kontainer prevents this automatically. When a service is defined as <code>singleton</code> but injects a <code>dynamic</code> service (directly or transitively), Kontainer <strong>promotes</strong> it to <strong>semi-dynamic</strong> — it behaves like a dynamic service, getting a fresh instance per container.</p>
+<p>Kontainer prevents this automatically. When a service is defined as <code>singleton</code> but injects a <code>dynamic</code> or <code>dynamicPrototype</code> service (directly or transitively), Kontainer <strong>promotes</strong> it to <strong>semi-dynamic</strong> — it behaves like a dynamic service, getting a fresh instance per container.</p>
 
 <Code code={`val blueprint = kontainer {
     dynamic(RequestContext::class)
@@ -229,7 +229,9 @@ class OrderController(val orders: OrderService)   // singleton → semi-dynamic 
 
 <p>The only services that remain true singletons are those with <strong>no transitive dependency</strong> on any dynamic service — like a database pool or a configuration object. Everything else is automatically scoped correctly.</p>
 
-<p>You can verify this at runtime using the <a href="/ultra/kontainer/advanced#debug-tools">debug tools</a> — the provider type will show <code>SemiDynamic</code> for promoted services.</p>
+<p>The <code>Kontainer</code> and the <code>InjectionContext</code> count as dynamic too, so a singleton that injects either of them is promoted as well.</p>
+
+<p>You can verify this at runtime using the <a href="/ultra/kontainer/introspection">debug tools</a> — the kind shows <code>SemiDynamic</code> for promoted services, together with the dynamic services that caused it.</p>
 
 <h2>Comparison</h2>
 
@@ -261,6 +263,12 @@ class OrderController(val orders: OrderService)   // singleton → semi-dynamic 
         <td class="py-2">Every injection / get()</td>
         <td class="py-2">No</td>
         <td class="py-2">Disposable, short-lived objects</td>
+      </tr>
+      <tr class="border-b border-white/5">
+        <td class="py-2"><code>dynamicPrototype</code></td>
+        <td class="py-2">Every injection / get()</td>
+        <td class="py-2">No</td>
+        <td class="py-2">Short-lived objects bound to the request: singletons injecting one become per container</td>
       </tr>
       <tr>
         <td class="py-2"><em>semi-dynamic</em></td>

@@ -28,7 +28,8 @@ val logger = kontainer.get(RequestLogger::class)
 
 ## Key features
 
-- **Three service types** — Singleton, Dynamic (per-container), and Prototype (per-call)
+- **Two service types, four declarations**: Singleton and Prototype; declared as `singleton` (global), `dynamic`
+  (per-container), `prototype` and `dynamicPrototype` (per-call)
 - **Constructor injection** — No annotations, no magic. Just primary constructors.
 - **Blueprint validation** — Dependency graph is validated before any container is created
 - **Per-request containers** — Fresh Dynamic services per unit of work, automatic cleanup

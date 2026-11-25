@@ -4,12 +4,12 @@ import { kontainerSidebar } from '../../../data/kontainer-sidebar';
 import { Code } from 'astro:components';
 ---
 
-<DocsLayout title="Defining Services" sidebar={kontainerSidebar} description="How to register services in Kontainer: Singleton, Dynamic, Prototype, instances, and interfaces">
+<DocsLayout title="Defining Services" sidebar={kontainerSidebar} description="How to register services in Kontainer: Singleton, Dynamic, Prototype, Dynamic Prototype, instances, and interfaces">
 
 <h1>Defining Services</h1>
 
 <p class="text-xl text-gray-400 !mt-2 !mb-8">
-  Kontainer supports three service lifecycles — Singleton, Dynamic, and Prototype —
+  Kontainer has four ways to declare a service — Singleton, Dynamic, Prototype, and Dynamic Prototype —
   plus existing instances and interface-based registration.
 </p>
 
@@ -63,6 +63,23 @@ val kontainer = blueprint.create()
 println(kontainer.get(Counter::class).next())  // 1
 println(kontainer.get(Counter::class).next())  // 1  (new instance each time!)`} lang="kotlin" theme="vitesse-dark" />
 
+<h2>Dynamic prototype</h2>
+
+<p>A dynamic prototype is created like a prototype, on every injection, but is <strong>bound to the container</strong> like a dynamic service: a singleton that injects one becomes one instance per container (<a href="/ultra/kontainer/lifecycle#semi-dynamic">semi-dynamic</a>).</p>
+
+<Code code={`class RequestScratchpad {
+    val notes = mutableListOf<String>()
+}
+
+class ReportService(val scratchpad: RequestScratchpad)
+
+val blueprint = kontainer {
+    dynamicPrototype(RequestScratchpad::class)
+    singleton(ReportService::class)  // one per container, as it injects a dynamic prototype
+}`} lang="kotlin" theme="vitesse-dark" />
+
+<p>A plain <code>prototype</code> that injects something dynamic already makes its users per container. Choose <code>dynamicPrototype</code> when the prototype is bound to the request although nothing it injects is dynamic; the debug tools then name it as the cause. A dynamic prototype cannot be overridden at <code>create</code>: only <code>dynamic</code> services can.</p>
+
 <h2>Existing instances</h2>
 
 <p>Register an already-created object as a singleton:</p>
@@ -97,7 +114,7 @@ val kontainer = blueprint.create()
 kontainer.get(GreeterInterface::class)  // works
 kontainer.get(Greeter::class)           // throws ServiceNotFound`} lang="kotlin" theme="vitesse-dark" />
 
-<p>This pattern works with all lifecycle types: <code>singleton</code>, <code>dynamic</code>, <code>prototype</code>, <code>instance</code>, and factory methods.</p>
+<p>This pattern works with all of them: <code>singleton</code>, <code>dynamic</code>, <code>prototype</code>, <code>dynamicPrototype</code>, <code>instance</code>, and factory methods.</p>
 
 <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/kontainer/lifecycle" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">

@@ -1,6 +1,6 @@
 # ULTRA-00338: Docs: ultra/kontainer after ULTRA-00319 (ServiceType, ServiceKind, dynamicPrototype)
 
-> **Status (2026-11-14): NOT STARTED.** 
+> **Status (2026-11-25): IN PROGRESS.** Pages, mirror and README updated on `wt/kontainer`; review by the coordinator next.
 >
 > **Part of:** ULTRA-00260 (Epic: Docs backlog)
 
@@ -79,3 +79,17 @@ ULTRA-00329 removed the instance API and changed the dump; these spots describe 
   service, while reads through the base type stay ambiguous (ULTRA-00345); factories are not constructed by callers
   (ULTRA-00346).
 - 2026-11-24: spots from ULTRA-00329 added (instance API removed, dump column "Created").
+- 2026-11-25: docs track on `wt/kontainer`. Changed: `introspection` (dump with the Kind and Created columns and the
+  built-ins, the type and kind model replacing the five-value table, debug info with `kind`, `overridden`,
+  `semiDynamicBecauseOf` and `created`, `provider.created.count`, the global singleton note, the override code
+  location; `isProviderCreated` was described as "instantiated", it reports the provider; the `overwrites` chain is
+  not kept across `extend`, the page said it was), `lifecycle` (`dynamicPrototype` row, promotion by `Kontainer` and
+  `InjectionContext`, broken link `advanced#debug-tools` now `introspection`), `services` (four declarations, a
+  `dynamicPrototype` section with when to choose it), `index`, `getting-started` (cycles, remembered validation),
+  `injection` (decorator, ambiguous nullable, each candidate as itself, the composite in its own list), `modules`
+  (redefinition rule, `extend`), `advanced` (what can be overridden, eager overrides, exact match, two overrides for
+  one service, `clone` keeps and reruns the overrides with the same checks, the built-ins); the mirror moves with
+  them (also "compile-time verification", which was false); `ultra/kontainer/README.MD` line "Three service types".
+  Deleted the stale `ultra/kontainer/docs/ultra::docs/index.md`; one reference remains, the EXAMPLES link in
+  `ultra/README.MD` (line 28), which already resolved to a path that does not exist (`ultra/ultra/kontainer/...`), as
+  does its mutator neighbour; left for the coordinator. `pnpm astro build`: 118 pages, green.

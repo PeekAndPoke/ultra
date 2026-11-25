@@ -104,9 +104,10 @@ val blueprint = kontainer {
   <li>Are all required dependencies registered?</li>
   <li>Are there ambiguous services (multiple implementations for one type)?</li>
   <li>Can all constructors be satisfied?</li>
+  <li>Is there a dependency cycle?</li>
 </ul>
 
-<p>If anything is wrong, you get a <code>KontainerInconsistent</code> exception with a clear message listing every problem — not a cryptic runtime error later.</p>
+<p>If anything is wrong, you get a <code>KontainerInconsistent</code> exception with a clear message listing the problems — not a cryptic runtime error later. The result is remembered: every <code>create()</code> of an invalid blueprint throws the same exception.</p>
 
 <div class="not-prose mt-8 flex gap-4">
   <a href="/ultra/kontainer/services" class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-500 transition-colors">

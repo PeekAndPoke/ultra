@@ -77,6 +77,8 @@ val blueprint = kontainer {
 
 <p>If two services implement the same interface, injection becomes <strong>ambiguous</strong> and Kontainer reports an error. Use <code>List&lt;T&gt;</code> injection instead (see below).</p>
 
+<p>A decorator counts as a candidate too: <code>CachingRepo(inner: Repo) : Repo</code> next to <code>RealRepo : Repo</code> makes <code>inner</code> ambiguous. Let the decorator inject the concrete class, <code>inner: RealRepo</code>.</p>
+
 <h2>Nullable injection</h2>
 
 <p>Mark a dependency as nullable to make it optional. If the service isn't registered, <code>null</code> is injected instead of throwing:</p>
@@ -93,6 +95,8 @@ val blueprint = kontainer {
 
 val kontainer = blueprint.create()
 println(kontainer.get(MyService::class).optional)  // null`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Optional does not mean lenient: with two or more candidates a nullable parameter is ambiguous, exactly like a non-null one.</p>
 
 <h2>Inject all implementations</h2>
 
@@ -123,6 +127,10 @@ val kontainer = blueprint.create()
 kontainer.get(Database::class).repos.forEach {
     println(it.name)  // "users", "orders"
 }`} lang="kotlin" theme="vitesse-dark" />
+
+<p>Every registered service of the type is in the list once, as itself, also when one of them is a super type of another. The same holds for <code>Lazy&lt;List&lt;T&gt;&gt;</code>, <code>Lookup&lt;T&gt;</code> and <code>getAll()</code>.</p>
+
+<p>A service that injects a list of its own super type is in its own list: <code>CompositeHandler(all: List&lt;Handler&gt;) : Handler</code> is a dependency cycle, and the first <code>create()</code> fails. <code>Lazy&lt;List&lt;Handler&gt;&gt;</code> only defers the problem; register the composite under a type outside the list.</p>
 
 <h2>Lazy injection</h2>
 
