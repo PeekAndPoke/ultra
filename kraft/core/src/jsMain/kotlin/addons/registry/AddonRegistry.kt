@@ -9,7 +9,7 @@ import io.peekandpoke.ultra.common.TypedKey
  *
  * Access from a component via:
  * ```
- * val marked by subscribingTo(addons.marked.ready)
+ * val marked by subscribingTo(addons.marked)
  * ```
  */
 class AddonRegistry constructor(

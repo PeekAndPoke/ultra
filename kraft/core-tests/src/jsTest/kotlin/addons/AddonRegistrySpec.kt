@@ -145,6 +145,29 @@ class AddonRegistrySpec : StringSpec() {
             unsub()
         }
 
+        "a read alone starts loading a lazy addon" {
+            val builder = AddonRegistryBuilder()
+            var calls = 0
+
+            val addon = builder.register(
+                key = testAddonKey,
+                name = "test",
+                lazy = true,
+            ) {
+                calls++
+                TestAddon("read")
+            }
+
+            builder.build().loadEager()
+
+            addon() shouldBe null
+
+            eventually {
+                addon()?.greeting shouldBe "read"
+            }
+            calls shouldBe 1
+        }
+
         "loadEager calls the loader of a non-lazy addon once" {
             val builder = AddonRegistryBuilder()
             var calls = 0

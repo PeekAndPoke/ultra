@@ -15,7 +15,7 @@ import io.peekandpoke.ultra.streams.StreamSource
 class Addon<T> internal constructor(
     /** Human-readable name for error messages. */
     val name: String,
-    /** Whether to defer loading until the first subscription. */
+    /** Whether to defer loading until the first read or subscription. */
     private val lazy: Boolean,
     /** Suspend function that performs the dynamic import and returns the addon facade. */
     private val loader: suspend () -> T,
