@@ -33,6 +33,9 @@
   with a hint to name the service class (`with(Number::class) { 5 }`). `Number`, `CharSequence` and arrays stay
   allowed; `get(Int::class)` and friends answer as before (not found, null, empty). This also ends the aliased
   `Int::class` / `java.lang.Integer` lookups (ULTRA-00354).
+- `monko/core`: `MonkoRepository.remove(stored: Stored<T>)` (JVM name `removeStored`) is replaced by an override of
+  `Repository.remove(entity)`. Kotlin sources compile unchanged; classes compiled against 0.119.0 that call it directly
+  must be recompiled (ULTRA-00359).
 
 ### Performance
 
@@ -65,6 +68,9 @@
 - `funktor/rest`: the error for an empty `authorize {}` no longer advises `public()` inside it, which always fails in
   an `ApiRoutes` group; it points to a separate group with `authFloor = { public() }`. The `public()`/`forbidden()` and
   `validateChain` KDocs say the same (ULTRA-00360).
+- `monko/core`, behaviour change (no compile signal): `remove(entity)` called through a `Repository<T>` reference
+  (`Database.getRepository`, generic code) now runs `OnAfterDelete`, as Karango does; it deleted without the hook
+  (ULTRA-00359).
 - `funktor-demo`: the sdkgen-app dev server moves from 36591 (b2b-app's port) to 36593 with `strictPort` (ULTRA-00360).
 
 ### Docs
@@ -75,6 +81,8 @@
 
 ### Build
 
+- `karango/core`, `monko/core`: `ultra:vault` is an `api` dependency; a consumer with only `karango:core` or
+  `monko:core` can name Vault types, Kontainer, Kronos and the logging module (ULTRA-00359).
 - `ultra/kontainer`: the JMH harness lives in the unpublished module `ultra/kontainer-benchmarks` (`console/wt-gradle.sh
   :ultra:kontainer-benchmarks:jmh`); the published `ultra/kontainer` applies no JMH plugin (ULTRA-00353).
 
