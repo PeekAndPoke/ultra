@@ -91,3 +91,4 @@ unused.
 - 2026-11-25: IN PROGRESS. Implemented on wt/vault-api (Monko override with RED-first e2e and four mutants, vault as
   api in both modules, docs); review gate next.
 - 2026-11-25: gate PASS round 1, no findings; merged into master.
+- 2026-11-25: DONE.
