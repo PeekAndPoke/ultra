@@ -40,7 +40,7 @@ class ServiceDefinition internal constructor(
                 )
             }
 
-            /** Creates a [CodeLocation] named by the class [origin], without capturing a stack */
+            /** A [CodeLocation] named by the class [origin] (a lambda by its enclosing class), no stack captured */
             internal fun of(origin: Class<*>): CodeLocation {
                 return CodeLocation(
                     throwable = null,
@@ -52,8 +52,11 @@ class ServiceDefinition internal constructor(
         /** The filtered stack trace, excluding Kontainer internals; a single entry for a location named by a class */
         val stack: Array<StackTraceElement> by lazy {
             if (throwable == null) {
+                // A Kotlin 2 lambda is a hidden class "Outer$$Lambda/0x..."; the suffix differs per JVM run
+                val className = checkNotNull(origin).name.substringBefore("\$\$Lambda")
+
                 return@lazy arrayOf(
-                    StackTraceElement(checkNotNull(origin).name, "invoke", null, -1)
+                    StackTraceElement(className, "invoke", null, -1)
                 )
             }
 
