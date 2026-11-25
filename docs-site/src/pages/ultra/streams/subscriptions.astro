@@ -56,13 +56,14 @@ subs.unsubscribeAll()`} lang="kotlin" theme="vitesse-dark" />
 
 <Code code={`val source = StreamSource(1)
 
-source.subscribeToStream { throw RuntimeException("oops") }
-source.subscribeToStream { println("Got: ${'$'}it") }
+source.subscribeToStream { if (it > 1) throw RuntimeException("oops") }
+source.subscribeToStream { println("Got: ${'$'}it") }  // prints "Got: 1"
 
 source(2)  // prints "Got: 2"`} lang="kotlin" theme="vitesse-dark" />
 
     <p>The exception is logged as <code>[Streams] ERROR: subscriber threw ...</code> so it shows up in your console
-        during development, but it doesn't take down the stream.</p>
+        during development, but it doesn't take down the stream. A handler that throws on the current value it gets when
+        subscribing is not kept: the exception reaches the caller of <code>subscribeToStream</code>.</p>
 
     <Aside>We debated whether to swallow exceptions silently. We didn't. They're logged. You'll see them. You just won't
         lose your other subscribers over it.
@@ -78,11 +79,11 @@ source(2)  // prints "Got: 2"`} lang="kotlin" theme="vitesse-dark" />
 
 <h2>Lazy subscription chains</h2>
 
-<p>Operator chains are fully lazy. No work happens until someone subscribes to the end of the chain:</p>
+<p>Operator chains subscribe lazily. Nothing upstream is subscribed until someone subscribes to the end of the chain:</p>
 
 <Code code={`val source = StreamSource(1)
 
-// No subscriptions created yet — this chain is inert
+// No subscriptions created yet
 val result = source
     .map { it * 2 }
     .filter(0) { it > 5 }

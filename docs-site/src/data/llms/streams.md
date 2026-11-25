@@ -33,9 +33,8 @@ source(99)
 // prints "Got: 99"
 ```
 
-This is what makes Streams perfect for UI programming. In Kraft, components subscribe to streams and re-render when
-values change. Because streams always have a value, the first render always has data — no loading spinners, no null
-checks, no "initial state" boilerplate.
+This works well for UI programming. In Kraft, components subscribe to streams and re-render when values change. Because
+streams always have a value, the first render always has data.
 
 ## Two types
 
@@ -53,7 +52,7 @@ have downstream subscribers.
   needed.
 - **Composable Operators** — `map`, `filter`, `combine`, `debounce`, `fold`, `distinct`, `history`, and more.
 - **Lazy Subscriptions** — Operators only subscribe upstream when they have downstream subscribers. No wasted work.
-- **Kotlin Multiplatform** — Core + all operators work on JVM and JS. Plus JS-specific extras like `animTicker()` and
+- **Kotlin Multiplatform** — Core + all operators work on JVM, JS and native. Plus JS-specific extras like `animTicker()` and
   localStorage persistence.
 - **Resilient** — A failing subscriber never prevents other subscribers from being notified. Streams keep flowing.
 - **Flow Interop** — `stream.asFlow()` bridges into Kotlin's Flow world when you need it.
@@ -101,7 +100,8 @@ dependencies {
 
 Find the latest version on [Maven Central](https://central.sonatype.com/namespace/io.peekandpoke.ultra).
 
-Streams is a Kotlin Multiplatform library — it works in `commonMain`, `jvmMain`, and `jsMain`.
+Streams is a Kotlin Multiplatform library — it works in `commonMain`, `jvmMain`, `jsMain`, and `nativeMain`
+(linuxX64, linuxArm64, macosArm64, mingwX64).
 
 ## 2. Create a StreamSource
 
@@ -383,8 +383,11 @@ println(sum())  // 105
 Shorthand for combining into a `Pair`:
 
 ```kotlin
+val a = StreamSource(1)
+val b = StreamSource(10)
+
 val pair = a.pairedWith(b)
-println(pair())  // Pair(1, 10)
+println(pair())  // (1, 10)
 ```
 
 ## switchMap
@@ -456,7 +459,7 @@ println(recent())  // [2, 3, 4] — oldest values dropped
 ```
 
 The capacity may be a `Stream<Int>`: a smaller one drops the oldest at once, a larger one fills up from there. Values
-are recorded only while someone listens, the current one first on each subscribe. `historyOfNonNull(capacity)` only keeps non-null values. Each value copies the window: for a fast producer, or a
+are recorded only while someone listens, the current one first whenever listening starts. `historyOfNonNull(capacity)` only keeps non-null values. Each value copies the window: for a fast producer, or a
 window over time, sample first: `diagnostics.sampled(every = 250.milliseconds).history(capacity = 480)`.
 
 ## sampled
@@ -481,6 +484,7 @@ Only publish after a quiet period. When values arrive rapidly, only the last one
 ```kotlin
 val search = StreamSource("")
 val debounced = search.debounce(300)  // 300ms delay
+debounced.subscribeToStream { println(it) }  // values are debounced only while someone listens
 
 // Typing rapidly: "h", "he", "hel", "hell", "hello"
 // Only "hello" is published — 300ms after the last keystroke
@@ -500,6 +504,7 @@ val source = StreamSource(1)
 val paused = StreamSource(false)
 
 val stream = source.cutoffWhen(paused)
+stream.subscribeToStream { println(it) }  // prints 1
 
 // stream publishes values while paused() is false
 source(2)  // published
@@ -640,14 +645,15 @@ handlers still receive the value:
 ```kotlin
 val source = StreamSource(1)
 
-source.subscribeToStream { throw RuntimeException("oops") }
-source.subscribeToStream { println("Got: $it") }
+source.subscribeToStream { if (it > 1) throw RuntimeException("oops") }
+source.subscribeToStream { println("Got: $it") }  // prints "Got: 1"
 
 source(2)  // prints "Got: 2"
 ```
 
 The exception is logged as `[Streams] ERROR: subscriber threw ...` so it shows up in your console during development,
-but it never takes down the stream.
+but it never takes down the stream. A handler that throws on the current value it gets when subscribing is not kept: the
+exception reaches the caller of `subscribeToStream`.
 
 ## Writes and unsubscribes during a publish
 
@@ -658,12 +664,12 @@ other operator's lambda may (`map`, `filter`, `fold`, `combinedWith`, the `switc
 
 ## Lazy subscription chains
 
-Operator chains are fully lazy. No work happens until someone subscribes to the end of the chain:
+Operator chains subscribe lazily. Nothing upstream is subscribed until someone subscribes to the end of the chain:
 
 ```kotlin
 val source = StreamSource(1)
 
-// No subscriptions created yet — this chain is inert
+// No subscriptions created yet
 val result = source
     .map { it * 2 }
     .filter(0) { it > 5 }
@@ -679,6 +685,24 @@ unsub()
 
 Each operator only subscribes to its upstream when it gains its first subscriber, and unsubscribes when its last
 subscriber leaves. Unused branches cost nothing.
+
+## Permanent subscriptions
+
+`permanent()` pins a subscription that never tears down, for a derived stream that must stay subscribed upstream:
+
+```kotlin
+val source = StreamSource(0)
+
+// Always-active derived stream with a side effect
+val logged = source
+    .map { it * 2 }
+    .permanent { println("Value changed: $it") }
+
+// Or just pin the subscription without a handler
+val pinned = source.map { it + 1 }.permanent()
+```
+
+Use this sparingly: there is no way to remove a permanent subscription.
 
 ---
 
@@ -730,7 +754,7 @@ val prefs = StreamSource(Preferences())
     .persistInLocalStorage("app.prefs", Preferences.serializer())
 ```
 
-Falls back to in-memory storage silently if localStorage is unavailable or the quota is exceeded. Accepts a custom
+If localStorage is unavailable or the quota is exceeded, it logs a console warning and the stream keeps working in memory. Accepts a custom
 `StringFormat` codec (defaults to JSON with `ignoreUnknownKeys = true`).
 
 ## debouncedFunc() / debouncedFuncExceptFirst()
@@ -747,7 +771,7 @@ val saveSearch = debouncedFunc(delayMs = 200) {
 
 inputField.onInput { saveSearch() }
 
-// Execute first call immediately, debounce the rest
+// The first call runs after 3 ms, the later ones after delayMs
 val autoSave = debouncedFuncExceptFirst(delayMs = 1000) {
     saveDraft()
 }
@@ -763,11 +787,12 @@ Build your own operators, bridge to Kotlin Flow, and understand the platform mat
 
 ## Custom operators
 
-Build operators by extending `StreamMapper` (transform) or `StreamWrapper` (pass-through):
+Build operators on `StreamMapper` (transform) or by extending `StreamWrapper` (pass-through):
 
 ```kotlin
 import io.peekandpoke.ultra.streams.Stream
 import io.peekandpoke.ultra.streams.StreamMapper
+import io.peekandpoke.ultra.streams.StreamSource
 
 fun Stream<Int>.clamp(min: Int, max: Int): Stream<Int> =
     StreamMapper(
@@ -792,10 +817,14 @@ it listens to the config only while listened to, and its KDoc says when a change
 Convert any stream to a Kotlin `Flow`:
 
 ```kotlin
+import io.peekandpoke.ultra.streams.StreamSource
 import io.peekandpoke.ultra.streams.ops.asFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.take
 
 val source = StreamSource(1)
 
+// collect suspends: call it from a coroutine
 source.asFlow()
     .filter { it > 5 }
     .take(3)
