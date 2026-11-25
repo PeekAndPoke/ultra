@@ -20,8 +20,8 @@ import {Code} from 'astro:components';
 
     <h2>Setting up the appender</h2>
 
-    <p>Add the database log appender in your Ktor application module. It captures Logback events
-        at or above the specified level and writes them to the configured storage backend.</p>
+    <p>Add the Logback appender in your Ktor application module. It captures the events of the application's
+        logger at or above the specified level and writes them to ArangoDB, the only backend it has.</p>
 
     <Code code={`fun Application.module() = app.module(this) { app, config, init ->
     // Persist log entries at INFO level and above to ArangoDB
@@ -53,7 +53,7 @@ import {Code} from 'astro:components';
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Database-backed</h3>
             <p class="text-sm text-gray-400">Log entries stored in ArangoDB or MongoDB. Survives
-                restarts. Searchable by level, logger, message, and timestamp.</p>
+                restarts. Filtered by minimum level and state, searched in message, logger name and stack trace.</p>
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Web UI</h3>
@@ -63,18 +63,18 @@ import {Code} from 'astro:components';
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Bulk actions</h3>
-            <p class="text-sm text-gray-400">Acknowledge, archive, or delete log entries in batch
+            <p class="text-sm text-gray-400">Mark log entries acknowledged, or new again, in batch
                 through the web UI or REST API.</p>
         </div>
         <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">REST API</h3>
             <p class="text-sm text-gray-400">Query logs programmatically via <code>LoggingApiClient</code>.
-                Filter by severity, date range, or search text.</p>
+                Filter by minimum level, state, or search text.</p>
         </div>
     </div>
 
-    <Aside>The appender hooks into Logback, so any library that logs through SLF4J
-        automatically gets its entries persisted. No code changes needed in your application logic.
+    <Aside>The appender hooks into Logback on the application's logger (<code>Application.log</code>), so what is
+        logged there is persisted without code changes in your application logic.
     </Aside>
 
     <div class="mt-12">

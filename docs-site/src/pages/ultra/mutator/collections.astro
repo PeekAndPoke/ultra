@@ -35,7 +35,7 @@ val updated = book.copy(
         else addr
     }
 )
-// That's 5 lines for one field change. In a list. Of nested objects.`} lang="kotlin" theme="vitesse-dark"/>
+// That's 6 lines for one field change. In a list. Of nested objects.`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>With Mutator:</p>
 
@@ -46,8 +46,10 @@ val updated = book.copy(
     <h2>ListMutator</h2>
 
     <p>KSP generates <code>List&lt;T&gt;.mutator()</code> and <code>List&lt;T&gt;.mutate {'{ }'}</code> for every <code>@Mutable</code>
-        class. The <code>ListMutator</code> implements <code>MutableList&lt;Mutator&lt;T&gt;&gt;</code>, so you can use
-        all familiar list operations.</p>
+        class. The <code>ListMutator</code> implements <code>MutableList&lt;Mutator&lt;T&gt;&gt;</code>, so the familiar
+        list operations work on it. Differences include: <code>subList()</code> returns a read-only snapshot, not a view,
+        and an element mutator drops its writes when its row was reordered, removed or written by something else
+        (another element mutator, <code>set</code>, a reset or a replaced list).</p>
 
     <h3>Iterating and modifying elements</h3>
 
@@ -79,11 +81,12 @@ mutator.add(Address("Street 3", "City 3", "Zip 3"))
 // Remove by index
 mutator.removeAt(0)
 
+// Check the result
+mutator()  // [Address("Street 2", "City 2", "Zip 2"), Address("Street 3", "City 3", "Zip 3")]
+
 // Clear the list
 mutator.clear()
-
-// Check the result
-mutator()  // [Address("Street 3", "City 3", "Zip 3")]`} lang="kotlin" theme="vitesse-dark"/>
+mutator()  // []`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>Nested list in a data class</h3>
 

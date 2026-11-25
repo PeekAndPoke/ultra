@@ -5,12 +5,18 @@ handles them all without annotations.
 
 ## Why Slumber?
 
-Jackson and Gson were built for Java. They don't understand Kotlin's null safety, default parameter values, or sealed
-class hierarchies. Slumber does — out of the box, with zero configuration for common cases.
+Jackson and Gson were built for Java. On their own they don't understand Kotlin's null safety, default parameter values,
+or sealed class hierarchies. Slumber does — out of the box, with zero configuration for common cases.
 
 ## Quick example
 
 ```kotlin
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.awake
+import io.peekandpoke.ultra.slumber.slumber
+
+enum class Role { Viewer, Editor }
+
 data class User(
     val name: String,
     val email: String,
@@ -18,11 +24,13 @@ data class User(
     val tags: List<String> = listOf()
 )
 
+val codec = Codec.default
+
 // Serialize
-val map = Slumber.awake(user)
+val map = codec.slumber(User("Alice", "alice@example.com"))
 
 // Deserialize — missing fields use defaults, null safety is respected
-val user = Slumber.unawake(User::class, map)
+val user = codec.awake<User>(mapOf("name" to "Bob", "email" to "bob@example.com"))
 ```
 
 ## Key features

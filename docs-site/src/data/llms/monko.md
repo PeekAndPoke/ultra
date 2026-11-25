@@ -23,13 +23,12 @@ collection.find(Filters.gt("age", 18))
 ```kotlin
 // With Monko
 repo.find { r ->
-    filter(r.address.city.eq("Berlin"))
-    filter(r.age.gt(18))
+    filter(and(r.address.city.eq("Berlin"), r.age.gt(18)))
     sort(r.name.asc)
 }
 ```
 
-Rename a field? The compiler tells you every query that needs updating. No silent breakage, no runtime surprises.
+Rename a field? The compiler tells you every typed query that needs updating.
 
 ## How It Works
 
@@ -42,7 +41,7 @@ Rename a field? The compiler tells you every query that needs updating. No silen
 
 - **Type-Safe Queries** -- KSP generates property paths for every `@Vault` entity. Filter, sort, and index by field
   name with compile-time checks.
-- **Repository Pattern** -- Full CRUD with lifecycle hooks, batch operations, and atomic read-modify-write.
+- **Repository Pattern** -- CRUD with lifecycle hooks, typed queries, cursors, and a read-modify-write helper.
 - **Index DSL** -- Define persistent, unique, sparse, and TTL indexes with the same type-safe property paths.
 - **Shared Entity Model** -- Uses the same `Stored<T>`, `New<T>`, `Ref<T>` wrappers as Karango
   (shared via [Vault](https://peekandpoke.io/llms/vault.md)). Switch databases without changing domain code.
@@ -63,6 +62,8 @@ generation, and Kontainer integration. The difference is the database underneath
 | KSP codegen     | AQL property paths                       | MongoDB property paths  |
 | Lifecycle hooks | OnBeforeSave, OnAfterSave, OnAfterDelete | Same (shared via Vault) |
 
+Both implement Vault's `Repository<T>`; typed queries are written per database.
+
 ---
 
 ### Getting Started {#monko-getting-started}
@@ -81,8 +82,9 @@ plugins {
 }
 
 dependencies {
-    implementation("io.peekandpoke.ultra:monko:{{ultraVersion}}")
-    ksp("io.peekandpoke.ultra:monko:{{ultraVersion}}")  // KSP processor for type-safe property paths
+    implementation("io.peekandpoke.monko:core:{{ultraVersion}}")
+    implementation("io.peekandpoke.ultra:vault:{{ultraVersion}}")  // @Vault, Stored, kType(): monko core does not expose it
+    ksp("io.peekandpoke.monko:ksp:{{ultraVersion}}")  // KSP processor for type-safe property paths
 }
 ```
 
@@ -113,6 +115,7 @@ data class Address(
 ```kotlin
 import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.MonkoDriver
+import io.peekandpoke.ultra.reflection.kType
 
 class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
     name = "persons",
@@ -125,12 +128,17 @@ class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
 
 ```kotlin
 import io.peekandpoke.monko.MongoDbConfig
+import io.peekandpoke.ultra.common.model.Redacted
 
 val config = MongoDbConfig(
-    connectionString = "mongodb://root:root@localhost:27017",
+    connectionString = Redacted("mongodb://root:root@localhost:27017"),
     database = "my_app",
 )
 ```
+
+Register the config and the repository in Kontainer, see
+[Kontainer Integration](https://peekandpoke.io/llms/monko.md#monko-kontainer-integration). The `repo` below is the
+`PersonsRepo` you get from the kontainer.
 
 ## 5. Basic CRUD
 
@@ -148,8 +156,8 @@ val found = repo.findById("persons/person-1")
 val updated = found!!.modify { it.copy(age = 31) }
 repo.save(updated)
 
-// Atomic read-modify-write
-repo.modifyById("persons/person-1") { copy(age = it.age + 1) }
+// Read-modify-write: findById, then save (not atomic)
+repo.modifyById("persons/person-1") { it.copy(age = it.age + 1) }
 
 // Delete
 repo.remove("persons/person-1")
@@ -229,11 +237,12 @@ stored.hasIdIn(listOf(other1, other2))
 
 ## MongoDB document IDs
 
-Monko generates MongoDB document IDs as follows:
+Monko maps MongoDB document IDs as follows:
 
-- If you provide a key via `insert(key, value)`, the document gets `_id = "collection/key"`
-- If no key is provided, Monko generates an `ObjectId` and converts it to a hex string
-- The `_key` is always the portion after the slash in `_id`
+- If you provide a key via `insert(key, value)`, the document's `_id` is that key, and `Stored._id` is
+  `"collection/key"`
+- If no key is provided, MongoDB assigns an `ObjectId`; `_key` is its hex string
+- The `_key` is always the portion after the slash in `Stored._id`
 
 ---
 
@@ -250,12 +259,14 @@ entity, with KSP-generated property accessors.
 
 ```kotlin
 val results = repo.find { r ->
-    filter(r.age.gte(18))
-    filter(r.address.city.eq("Berlin"))
+    filter(and(r.age.gte(18), r.address.city.eq("Berlin")))
     sort(r.name.asc)
     limit(20)
 }
 ```
+
+Each of `filter`, `sort`, `limit` and `skip` sets one value: a second `filter()` call replaces the first. Combine
+conditions with `and()`.
 
 ## Comparison operators
 
@@ -269,6 +280,9 @@ val results = repo.find { r ->
 | `lte`    | $lte    | `r.score.lte(100)`                           |
 | `isIn`   | $in     | `r.status.isIn(listOf("active", "pending"))` |
 | `nin`    | $nin    | `r.status.nin(listOf("deleted"))`            |
+
+A value of your own `@JvmInline value class` is reduced to its backing value. Only `String`, `Number` and `Boolean`
+backings are supported; any other backing throws `IllegalArgumentException` when the filter is built.
 
 ## String operators
 
@@ -285,11 +299,10 @@ import io.peekandpoke.monko.lang.dsl.and
 import io.peekandpoke.monko.lang.dsl.or
 import io.peekandpoke.monko.lang.dsl.not
 
-// AND (implicit -- multiple filter() calls are AND-ed)
-filter(r.age.gte(18))
-filter(r.status.eq("active"))
+// AND
+filter(and(r.age.gte(18), r.status.eq("active")))
 
-// Explicit AND / OR
+// OR
 filter(
     or(
         r.status.eq("active"),
@@ -328,9 +341,8 @@ filter(r.deletedAt.exists(false))
 ## Sorting
 
 ```kotlin
-// Single field
+// Single field (a second sort() call replaces the first)
 sort(r.name.asc)
-sort(r.createdAt.desc)
 
 // Multiple fields
 sort(orderBy(r.name.asc, r.age.desc))
@@ -353,7 +365,7 @@ val cursor = repo.find { r ->
     skip((page - 1) * pageSize)
     limit(pageSize)
 }
-// cursor.fullCount -> total matching documents
+// cursor.fullCount -> total matching documents (null when the query has no filter)
 ```
 
 ## Nested property access
@@ -362,8 +374,7 @@ KSP generates accessors for nested types. Access deeply nested fields with dot n
 
 ```kotlin
 // r.address is generated because Person has an Address field
-filter(r.address.city.eq("Berlin"))
-filter(r.address.zip.regex("^10"))
+filter(and(r.address.city.eq("Berlin"), r.address.zip.regex("^10")))
 sort(r.address.country.asc)
 ```
 
@@ -376,7 +387,7 @@ will not compile.
 
 # Repositories
 
-MonkoRepository provides typed CRUD, queries, cursors, and atomic operations.
+MonkoRepository provides typed CRUD, queries, and cursors.
 
 ## Defining a repository
 
@@ -388,8 +399,8 @@ class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
 )
 ```
 
-The repository is a singleton registered in Kontainer. The `MonkoDriver` is injected as a dynamic (per-request)
-dependency.
+The repository is registered as a singleton in Kontainer. The `MonkoDriver` it takes is dynamic (per request), so
+Kontainer makes the repository semi-dynamic: one instance per kontainer.
 
 ## CRUD operations
 
@@ -398,7 +409,7 @@ dependency.
 val stored = repo.insert("alice-1", Person(name = "Alice", age = 30, email = "alice@example.com"))
 
 // Insert with auto-generated ObjectId
-val stored = repo.insert(New(Person(name = "Bob", age = 25, email = "bob@example.com")))
+val bob = repo.insert(New(Person(name = "Bob", age = 25, email = "bob@example.com")))
 
 // Find by ID
 val person = repo.findById("persons/alice-1")  // returns Stored<Person>?
@@ -410,11 +421,14 @@ val everyone = repo.findAll()  // returns MonkoCursor<Stored<Person>>
 val modified = person!!.modify { it.copy(age = 31) }
 repo.save(modified)
 
-// Atomic read-modify-write
-repo.modifyById("persons/alice-1") { copy(age = it.age + 1) }
+// Read-modify-write: findById, then save (not atomic)
+repo.modifyById("persons/alice-1") { it.copy(age = it.age + 1) }
 
-// Delete
+// Delete by id (runs no hooks)
 repo.remove("persons/alice-1")
+
+// Delete a Stored entity (runs the OnAfterDelete hooks)
+repo.remove(bob)
 
 // Delete all
 repo.removeAll()
@@ -425,8 +439,7 @@ repo.removeAll()
 ```kotlin
 // Type-safe query with builder
 val berliners = repo.find { r ->
-    filter(r.address.city.eq("Berlin"))
-    filter(r.age.gte(18))
+    filter(and(r.address.city.eq("Berlin"), r.age.gte(18)))
     sort(r.name.asc)
     limit(50)
 }
@@ -434,7 +447,7 @@ val berliners = repo.find { r ->
 // Access results
 berliners.toList()       // List<Stored<Person>>
 berliners.count           // number of results returned
-berliners.fullCount       // total matching (for pagination)
+berliners.fullCount       // total matching (for pagination), null without a filter
 berliners.forEach { ... } // iterate
 ```
 
@@ -444,8 +457,8 @@ berliners.forEach { ... } // iterate
 
 ```kotlin
 val cursor = repo.find { r ->
-    filter(r.status.eq("active"))
-    sort(r.createdAt.desc)
+    filter(r.address.city.eq("Berlin"))
+    sort(r.name.asc)
     skip(20)
     limit(10)
 }
@@ -490,6 +503,7 @@ validation, and side effects.
 ## Defining indexes
 
 Override `buildIndexes()` in your repository. Index fields use the same KSP-generated property paths as queries.
+This example assumes `Person` also has `expiresAt` and `middleName` fields.
 
 ```kotlin
 class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
@@ -515,7 +529,7 @@ class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
             field { it.email }
         }
 
-        // TTL index -- auto-delete expired documents
+        // TTL index: MongoDB deletes expired documents (the field must hold a BSON Date)
         ttlIndex {
             field { it.expiresAt }
             expireAfter(0)  // delete when expiresAt is in the past
@@ -538,13 +552,20 @@ class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
 | `uniqueIndex`     | Unique index   | Enforce uniqueness         |
 | `ttlIndex`        | TTL index      | Auto-expire documents      |
 
+A TTL index only expires documents whose field holds a BSON Date. Slumber stores every date type (`MpInstant`,
+`Instant`, `Date`, ...) as an object and an epoch timestamp as a number, so a TTL index on such a field deletes nothing.
+
 ## Index management
 
 ```kotlin
-// Ensure indexes exist (create if missing, skip if present)
+// Create missing indexes. An index whose name exists with other fields, unique, sparse or
+// partial filter is dropped and re-created; a changed TTL expiry is not detected. Default names
+// come from the index type and the fields, so changing either creates a new index and leaves the
+// old one (use recreateIndexes()).
+// A failed create is logged as a warning, not thrown.
 repo.ensureIndexes()
 
-// Drop and recreate all indexes
+// Drop all indexes except _id_, then ensure
 repo.recreateIndexes()
 
 // Validate without creating
@@ -561,7 +582,9 @@ See the [Vault documentation](https://peekandpoke.io/llms/vault.md#vault-reposit
 
 ### Timestamped
 
-The most common hook. Automatically sets `createdAt` and `updatedAt`.
+The most common hook. On insert and save it sets `updatedAt`, and `createdAt` only while unset,
+in every repository that has
+`timestamped.onBeforeSave()` among its hooks.
 
 ```kotlin
 @Vault
@@ -579,12 +602,12 @@ data class Article(
 ### Custom hooks
 
 ```kotlin
-class ArticlesRepo(driver: MonkoDriver) : MonkoRepository<Article>(
+class ArticlesRepo(driver: MonkoDriver, timestamped: TimestampedHook) : MonkoRepository<Article>(
     name = "articles",
     storedType = kType(),
     driver = driver,
     hooks = Hooks.of(          // takes hooks directly; sorted by type internally
-        TimestampedOnBeforeSaveHook(),
+        timestamped.onBeforeSave(),
         MyAfterSaveHook(),
         MyAfterDeleteHook(),
     ),
@@ -593,11 +616,12 @@ class ArticlesRepo(driver: MonkoDriver) : MonkoRepository<Article>(
 
 ### Hook execution order
 
-| Operation  | Hook sequence                          |
-|------------|----------------------------------------|
-| `insert()` | OnBeforeSave -> persist -> OnAfterSave |
-| `save()`   | OnBeforeSave -> persist -> OnAfterSave |
-| `remove()` | delete -> OnAfterDelete                |
+| Operation         | Hook sequence                          |
+|-------------------|----------------------------------------|
+| `insert()`        | OnBeforeSave -> persist -> OnAfterSave |
+| `save()`          | OnBeforeSave -> persist -> OnAfterSave |
+| `remove(stored)`  | delete -> OnAfterDelete                |
+| `remove(idOrKey)` | delete (no hooks)                      |
 
 ---
 
@@ -612,10 +636,21 @@ Register MongoDB connections and repositories in Kontainer.
 ```kotlin
 import io.peekandpoke.monko.MongoDbConfig
 import io.peekandpoke.monko.monko
+import io.peekandpoke.ultra.common.model.Redacted
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.log.ultraLogging
+import io.peekandpoke.ultra.vault.VaultConfig
+import io.peekandpoke.ultra.vault.ultraVault
 
 val blueprint = kontainer {
+    // Monko builds on these: logging, Vault, and a Kronos for the Vault timestamp hooks
+    singleton(Kronos::class) { Kronos.systemUtc }
+    ultraLogging()
+    ultraVault(VaultConfig())
+
     monko(MongoDbConfig(
-        connectionString = "mongodb://root:root@localhost:27017",
+        connectionString = Redacted("mongodb://root:root@localhost:27017"),
         database = "my_app",
     ))
 
@@ -624,6 +659,8 @@ val blueprint = kontainer {
     singleton(ArticlesRepo::class)
 }
 ```
+
+Funktor registers the first three for you (see below).
 
 The `monko(config)` call registers:
 

@@ -24,7 +24,7 @@ import { Code } from 'astro:components';
     val userPost = Route2("/users/{id}/posts/{postId}")
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p><code>Static</code> is for routes with no parameters. <code>Route1</code> through <code>Route7</code> support 1-7 typed parameters.</p>
+<p><code>Static</code> is for routes with no parameters. <code>Route1</code> through <code>Route7</code> take 1 to 7 string parameters.</p>
 
 <h2>Setting up the router</h2>
 
@@ -84,7 +84,7 @@ ui.button {
 router.navBack()
 
 // Replace current URL (no history entry)
-router.replaceUri(Nav.home())`} lang="kotlin" theme="vitesse-dark" />
+router.replaceUri(router.strategy.render(Nav.home()))`} lang="kotlin" theme="vitesse-dark" />
 
     <h3>Link-style navigation with <code>A.href(route)</code></h3>
 
@@ -100,12 +100,10 @@ router.replaceUri(Nav.home())`} lang="kotlin" theme="vitesse-dark" />
 
     <Aside><strong>Always use <code>A.href(route)</code> for links — don't hand-write <code>href =
         "/about"</code>.</strong>
-        The helper asks the active router to render the URL using the configured path strategy, so the same code
+        The helper asks the active router to render the URL using the configured strategy, so the same code
         produces
         <code>/about</code> under <code>usePathStrategy()</code> and <code>#/about</code> under
-        <code>useHashStrategy()</code>. Hard-coded href strings bypass the strategy and break when you switch modes (or
-        when
-        the app is mounted under a non-root base path).
+        <code>useHashStrategy()</code>. Hard-coded href strings bypass the strategy and break when you switch modes.
     </Aside>
 
     <p>The helper lives in <code>io.peekandpoke.kraft.routing</code>:</p>
@@ -119,7 +117,7 @@ fun A.href(route: Route.Bound) {
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>Because it sets a real <code>href</code>, a plain click is routed in-app and the browser keeps Ctrl/Cmd+Click,
-        middle-click, "Open in new tab" and link previews. No <code>onClick</code> is needed — adding one that calls
+        middle-click, "Open in new tab" and link previews. No <code>onClick</code> is needed. Under <code>usePathStrategy()</code>, adding one that calls
         <code>router.navToUri</code> makes the click navigate twice. <a href="/ultra/kraft/link-clicks">Link Clicks</a>
         lists which links and clicks the router handles.</p>
 
@@ -159,7 +157,7 @@ fun A.href(route: Route.Bound) {
         if (AppState.auth.isLoggedIn) {
             RouterMiddlewareResult.Proceed
         } else {
-            ctx.redirect(router.strategy.render(Nav.login()))
+            ctx.redirect("/login")
         }
     }) {
         layout({ LoggedInLayout(it) }) {

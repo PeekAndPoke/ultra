@@ -88,7 +88,7 @@ val first = repo.findFirst {
     <Code code={`// Save a modified entity
 val updated = repo.save(stored.modify { it.copy(published = true) })
 
-// Modify by ID — atomic read-modify-write
+// Modify by ID: loads, modifies and saves (not atomic, no revision check)
 repo.modifyById(stored._id) { post ->
     post.copy(published = true)
 }
@@ -97,7 +97,7 @@ repo.modifyById(stored._id) { post ->
 // condition receives Stored<T>, modify receives T
 repo.modifyByIdWhen(
     stored._id,
-    condition = { !it().published },
+    condition = { !it.value.published },
     modify = { it.copy(published = true) },
 )`} lang="kotlin" theme="vitesse-dark"/>
 
@@ -126,13 +126,14 @@ val stored: List<Stored<BlogPost>> = repo.batchInsertValues(posts)`} lang="kotli
 
     <h2>Cursors</h2>
 
-    <p>Queries return <code>Cursor&lt;T&gt;</code>, a Flow-based wrapper. Use <code>asFlow()</code> for streaming
-        or the suspend convenience extensions for common operations:</p>
+    <p>Queries return <code>Cursor&lt;T&gt;</code>, a Flow-based wrapper. Use <code>asFlow()</code> for a Flow
+        or the suspend convenience extensions for common operations. The first collection fetches and buffers the
+        whole result, so a cursor can be iterated more than once:</p>
 
     <Code code={`val cursor = repo.findAll()
 
-cursor.count      // number of results in current batch
-cursor.fullCount  // total count (when using PAGE)
+cursor.count      // number of results the query returned
+cursor.fullCount  // matches ignoring LIMIT; needs the fullCount query option (findAll sets it)
 
 // Collect all results
 cursor.toList()                                      // suspend
@@ -147,9 +148,9 @@ cursor.firstOrNull()
 cursor.groupBy { it().author }
 
 // Flow-based streaming
-cursor.asFlow().collect { ... }`} lang="kotlin" theme="vitesse-dark"/>
+cursor.asFlow().collect { ... }  // Flow needs kotlinx-coroutines-core on your classpath`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>Results are deserialized lazily. <code>Stored&lt;T&gt;</code> entities are automatically cached in the <code>EntityCache</code>
+    <p>Results are deserialized on the first collection. <code>Stored&lt;T&gt;</code> entities are automatically cached in the <code>EntityCache</code>
         for deduplication. All cursor convenience methods (<code>map</code>, <code>filter</code>,
         <code>forEach</code>, <code>toList</code>, etc.) are <code>suspend</code> functions.</p>
 

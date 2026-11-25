@@ -94,12 +94,13 @@ if (result.success) {
 
     <h2>Dev overrides</h2>
 
-    <p>Pass a <code>MailingDevConfig</code> to <code>useSender</code> and the module redirects every
-        email to your dev inbox, prefixes the subject and adds a banner to the body. No accidental
-        emails to real users.</p>
+    <p>Pass a <code>MailingDevConfig</code> to <code>useSender</code> and the module prefixes the subject,
+        adds a banner to the body and, when its <code>destination</code> is set, redirects every email to that
+        inbox. <code>disableEmails</code> sends nothing at all.</p>
 
-    <Aside>In production the real sender is used directly. In dev/staging all emails go to the address
-        you configure, with the original recipient recorded in the send result.
+    <Aside>Without a dev config the real sender is used directly. With one that sets a
+        <code>destination</code> email, the emails go to that address, with the original recipient recorded in the send
+        result.
     </Aside>
 
     <h2>Tests capture instead of sending</h2>
@@ -109,7 +110,7 @@ if (result.success) {
         so no client is built and no credentials are needed. Assert on what was sent by resolving
         <code>CapturedEmails</code>:</p>
 
-    <Code code={`class MyMailSpec : FunktorApiSpec() {
+    <Code code={`class MyMailSpec : AppSpec<MyConfig>(app) {
     private val emails by service(CapturedEmails::class)
 
     init {

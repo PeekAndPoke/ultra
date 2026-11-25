@@ -81,6 +81,9 @@ import {Code} from 'astro:components';
 
     <Code code={`import io.peekandpoke.ultra.cache.FastCache
 import io.peekandpoke.ultra.cache.fastCache
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 lateinit var stats: FastCache.StatisticsBehaviour<String, String>
 
@@ -92,11 +95,13 @@ val cache = fastCache<String, String> {
 
 // Use the cache...
 cache.put("a", "1")
-cache.getOrPut("b") { "2" }   // records a MISS and a PUT — it calls get() first
+cache.getOrPut("b") { "2" }   // records a MISS and a PUT: a lookup first, then the put
 cache.get("a")                // hit
 cache.get("missing")          // miss
 
-// Take a snapshot
+// Counting happens on the background loop (50ms by default): wait for its next pass
+delay(100.milliseconds)  // inside a coroutine
+
 val snapshot = stats.snapshot()
 println(snapshot.hitCount)       // 1
 println(snapshot.missCount)      // 2
@@ -133,7 +138,8 @@ println(snapshot.hitRate)        // 0.333…`} lang="kotlin" theme="vitesse-dark
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>putCount</code></td>
                 <td class="py-2"><code>Long</code></td>
-                <td class="py-2">Total <code>put()</code> calls (including <code>getOrPut</code> misses)</td>
+                <td class="py-2">Total <code>put()</code> calls (including <code>getOrPut</code> misses and background refresh
+                    results)</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>evictionCount</code></td>
@@ -157,7 +163,8 @@ println(snapshot.hitRate)        // 0.333…`} lang="kotlin" theme="vitesse-dark
     <h3>How statistics counts</h3>
 
     <p>Statistics processes every action in every batch, not just the last-per-key. If a key is read
-        5 times in one batch, that's 5 hits. Evictions are counted via the eviction listener — the same
+        5 times in one batch, that's 5 hits. The batch is counted in the background loop, so an operation shows in a
+        snapshot after the next loop pass. Evictions are counted via the eviction listener — the same
         mechanism used by <code>onEviction</code>.</p>
 
     <h2>Combining both</h2>

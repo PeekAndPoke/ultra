@@ -67,13 +67,13 @@ stored.hasIdIn(listOf(other1, other2))`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>MongoDB document IDs</h2>
 
-    <p>Monko generates MongoDB document IDs as follows:</p>
+    <p>Monko maps MongoDB document IDs as follows:</p>
 
     <ul>
-        <li>If you provide a key via <code>insert(key, value)</code>, the document gets <code>_id =
-            "collection/key"</code></li>
-        <li>If no key is provided, Monko generates an <code>ObjectId</code> and converts it to a hex string</li>
-        <li>The <code>_key</code> is always the portion after the slash in <code>_id</code></li>
+        <li>If you provide a key via <code>insert(key, value)</code>, the document's <code>_id</code> is that key,
+            and <code>Stored._id</code> is <code>"collection/key"</code></li>
+        <li>If no key is provided, MongoDB assigns an <code>ObjectId</code>; <code>_key</code> is its hex string</li>
+        <li>The <code>_key</code> is always the portion after the slash in <code>Stored._id</code></li>
     </ul>
 
     <div class="mt-12">

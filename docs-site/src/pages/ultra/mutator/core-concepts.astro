@@ -144,8 +144,9 @@ mutator.getInitialValue().street  // "Oak Ave"`} lang="kotlin" theme="vitesse-da
 
     <h2>Structural equality guarantees</h2>
 
-    <p>Mutator is careful about identity. If a mutation results in a value equal to the initial value, Mutator returns
-        the <strong>exact same instance</strong> (reference equality):</p>
+    <p>Mutator is careful about identity. If a mutation of a data class results in a value equal to the initial value,
+        Mutator returns the <strong>exact same instance</strong> (reference equality). Collection mutators work on a
+        copy of the collection, so their own value is never the same instance:</p>
 
     <Code code={`val address = Address(street = "Main St", city = "Springfield", zip = "62701")
 

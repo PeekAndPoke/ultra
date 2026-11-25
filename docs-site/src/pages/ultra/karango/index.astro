@@ -79,8 +79,8 @@ val adults = repo.findList {
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Async &amp; Coroutines</h3>
-            <p class="text-sm text-gray-400">All operations are <code>suspend</code> functions. Streaming cursors for
-                large result sets.</p>
+            <p class="text-sm text-gray-400">All operations are <code>suspend</code> functions. Cursors expose results
+                as a Flow; the first collection fetches and buffers every batch.</p>
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Slumber Integration</h3>
@@ -88,9 +88,9 @@ val adults = repo.findList {
                 graceful error handling built in.</p>
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-            <h3 class="text-white font-semibold mb-1">Battle-Tested</h3>
-            <p class="text-sm text-gray-400">131 test files. Used in production across authentication, logging, cluster
-                management, and more.</p>
+            <h3 class="text-white font-semibold mb-1">Used Across Funktor</h3>
+            <p class="text-sm text-gray-400">Funktor's authentication, logging, cluster and messaging modules can store
+                their data with it (<code>useKarango()</code>).</p>
         </div>
     </div>
 

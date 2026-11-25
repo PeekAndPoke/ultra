@@ -62,7 +62,7 @@ class SessionsRepo(driver: KarangoDriver) : EntityRepository<Session>(
     override fun KarangoIndexBuilder<Session>.buildIndexes() {
         ttlIndex {
             field { expiresAt }
-            options { expireAfter(0) }  // expire at the exact timestamp
+            options { expireAfter(0) }  // expire at the stored timestamp (also the default)
         }
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
@@ -159,7 +159,8 @@ hooks = Hooks.of<Article>()
     <ul>
         <li><strong>insert()</strong>: OnBeforeSave → persist → OnAfterSave</li>
         <li><strong>save()</strong>: OnBeforeSave → persist → OnAfterSave</li>
-        <li><strong>remove()</strong>: delete → OnAfterDelete</li>
+        <li><strong>remove(stored)</strong>: delete → OnAfterDelete (removing by id or key, a list of entities, or
+            <code>removeAll()</code> runs no hooks)</li>
         <li><strong>batchInsert()</strong>: OnBeforeSave (each) → persist all → OnAfterSave (each)</li>
     </ul>
 

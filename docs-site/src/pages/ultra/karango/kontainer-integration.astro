@@ -16,13 +16,22 @@ import {Code} from 'astro:components';
 
     <h2>Setting up Karango with Kontainer</h2>
 
-    <p>One line to register all Karango infrastructure:</p>
+    <p>One line registers the Karango infrastructure. It builds on the Vault and logging modules, and Vault's
+        timestamp hooks need a <code>Kronos</code>; a Funktor app registers these through <code>funktor(...)</code>:</p>
 
     <Code code={`import io.peekandpoke.karango.karango
 import io.peekandpoke.karango.config.ArangoDbConfig
+import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.log.ultraLogging
+import io.peekandpoke.ultra.vault.VaultConfig
+import io.peekandpoke.ultra.vault.ultraVault
 
 val blueprint = kontainer {
+    instance(Kronos::class, Kronos.systemUtc)
+    ultraLogging()
+    ultraVault(VaultConfig.default)   // Database, EntityCache, profiler, hook scope
+
     // Register Karango module — sets up driver, codec, and DB connection
     karango(ArangoDbConfig(
         host = "localhost",
@@ -52,10 +61,11 @@ val blueprint = kontainer {
     <Code code={`// Kontainer automatically discovers all Repository<*> implementations
 // and passes them to the Database class as a Lookup<Repository<*>>
 
-// You DON'T need to register the Database manually — it's wired automatically.
+// You DON'T register the Database yourself: ultraVault() does, and it picks up every repository.
 // Just register your repositories:
 
 val blueprint = kontainer {
+    // ... Kronos, ultraLogging() and ultraVault() as above
     karango(config)
 
     singleton(PersonsRepo::class)
@@ -102,8 +112,8 @@ val repo = database.getRepositoryStoring(Person::class)
 database.hasRepositoryStoring(Person::class)  // true
 database.hasRepositoryStoring(Unknown::class)  // false
 
-// Find by collection name
-val repo = database.getRepository("persons")
+// Find by repository name (the collection name)
+val byName = database.getRepository("persons")
 // → PersonsRepo`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Database lifecycle</h2>
@@ -112,20 +122,25 @@ val repo = database.getRepository("persons")
 
     <Code code={`val database: Database = kontainer.get(Database::class)
 
-// Create collections if they don't exist
+// Create missing collections, then ensure the indexes of each
 database.ensureRepositories()
 
-// Create indexes defined in buildIndexes()
-database.ensureIndexes()
+// Ensure the indexes defined in buildIndexes() and report the result
+val report: List<VaultModels.IndexesInfo> = database.ensureIndexes()
 
-// Or validate without creating
+// Or only report, without changing anything
 database.validateIndexes()`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><code>ensureIndexes()</code> creates missing indexes. An index with the same name but other fields is dropped
+        and re-created, so it is briefly missing. Indexes that are not defined are kept; they show in
+        <code>excessIndexes</code>, and only <code>recreateIndexes()</code> removes them.</p>
 
     <h2>Real-world example: Funktor app setup</h2>
 
-    <p>Here's how the Funktor demo app wires everything together:</p>
+    <p>Simplified from the Funktor demo app:</p>
 
-    <Code code={`fun createBlueprint(config: AppConfig) = kontainer {
+    <Code code={`// FunktorDemoConfig implements AppConfig and adds arangodb: ArangoDbConfig
+fun createBlueprint(config: FunktorDemoConfig) = kontainer {
     // Mount Funktor modules — each can opt into Karango storage
     funktor(
         config = config,
@@ -141,20 +156,17 @@ database.validateIndexes()`} lang="kotlin" theme="vitesse-dark"/>
     singleton(AdminUsersRepo::class)
 }
 
-// On application startup:
-val app = createBlueprint(config)
-val kontainer = app.create()
-
-// Ensure all collections and indexes exist
-kontainer.get(Database::class).ensureRepositories()
-kontainer.get(Database::class).ensureIndexes()`} lang="kotlin" theme="vitesse-dark"/>
+// No startup code needed: the cluster module calls Database.ensureRepositories()
+// when the app starts (EnsureRepositoriesOnAppStarting)`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>Each Funktor module (<code>logging</code>, <code>cluster</code>, <code>auth</code>) registers its own
         repositories when <code>useKarango()</code> is called. The Database automatically discovers all of them.</p>
 
     <h2>Dynamic vs singleton repositories</h2>
 
-    <p>Repositories are typically registered as <strong>singletons</strong> — they hold no per-request state. The <code>KarangoDriver</code>
+    <p>Repositories are typically registered as <strong>singletons</strong> — they hold no per-request state. As a
+        repository injects the dynamic <code>KarangoDriver</code>, the kontainer makes it semi-dynamic: one instance
+        per kontainer. The <code>KarangoDriver</code>
         and <code>KarangoCodec</code> are registered as <strong>dynamic</strong> (created per kontainer instance)
         because they carry per-request context like the <code>EntityCache</code>:</p>
 
@@ -165,8 +177,10 @@ val KarangoModule = module { config: ArangoDbConfig ->
 
     // Per-request driver and codec
     dynamic(KarangoDriver::class)
+
+    val codecConfig = getKarangoDefaultSlumberConfig()   // built once, reused
     dynamic(KarangoCodec::class) { database: Database, cache: EntityCache ->
-        KarangoCodec(config = slumberConfig, database = database, entityCache = cache)
+        KarangoCodec(config = codecConfig, database = database, entityCache = cache)
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 

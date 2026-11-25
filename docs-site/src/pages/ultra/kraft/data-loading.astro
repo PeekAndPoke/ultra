@@ -19,7 +19,8 @@ import {Code} from 'astro:components';
 
     <h2>Basic usage</h2>
 
-    <p>Create a loader in your component with <code>dataLoader</code>. It starts loading immediately on mount:</p>
+    <p>Create a loader in your component with <code>dataLoader</code>. It starts loading when the component is created
+        and takes the first value the flow emits:</p>
 
     <Code code={`class UserList(ctx: NoProps) : PureComponent(ctx) {
 
@@ -59,7 +60,8 @@ import {Code} from 'astro:components';
     <Code code={`private val loader = dataLoaderOf(listOf("Alice", "Bob", "Charlie"))`} lang="kotlin"
           theme="vitesse-dark"/>
 
-    <p>This creates a loader that starts in the <code>Loaded</code> state immediately.</p>
+    <p>This creates a loader whose flow emits the value. Like any loader it starts in <code>Loading</code> and moves to
+        <code>Loaded</code> a few milliseconds later.</p>
 
     <h2>Reloading</h2>
 

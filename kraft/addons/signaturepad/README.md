@@ -12,13 +12,9 @@ handwritten signature capture in Kraft applications.
 ## Example
 
 ```kotlin
-signaturePad {
-    penColor = "black"
-    backgroundColor = "white"
-    onEnd { pad ->
-        val dataUrl = pad.toDataURL("image/png")
-        // use the signature image
-    }
+SignaturePad { pad ->
+    val png = pad.export.toPng()
+    // use the signature image
 }
 ```
 

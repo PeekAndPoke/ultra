@@ -67,10 +67,10 @@ UiInputField(age, { age = it }) {
 UiInputField(price, { price = it }) {
     label("Price")
     step(0.01)
-    leftIcon { icon.dollar_sign }
+    leftIcon { dollar_sign }
 }
 
-// Nullable number — empty input returns null
+// Nullable number: takes null; an emptied input gives 0
 UiInputField.nullable(weight, { weight = it }) {
     label("Weight (optional)")
 }`} lang="kotlin" theme="vitesse-dark" />
@@ -97,7 +97,7 @@ UiDateField(birthday, { birthday = it }) {
     label("Birthday")
 }
 
-// DateTime — works with MpLocalDateTime, MpInstant, MpZonedDateTime
+// DateTime — works with MpLocalDateTime, MpZonedDateTime, and MpInstant (with a timezone)
 UiDateTimeField(appointmentTime, { appointmentTime = it }) {
     label("Appointment")
 }
@@ -163,12 +163,14 @@ UiCheckboxField(
     option(realValue = "de", formValue = "de", display = "Germany")
     option(realValue = "us", formValue = "us", display = "United States")
     option(realValue = "jp", formValue = "jp", display = "Japan")
-    searchableBy { option, query -> option.formValue.contains(query, ignoreCase = true) }
+    searchableBy { query -> filter { it.formValue.contains(query, ignoreCase = true) } }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
 <h3>Nullable fields</h3>
 
-    <p>Most field types have a <code>.nullable()</code> variant that returns <code>null</code> when the input is empty:
+    <p>The input, date, date-time and time fields have a <code>.nullable()</code> variant for a nullable value. The date
+        and time variants return <code>null</code> when the input is emptied; the text and number variants return
+        <code>""</code> and <code>0</code>:
     </p>
 
 <Code code={`UiInputField.nullable(middleName, { middleName = it }) {
@@ -190,8 +192,8 @@ UiDateField.nullable(endDate, { endDate = it }) {
     renderItem { ctx ->
         UiInputField(ctx.item, { ctx.modify(it) }) {
             label("Tag #${'$'}{ctx.idx + 1}")
-            rightIcon({ red.times }) { component ->
-                component.onClick { ctx.remove() }
+            rightIcon({ red.times }) {
+                onClick { ctx.remove() }
             }
         }
     }
@@ -203,12 +205,13 @@ UiDateField.nullable(endDate, { endDate = it }) {
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-    <p>Each <code>ItemCtx</code> provides: <code>idx</code>, <code>item</code>, <code>all</code>, <code>modify()</code>,
-        <code>remove()</code>, <code>copy()</code>, and <code>swapWith(idx)</code>.</p>
+    <p>Each <code>ItemCtx</code> provides: <code>idx</code>, <code>item</code>, <code>all</code>, <code>modify(value)</code>,
+        <code>remove()</code>, <code>copy(value)</code>, and <code>swapWith(idx)</code>.</p>
 
     <h2>Common field options</h2>
 
-    <p>All field types share these options from the base <code>FieldOptions</code> interface:</p>
+    <p>The input, textarea and checkbox fields share these options (<code>appear</code> comes from the SemanticUI
+        options):</p>
 
     <div class="not-prose my-8">
         <table class="w-full text-sm text-left">
@@ -236,8 +239,8 @@ UiDateField.nullable(endDate, { endDate = it }) {
                 <td>Disable the field</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>required()</code></td>
-                <td>Mark as required</td>
+                <td class="py-2"><code>required(true)</code></td>
+                <td>Sets the HTML required attribute (input fields)</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>accepts(rule1, rule2, ...)</code></td>
@@ -277,15 +280,15 @@ UiDateField.nullable(endDate, { endDate = it }) {
                 <td>Step increment for number inputs</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>leftIcon &#123; icon.search &#125;</code></td>
+                <td class="py-2"><code>leftIcon &#123; search &#125;</code></td>
                 <td>Icon on the left side</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>rightIcon &#123; icon.check &#125;</code></td>
+                <td class="py-2"><code>rightIcon &#123; check &#125;</code></td>
                 <td>Icon on the right side</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>rightIcon(&#123; icon.times &#125;) &#123; it.onClick &#123; clear() &#125;
+                <td class="py-2"><code>rightIcon(&#123; times &#125;) &#123; field -> onClick &#123; field.setInput("") &#125;
                     &#125;</code></td>
                 <td>Right icon with click handler</td>
             </tr>
@@ -298,11 +301,11 @@ UiDateField.nullable(endDate, { endDate = it }) {
                 <td>Toggle password visibility (eye icon)</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>leftLabel &#123; +"https://" &#125;</code></td>
+                <td class="py-2"><code>leftLabel &#123; ui.label &#123; +"https://" &#125; &#125;</code></td>
                 <td>Attached label on the left</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>rightLabel &#123; +"kg" &#125;</code></td>
+                <td class="py-2"><code>rightLabel &#123; ui.label &#123; +"kg" &#125; &#125;</code></td>
                 <td>Attached label on the right</td>
             </tr>
             <tr class="border-b border-white/5">
@@ -360,7 +363,7 @@ UiDateField.nullable(endDate, { endDate = it }) {
                 <td>Auto-grow height with content (default: on)</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>customize &#123; rows = 5 &#125;</code></td>
+                <td class="py-2"><code>customize &#123; rows = "5" &#125;</code></td>
                 <td>Custom textarea attributes (rows, cols, etc.)</td>
             </tr>
             <tr class="border-b border-white/5">
@@ -387,8 +390,8 @@ UiDateField.nullable(endDate, { endDate = it }) {
                 <td>Add a selectable option</td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2"><code>searchableBy &#123; option, query -> ... &#125;</code></td>
-                <td>Enable filtering with a predicate</td>
+                <td class="py-2"><code>searchableBy &#123; query -> filter &#123; ... &#125; &#125;</code></td>
+                <td>Enable search; the block filters the options by the search text</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>autoSuggest &#123; query -> ... &#125;</code></td>
@@ -590,8 +593,8 @@ UiInputField(age, { age = it }) {
 
     <h3>Custom messages</h3>
 
-    <p>Every rule accepts a custom error message — either a static string or a lambda that receives the current
-        value:</p>
+    <p>Most built-in rules accept a custom error message — either a static string or a lambda that receives the
+        current value:</p>
 
 <Code code={`accepts(
     notBlank("This field is required"),
@@ -601,7 +604,7 @@ UiInputField(age, { age = it }) {
     <h3>Composing rules</h3>
 
     <Code code={`// OR — passes if either rule passes
-accepts(empty() or validEmail())
+accepts(empty<String>() or validEmail())
 
 // Any of — passes if any rule passes
 accepts(anyRuleOf(empty(), validEmail(), validUrlWithProtocol()))
@@ -638,7 +641,7 @@ accepts(allRulesOf(notBlank(), minLength(3), maxLength(50)))`} lang="kotlin" the
                 accepts(notBlank(), validEmail())
             }
 
-            // Disable button when form is invalid
+            // Disabled while a field shows errors
             ui.blue.button.given(!formCtrl.isValid) { disabled }.then {
                 // Runs the block only when every field passes
                 onClick { formCtrl.validate { submitForm() } }
@@ -659,6 +662,7 @@ accepts(allRulesOf(notBlank(), minLength(3), maxLength(50)))`} lang="kotlin" the
     private val pageFormCtrl = formObserver()
 
     override fun VDom.render() {
+        // A formController() in a sub-form stops its fields here; use formObserver() there
         AddressForm()
         PaymentForm()
 
@@ -683,7 +687,8 @@ accepts(allRulesOf(notBlank(), minLength(3), maxLength(50)))`} lang="kotlin" the
             <tbody class="text-gray-300">
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>isValid</code></td>
-                <td>True when all tracked fields pass validation</td>
+                <td>True when no tracked field has errors. A field is checked once touched (edited, or by
+                    <code>validate</code>), so an untouched invalid field does not count yet</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>isNotValid</code></td>
@@ -775,7 +780,7 @@ accepts(allRulesOf(notBlank(), minLength(3), maxLength(50)))`} lang="kotlin" the
 
             UiInputField(draft.website, { draft = draft.copy(website = it) }) {
                 label("Website")
-                accepts(nullOrElse(validUrlWithProtocol()))
+                accepts(empty<String>() or validUrlWithProtocol())
             }
 
             // Only enable submit when valid AND changed

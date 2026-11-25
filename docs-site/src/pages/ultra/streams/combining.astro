@@ -33,8 +33,11 @@ println(sum())  // 105`} lang="kotlin" theme="vitesse-dark" />
 
 <p>Shorthand for combining into a <code>Pair</code>:</p>
 
-<Code code={`val pair = a.pairedWith(b)
-println(pair())  // Pair(1, 10)`} lang="kotlin" theme="vitesse-dark" />
+<Code code={`val a = StreamSource(1)
+val b = StreamSource(10)
+
+val pair = a.pairedWith(b)
+println(pair())  // (1, 10)`} lang="kotlin" theme="vitesse-dark" />
 
 <h2 id="switchmap">switchMap</h2>
 
@@ -154,7 +157,7 @@ source(4)
 println(recent())  // [2, 3, 4] — oldest values dropped`} lang="kotlin" theme="vitesse-dark" />
 
 <p>The capacity may be a <code>Stream&lt;Int&gt;</code>: a smaller one drops the oldest values at once, a larger one
-    fills up from there. Values are recorded only while someone listens, the current one first on each subscribe.</p>
+    fills up from there. Values are recorded only while someone listens, the current one first whenever listening starts.</p>
 
 <p>Each value copies the window. For a fast producer, or a window over time rather than over values, sample first:</p>
 

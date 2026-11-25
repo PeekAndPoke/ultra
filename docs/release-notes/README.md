@@ -22,7 +22,7 @@ Written by the `/release` skill from the `## Unreleased` section of the changelo
 ```markdown
 ---
 version: 0.118.0
-date: 2026-11-14
+date: 2026-11-13
 summary: One line, under 160 characters: what this release is about.
 ---
 

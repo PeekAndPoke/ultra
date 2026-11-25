@@ -23,6 +23,7 @@ import {dep} from '../../../data/site';
 
 dependencies {
     implementation("${dep.karangoCore}")
+    implementation("${dep.vault}")  // @Vault, Kontainer, Kronos, logging: karango core does not expose them
     ksp("${dep.karangoKsp}")
 }`} lang="kotlin" theme="vitesse-dark"/>
 
@@ -54,20 +55,31 @@ class PersonsRepo(driver: KarangoDriver) : EntityRepository<Person>(
     <h2>4. Configure the connection</h2>
 
     <Code code={`import io.peekandpoke.karango.config.ArangoDbConfig
+import io.peekandpoke.ultra.common.model.Redacted
 
 val config = ArangoDbConfig(
     host = "localhost",
     port = 8529,
     user = "root",
-    password = "",
+    password = Redacted(""),
     database = "my_app",
 )`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>With Kontainer (dependency injection):</p>
+    <p>With Kontainer (dependency injection). Karango builds on the Vault and logging modules, and Vault's
+        timestamp hooks need a <code>Kronos</code>; a Funktor app registers all three through <code>funktor(...)</code>:</p>
 
     <Code code={`import io.peekandpoke.karango.karango
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.log.ultraLogging
+import io.peekandpoke.ultra.vault.VaultConfig
+import io.peekandpoke.ultra.vault.ultraVault
 
-kontainer {
+val blueprint = kontainer {
+    instance(Kronos::class, Kronos.systemUtc)
+    ultraLogging()
+    ultraVault(VaultConfig.default)
+
     karango(config)
 
     // Register your repositories

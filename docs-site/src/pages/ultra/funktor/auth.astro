@@ -23,14 +23,28 @@ import {githubRepo} from '../../../data/site';
     <Code code={`class AdminUserRealm(
     override val deps: AuthSystem.Deps,
     private val usersRepo: AdminUsersRepo,
+    emailAndPassword: EmailAndPasswordAuth.Factory,
+    googleSso: GoogleSsoAuth.Factory,
+    githubSso: GithubSsoAuth.Factory,
 ) : AuthRealm<AdminUser> {
 
     override val id = RealmId("admin-user")
 
-    override val providers = listOf(
-        EmailAndPasswordAuth(deps),
-        GoogleSsoAuth(deps, clientId = "your-google-client-id"),
-        GithubSsoAuth(deps, clientId = "your-github-id", clientSecret = "your-github-secret"),
+    override val messaging = AuthRealm.DefaultMessaging(
+        senderEmail = "noreply@example.com",
+        senderName = "Example",
+        applicationName = "Example Admin",
+        realm = this,
+    )
+
+    override val providers = listOfNotNull(
+        emailAndPassword(
+            frontendUrls = EmailAndPasswordAuth.FrontendUrls(baseUrl = "https://admin.example.com/auth"),
+            capabilities = setOf(Capability.SignIn, Capability.SignUp),
+        ),
+        // null, so left out, when its keys are missing from the config
+        googleSso.fromAppConfig(Capability.SignIn, Capability.SignUp),
+        githubSso.fromAppConfig(Capability.SignIn, Capability.SignUp),
     )
 
     override val passwordPolicy = PasswordPolicy.default
@@ -60,6 +74,8 @@ import {githubRepo} from '../../../data/site';
 
         override suspend fun serialize(user: Stored<AdminUser>) = /* ... */
     }
+
+    // generateJwt: see below
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p><code>activate</code> and <code>retire</code> have no default. A realm without sign-up throws
@@ -263,7 +279,7 @@ AuthDisplayName.normalizeOrNull("  Ada Lovelace ") // "Ada Lovelace"`} lang="kot
         same organisation &mdash; it never silently changes which one is active.</p>
 
     <Code code={`class B2bRealm(...) : AuthRealm<B2bUser> {
-    override val orgPolicy = OrgPolicy.Required()
+    override val orgPolicy = OrgPolicy.Required
 
     override suspend fun getMemberships(user: Stored<B2bUser>): Set<OrgMembership> =
         orgMembers.sessionMembershipsOf(UserId(user._id))
@@ -342,7 +358,9 @@ val blueprint = kontainer {
     <Code code={`// Frontend: the token is refreshed automatically by AuthState.
 // You can also call it manually:
 val response = api.auth.refreshToken().firstOrNull()
-// response.data?.token  — the new JWT`} lang="kotlin" theme="vitesse-dark"/>
+// The new JWT. \`bearerToken\` is an extension on Success; the response is sealed
+// (Success or OrgSelectionRequired), so narrow it first.
+val token = (response?.data as? AuthSignInResponse.Success)?.bearerToken`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>API access matrix (ApiAcl)</h2>
 

@@ -128,7 +128,9 @@ repo.removeAll()`} lang="kotlin" theme="vitesse-dark"/>
             </tr>
             <tr>
                 <td class="px-3 py-2 border border-white/10"><code>OnAfterDelete&lt;T&gt;</code></td>
-                <td class="px-3 py-2 border border-white/10">After a remove completes.</td>
+                <td class="px-3 py-2 border border-white/10">After <code>remove(entity)</code> completes; not after
+                    <code>remove(idOrKey)</code> or <code>removeAll()</code>. With Monko, a call through a
+                    <code>Repository&lt;T&gt;</code> reference runs no hook.</td>
                 <td class="px-3 py-2 border border-white/10">Yes</td>
             </tr>
             </tbody>
@@ -136,23 +138,27 @@ repo.removeAll()`} lang="kotlin" theme="vitesse-dark"/>
     </div>
 
     <p><code>OnBeforeSave</code> runs synchronously and returns the (potentially modified) entity.
-        <code>OnAfterSave</code> and <code>OnAfterDelete</code> run asynchronously in the background
-        after the database operation completes.</p>
+        <code>OnAfterSave</code> and <code>OnAfterDelete</code> run after the database operation, through the
+        driver's <code>VaultHookScope</code>. A driver you construct yourself awaits them
+        (<code>VaultHookScope.Inline</code>). A driver from the Kontainer module gets
+        <code>DeferredVaultHookScope</code>, which runs them inline until something binds it to an application
+        scope. Funktor binds it at app start, so in a Funktor app they run in the background, and a read right
+        after a save may not yet see what a hook writes. Hook failures are logged, never thrown.</p>
 
-    <Code code={`// Built-in hook: automatic timestamps
-class TimestampedHook<T : Timestamped> : Repository.Hooks.OnBeforeSave<T> {
-    override fun <X : T> onBeforeSave(
-        repo: Repository<T>,
-        storable: Storable<T>,
+    <Code code={`// A custom hook
+class MyCustomHook : Repository.Hooks.OnBeforeSave<MyEntity> {
+    override fun <X : MyEntity> onBeforeSave(
+        repo: Repository<MyEntity>,
+        storable: Storable<MyEntity>,
     ): Storable<X> {
-        // Sets createdAt on first insert, updatedAt on every save
         ...
     }
 }
 
-// Composing hooks
+// Composing hooks. The built-in TimestampedHook (injected from the Vault module) sets
+// createdAt on first insert and updatedAt on every save; MyEntity implements Timestamped.
 val hooks = Repository.Hooks.of(
-    TimestampedHook<MyEntity>(),
+    timestampedHook.onBeforeSave<MyEntity>(),
     MyCustomHook(),
 )`} lang="kotlin" theme="vitesse-dark"/>
 
@@ -172,8 +178,8 @@ val hooks = Repository.Hooks.of(
     <p>Vault ships two implementations:</p>
 
     <ul>
-        <li><code>DefaultEntityCache</code> — thread-safe cache backed by <code>ConcurrentHashMap</code>,
-            with synchronized sync access and <code>Mutex</code>-based suspend access
+        <li><code>DefaultEntityCache</code> — backed by <code>NullableCache</code>: concurrent lookups of one id
+            share one provider run, and an id that resolves to nothing is remembered as well
         </li>
         <li><code>NullEntityCache</code> — no-op implementation that always calls through to the provider</li>
     </ul>
@@ -190,13 +196,14 @@ repo.ensure()
 
 // Or separately
 repo.ensureRepository()  // create the collection if missing
-repo.ensureIndexes()     // create defined indexes
+repo.ensureIndexes()     // create missing indexes, drop and re-create changed ones
+                         // (Karango: only when the fields of a named index change)
 
 // Validate index state
 val info: IndexesInfo = repo.validateIndexes()
 info.healthyIndexes   // indexes that exist as defined
 info.missingIndexes   // defined but not yet created
-info.excessIndexes    // exist but not defined
+info.excessIndexes    // exist but not defined (ensureIndexes leaves them)
 
 // Recreate all indexes (drop + re-create)
 repo.recreateIndexes()`} lang="kotlin" theme="vitesse-dark"/>

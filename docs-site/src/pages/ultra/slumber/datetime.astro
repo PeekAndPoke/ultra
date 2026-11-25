@@ -15,15 +15,17 @@ import { Code } from 'astro:components';
 
 <h2>The format</h2>
 
-<p>All datetime types serialize to the same structure:</p>
+<p>Most datetime types serialize to the same structure:</p>
 
 <Code code={`{
     "ts": 1649116800000,         // epoch milliseconds (machine-readable)
     "timezone": "Europe/Berlin", // timezone ID
-    "human": "2022-04-05T..."    // ISO-8601 string (human-readable)
+    "human": "2022-04-05T..."    // debug rendering, no stable format
 }`} lang="json" theme="vitesse-dark" />
 
-<p>This format stores both the precise timestamp and the timezone, so no information is lost. The <code>human</code> field is for debugging — deserialization uses only <code>ts</code> and <code>timezone</code>.</p>
+<p><code>ts</code> is in epoch milliseconds, so anything finer than a millisecond is dropped. <code>timezone</code> is the zone of a zoned type and <code>"UTC"</code> for every other type. The <code>human</code> field is for debugging — deserialization uses only <code>ts</code> and <code>timezone</code>.</p>
+
+<p>The exceptions: <code>LocalTime</code> and <code>MpLocalTime</code> are stored as a number (seconds and milliseconds of the day), <code>ZoneId</code> and <code>MpTimezone</code> as a plain string, and <code>MpLocalTimeSlot</code> as <code>{'{'}from, duration, to{'}'}</code>.</p>
 
 <h2>java.time types</h2>
 
@@ -74,22 +76,28 @@ val dateTime = LocalDateTime(2022, Month.APRIL, 5, 10, 30, 0)
 codec.slumber(dateTime)
 // → { "ts": ..., "timezone": "UTC", "human": "..." }`} lang="kotlin" theme="vitesse-dark" />
 
+<p>Supported <code>kotlinx.datetime</code> types: <code>LocalDate</code> and <code>LocalDateTime</code>.</p>
+
 <h2>MpDateTime types (Ultra multiplatform)</h2>
 
-<p>Ultra's own multiplatform datetime types follow the same format:</p>
+<p>Ultra's own multiplatform datetime types use the same formats:</p>
 
-    <Code code={`import io.peekandpoke.ultra.common.datetime.*
+    <Code code={`import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpTimezone
+import io.peekandpoke.ultra.slumber.Codec
+import io.peekandpoke.ultra.slumber.slumber
+import kotlinx.datetime.Month
 
 val codec = Codec.default
 
-val instant = MpLocalDate.of(2022, kotlinx.datetime.Month.APRIL, 5)
-    .atStartOfDay(kotlinx.datetime.TimeZone.UTC)
+val instant = MpLocalDate.of(2022, Month.APRIL, 5)
+    .atStartOfDay(MpTimezone.UTC)
     .toInstant()
 
 codec.slumber(instant)
 // → { "ts": 1649116800000, "timezone": "UTC", "human": "2022-04-05T00:00:00.000Z" }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>Supported MpDateTime types: <code>MpInstant</code>, <code>MpZonedDateTime</code>, <code>MpLocalDate</code>, <code>MpLocalDateTime</code>, <code>MpLocalTime</code>, <code>MpTimezone</code>.</p>
+<p>Supported MpDateTime types: <code>MpInstant</code>, <code>MpZonedDateTime</code>, <code>MpLocalDate</code>, <code>MpLocalDateTime</code>, <code>MpLocalTime</code>, <code>MpLocalTimeSlot</code>, <code>MpTimezone</code>.</p>
 
 <h2>DateTime in data classes</h2>
 

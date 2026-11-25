@@ -68,8 +68,8 @@ i18n.resolvePlural("checkout.items", count = 3)
         never re-scanned, so a value that itself contains <code>{'{{...}}'}</code> can never be
         re-interpreted as another placeholder.</p>
 
-    <Code code={`i18n.resolve("greeting", mapOf("name" to "{{secret}}", "secret" to "hunter2"))
-// -> "Hello {{secret}}!"   — NOT "Hello hunter2!"`} lang="kotlin" theme="vitesse-dark"/>
+    <Code code={`i18n.resolve("checkout.greeting", mapOf("name" to "{{secret}}", "secret" to "hunter2"))
+// -> "Hallo {{secret}}!"   NOT "Hallo hunter2!"`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>That matters when any part of a message comes from user input. Unknown placeholders are left in place
         for the same reason as missing keys &mdash; visibly wrong beats silently blank.</p>

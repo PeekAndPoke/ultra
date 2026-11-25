@@ -14,7 +14,7 @@ Comprehensive showcase of FomanticUI (SemanticUI) components integrated with Kra
 ## How to run
 
 ```bash
-./gradlew -t --parallel :examples:fomanticui:run
+./gradlew -t :kraft:examples:fomanticui:jsBrowserDevelopmentRun
 ```
 
 The development server will start and the app will be available in your browser.

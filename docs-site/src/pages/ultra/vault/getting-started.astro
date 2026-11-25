@@ -17,9 +17,9 @@ import {dep} from '../../../data/site';
 
     <h2>Dependency</h2>
 
-    <p>You rarely add Vault directly &mdash; <a href="/ultra/karango/">Karango</a> and
-        <a href="/ultra/monko/">Monko</a> bring it in. Add it explicitly only when you are writing
-        backend-agnostic code against the shared abstractions.</p>
+    <p>Add Vault next to <a href="/ultra/karango/">Karango</a> or <a href="/ultra/monko/">Monko</a>: they depend on
+        it at runtime only, so your code cannot name <code>@Vault</code>, <code>Stored</code> or
+        <code>Repository</code> without it. Funktor already exposes it.</p>
 
     <Code code={`dependencies {
     implementation("${dep.vault}")
@@ -56,7 +56,7 @@ stored._id    // "articles/abc123"
 stored._key   // "abc123"
 stored()      // Article(title="Hello", body="World")
 
-// A lazy reference — resolves on first access
+// A reference; asRef wraps the already-loaded value
 val ref: Ref<Article> = stored.asRef`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>3. Working with Stored</h2>
@@ -95,12 +95,13 @@ suspend fun printTitle(storable: Storable<Article>) {
 // Works the same for any wrapper type
 printTitle(new)     // instant
 printTitle(stored)  // instant
-printTitle(ref)     // may suspend to load from DB, then cached`} lang="kotlin" theme="vitesse-dark"/>
+printTitle(ref)     // instant here; a Ref read from the DB loads on first resolve, then caches`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>5. Cursors</h2>
 
     <p><code>Cursor&lt;T&gt;</code> wraps a Kotlin Flow and provides suspend-friendly collection operations.
-        Repository queries return cursors, so you can stream results lazily or collect them all at once.</p>
+        Repository queries return cursors: use the Flow via <code>asFlow()</code> or the collection-style
+        extensions below.</p>
 
     <Code code={`import io.peekandpoke.ultra.vault.Cursor
 import io.peekandpoke.ultra.vault.filter

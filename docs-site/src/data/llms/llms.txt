@@ -25,7 +25,7 @@
 
 ## Kraft
 
-- [Kraft](https://peekandpoke.io/llms/kraft.md): Build SPAs in pure Kotlin — components, reactive state, routing, forms, SemanticUI DSL, 12 lazy-loaded addons (AddonRegistry)
+- [Kraft](https://peekandpoke.io/llms/kraft.md): Build SPAs in pure Kotlin — components, reactive state, routing, forms, SemanticUI DSL, 13 addons, each in its own webpack chunk (AddonRegistry)
 
 ## Funktor
 

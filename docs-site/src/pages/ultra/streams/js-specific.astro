@@ -47,7 +47,7 @@ data class Preferences(val fontSize: Int = 14, val darkMode: Boolean = false)
 val prefs = StreamSource(Preferences())
     .persistInLocalStorage("app.prefs", Preferences.serializer())`} lang="kotlin" theme="vitesse-dark" />
 
-<p>Falls back to in-memory storage silently if localStorage is unavailable or the quota is exceeded. Accepts a custom <code>StringFormat</code> codec (defaults to JSON with <code>ignoreUnknownKeys = true</code>).</p>
+<p>If localStorage is unavailable or the quota is exceeded, it logs a console warning and the stream keeps working in memory. Accepts a custom <code>StringFormat</code> codec (defaults to JSON with <code>ignoreUnknownKeys = true</code>).</p>
 
 <h2>debouncedFunc() / debouncedFuncExceptFirst()</h2>
 
@@ -62,7 +62,7 @@ val saveSearch = debouncedFunc(delayMs = 200) {
 
 inputField.onInput { saveSearch() }
 
-// Execute first call immediately, debounce the rest
+// The first call runs after 3 ms, the later ones after delayMs
 val autoSave = debouncedFuncExceptFirst(delayMs = 1000) {
     saveDraft()
 }`} lang="kotlin" theme="vitesse-dark" />

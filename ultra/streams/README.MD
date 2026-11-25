@@ -12,13 +12,13 @@ null states.
 ## Quick example
 
 ```kotlin
-val count = streamOf(0)
+val count = StreamSource(0)
 val doubled = count.map { it * 2 }
 val label = doubled.map { "Value: $it" }
 
-label.onChange { println(it) }
+label.subscribeToStream { println(it) }  // prints "Value: 0"
 
-count.next(5)  // prints "Value: 10"
+count(5)  // prints "Value: 10"
 ```
 
 ## Key features
@@ -26,7 +26,7 @@ count.next(5)  // prints "Value: 10"
 - **Always has a value** — No empty states, no initialization race conditions
 - **Kotlin Multiplatform** — Works on JVM, JS and Native
 - **Composable operators** — map, filter, combine, switchMap, debounce, distinct, and more
-- **Lazy subscriptions** — Operators only compute when someone is listening
+- **Lazy subscriptions** — Operators only subscribe upstream when someone is listening
 - **Kraft integration** — First-class support as component state in Kraft SPAs
 - **Lightweight** — No heavy framework dependencies
 
@@ -39,6 +39,6 @@ Full docs at **[peekandpoke.io/ultra/streams](https://peekandpoke.io/ultra/strea
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.peekandpoke.ultra:streams:<version>")
+    implementation("io.peekandpoke.ultra:stream:<version>")
 }
 ```

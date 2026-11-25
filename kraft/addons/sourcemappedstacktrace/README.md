@@ -1,6 +1,6 @@
 # Kraft Addon: Sourcemapped Stacktrace
 
-Kotlin/JS wrapper for [sourcemapped-stacktrace](https://github.com/nicksrandall/sourcemapped-stacktrace) (npm:
+Kotlin/JS wrapper for [sourcemapped-stacktrace](https://github.com/novocaine/sourcemapped-stacktrace) (npm:
 `sourcemapped-stacktrace`), providing source-mapped stack trace resolution in Kraft applications.
 
 ## Features
@@ -12,7 +12,9 @@ Kotlin/JS wrapper for [sourcemapped-stacktrace](https://github.com/nicksrandall/
 ## Example
 
 ```kotlin
-SourcemappedStacktrace.mapStackTrace(error.stackTraceToString()) { mapped ->
+private val sourceMapped: SourceMappedStackTraceAddon? by subscribingTo(addons.sourceMappedStackTrace)
+
+sourceMapped?.mapStackTraceCached(error.stackTraceToString()) { mapped ->
     mapped.forEach { frame ->
         console.log(frame)
     }

@@ -81,7 +81,13 @@ cards.forEach { cardMutator ->
 
     <p>You can use <code>forEachIndexed</code> with sealed types just as you'd expect:</p>
 
-    <Code code={`val items: List<SealedInterface> = listOf(
+    <Code code={`@Mutable
+sealed interface SealedInterface {
+    data class One(val value: String) : SealedInterface
+    data class Two(val value: Int) : SealedInterface
+}
+
+val items: List<SealedInterface> = listOf(
     SealedInterface.One("hello"),
     SealedInterface.Two(42),
 )

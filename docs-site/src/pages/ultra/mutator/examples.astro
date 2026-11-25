@@ -5,12 +5,12 @@ import {Code} from 'astro:components';
 ---
 
 <DocsLayout title="Real-World Examples" sidebar={mutatorSidebar}
-            description="Nested forms, dirty tracking, undo/reset, and collection editing patterns">
+            description="Nested forms, dirty tracking, save/discard, and collection editing patterns">
 
     <h1>Real-World Examples</h1>
 
     <p class="text-xl text-gray-400 !mt-2 !mb-8">
-        Patterns for nested forms, dirty tracking, undo/reset, and collection editing.
+        Patterns for nested forms, dirty tracking, save/discard, and collection editing.
     </p>
 
     <h2>Pattern 1: The nested form</h2>
@@ -76,7 +76,7 @@ discardButton.enabled = mutator.isModified()
 fun onSave() {
     val current = mutator()
     repository.save(current)
-    mutator.commit()  // "Oak Ave" is now the baseline
+    mutator.commit()  // the current value is now the baseline
     // isModified() is now false — save button disabled
 }
 
@@ -121,6 +121,10 @@ data class TodoItem(
 )
 
 val mutator = todoList.mutator()
+
+// Re-render after every change (see Pattern 1): each access of a generated property (here
+// mutator.items) builds a new mutator, so row mutators kept from an earlier render can bring
+// back a removed row.
 
 // Render each item as an editable row:
 mutator.items.forEachIndexed { index, itemMutator ->
@@ -187,7 +191,7 @@ val updated = company.copy(
         } else dept
     }
 )
-// 13 lines. Good luck getting that right on the first try.`} lang="kotlin" theme="vitesse-dark"/>
+// 17 lines. Good luck getting that right on the first try.`} lang="kotlin" theme="vitesse-dark"/>
 
     <Code code={`// With Mutator:
 val updated = company.mutate {

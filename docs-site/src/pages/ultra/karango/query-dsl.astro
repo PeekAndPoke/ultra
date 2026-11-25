@@ -91,9 +91,9 @@ FOR(repo) { person ->
     FILTER(person.address.city EQ "Berlin")
     FILTER(person.address.zip EQ "10115")
 
-    // Array expansion — access fields inside lists
-    FILTER(person.tags.expand() EQ "vip")
-    // Generates: person.tags[*] == "vip"
+    // Array expansion with an array comparison operator
+    FILTER(person.tags.expand() ANY EQ("vip"))
+    // Generates: person.tags[*] ANY == "vip"
 
     RETURN(person)
 }`} lang="kotlin" theme="vitesse-dark"/>
@@ -164,14 +164,14 @@ RETURN_COUNT()              // return the count instead of documents`} lang="kot
     </p>
 
     <Code code={`// String functions
-FILTER(CONTAINS(LOWER(person.name), "alice"))
+FILTER(CONTAINS(LOWER(person.name), "alice".aql))
 FILTER(LENGTH(person.name) GT 3)
 
 // Math functions
-val total = LET("total") { SUM(prices) }
+val total = LET("total", SUM(prices))
 
 // Array functions
-val unique = LET("unique") { UNIQUE(person.tags) }
+val unique = LET("unique", UNIQUE(person.tags))
 
 // Type checking
 FILTER(IS_NOT_NULL(person.email))

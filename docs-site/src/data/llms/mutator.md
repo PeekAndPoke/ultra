@@ -4,7 +4,7 @@
 
 # Mutator — Type-Safe Mutation of Immutable Data
 
-KSP-generated code for mutating deeply nested immutable Kotlin data classes. No `copy()` chains, no boilerplate.
+KSP-generated code for mutating deeply nested immutable Kotlin data classes. No `copy()` chains.
 Changes propagate automatically from any depth back to the root.
 
 ## The problem Mutator solves
@@ -60,7 +60,7 @@ val result = mutator.get()
 
 For each primary constructor parameter, KSP generates one of:
 
-**Simple get/set** (for types without mutators — primitives, strings, non-@Mutable types):
+**Simple get/set** (for types that get no mutator: primitives, strings, types neither `@Mutable` nor discovered by a `deep` class, and collections of those):
 
 ```kotlin
 inline var Mutator<Address>.street
@@ -68,7 +68,7 @@ inline var Mutator<Address>.street
     set(v) = modifyIfChanged(get().street, v) { it.copy(street = v) }
 ```
 
-**Sub-mutator** (for @Mutable types — deep mutation with change propagation):
+**Sub-mutator** (for types that get a mutator, and lists, sets and maps of them; deep mutation with change propagation):
 
 ```kotlin
 inline val Mutator<Person>.address
@@ -86,12 +86,16 @@ data class AddressBook(val addresses: List<Address>)
 
 val updated = book.mutate {
     addresses[0].street = "Elm St"   // deep mutation into list element
-    addresses.add(newAddress)         // MutableList operations
+    addresses.add(newAddress)         // add(element) extension; ListMutator is a MutableList<Mutator<T>>
     addresses.removeAt(1)
 }
 ```
 
-Generated collection mutators: `List<T>.mutator()`, `Set<T>.mutator()`, `Map<K, V>.mutator()`.
+Generated collection mutators: `List<T>.mutator()`, `Set<T>.mutator()`, `Map<K, T>.mutator()`.
+
+`subList()` returns a read-only snapshot, not a view. An element mutator drops its writes when its row was
+reordered, removed or written by something else (another element mutator, `set`, a reset or a replaced list). Each access of a generated list property builds a new `ListMutator`, so an element mutator kept
+from an earlier access can bring back a row removed through a later one.
 
 ## @Mutable(deep = true | false)
 
@@ -150,7 +154,8 @@ mutator.reset()         // revert to initial value
 
 ## Structural equality
 
-If a mutation results in a value equal to the initial, Mutator returns the exact same instance:
+If a mutation of a data class results in a value equal to the initial, Mutator returns the exact same instance.
+Collection mutators work on a copy of the collection, so their own value is never the same instance:
 
 ```kotlin
 val result = address.mutate { street = address.street }
@@ -177,8 +182,8 @@ val circles = shapes.mutator().filterMutatorsOf<Shape.Circle>()
 The KSP processor is plugin-extensible via `ServiceLoader`:
 
 - `MutatorKspPlugin.vetoesType()` — block generation for specific types
-- `MutatorKspPlugin.generatesMutatorFor()` — handle type-level generation
-- `MutatorKspPlugin.generatesMutatorFieldFor()` — handle property-level generation
+- `MutatorKspPlugin.generatesMutatorFor()` / `generateMutatorFor()` — claim a type and generate its code
+- `MutatorKspPlugin.generatesMutatorFieldFor()` — decide whether a property gets a sub-mutator accessor instead of get/set
 - `MutatorKspPlugins.isInProcessingSet(declaration)` — query whether a type will get a mutator generated
 
 Built-in plugins:

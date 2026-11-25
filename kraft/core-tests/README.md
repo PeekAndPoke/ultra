@@ -13,5 +13,5 @@ Integration tests for the `kraft-core` module. This is an internal test module a
 ## Running the tests
 
 ```bash
-./gradlew :core-tests:jsTest
+./gradlew :kraft:core-tests:jsTest
 ```

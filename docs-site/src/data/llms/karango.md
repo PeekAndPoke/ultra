@@ -50,10 +50,12 @@ Red squiggle before you even run the code.
 - **Repository Pattern** — Full CRUD: insert, save, remove, find, batch insert. With lifecycle hooks and index
   management.
 - **100+ AQL Functions** — Math, string, array, type-check, and aggregate functions — all available in the Kotlin DSL.
-- **Async & Coroutines** — All operations are `suspend` functions. Streaming cursors for large result sets.
+- **Async & Coroutines** — All operations are `suspend` functions. Cursors expose results as a Flow; the first
+  collection fetches and buffers every batch.
 - **Slumber Integration** — Serialization via Slumber — polymorphic types, entity references, and graceful error
   handling built in.
-- **Battle-Tested** — 131 test files. Used in production across authentication, logging, cluster management, and more.
+- **Used Across Funktor** — Funktor's authentication, logging, cluster and messaging modules can store their data
+  with it (`useKarango()`).
 
 ---
 
@@ -72,8 +74,9 @@ plugins {
 }
 
 dependencies {
-    implementation("io.peekandpoke.ultra:karango-core:{{ultraVersion}}")
-    ksp("io.peekandpoke.ultra:karango-ksp:{{ultraVersion}}")
+    implementation("io.peekandpoke.karango:core:{{ultraVersion}}")
+    implementation("io.peekandpoke.ultra:vault:{{ultraVersion}}")  // karango core does not expose it
+    ksp("io.peekandpoke.karango:ksp:{{ultraVersion}}")
 }
 ```
 
@@ -110,22 +113,33 @@ class PersonsRepo(driver: KarangoDriver) : EntityRepository<Person>(
 
 ```kotlin
 import io.peekandpoke.karango.config.ArangoDbConfig
+import io.peekandpoke.ultra.common.model.Redacted
 
 val config = ArangoDbConfig(
     host = "localhost",
     port = 8529,
     user = "root",
-    password = "",
+    password = Redacted(""),
     database = "my_app",
 )
 ```
 
-With Kontainer (dependency injection):
+With Kontainer (dependency injection). Karango builds on the Vault and logging modules, and Vault's timestamp hooks
+need a `Kronos`; a Funktor app registers all three through `funktor(...)`:
 
 ```kotlin
 import io.peekandpoke.karango.karango
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.log.ultraLogging
+import io.peekandpoke.ultra.vault.VaultConfig
+import io.peekandpoke.ultra.vault.ultraVault
 
-kontainer {
+val blueprint = kontainer {
+    instance(Kronos::class, Kronos.systemUtc)
+    ultraLogging()
+    ultraVault(VaultConfig.default)
+
     karango(config)
 
     // Register your repositories
@@ -197,7 +211,7 @@ val stored: Stored<Person> = repo.insert(Person("Alice", 30))
 stored()      // Person(name="Alice", age=30) — your data
 stored._id    // "persons/abc123" — database ID
 stored._key   // "abc123" — document key
-stored._rev   // "_abc123def" — revision for optimistic locking
+stored._rev   // "_abc123def" — document revision
 ```
 
 ## The Storable hierarchy
@@ -321,9 +335,9 @@ FOR(repo) { person ->
     FILTER(person.address.city EQ "Berlin")
     FILTER(person.address.zip EQ "10115")
 
-    // Array expansion — access fields inside lists
-    FILTER(person.tags.expand() EQ "vip")
-    // Generates: person.tags[*] == "vip"
+    // Array expansion with an array comparison operator
+    FILTER(person.tags.expand() ANY EQ("vip"))
+    // Generates: person.tags[*] ANY == "vip"
 
     RETURN(person)
 }
@@ -404,14 +418,14 @@ Karango wraps 100+ AQL functions. A few examples:
 
 ```kotlin
 // String functions
-FILTER(CONTAINS(LOWER(person.name), "alice"))
+FILTER(CONTAINS(LOWER(person.name), "alice".aql))
 FILTER(LENGTH(person.name) GT 3)
 
 // Math functions
-val total = LET("total") { SUM(prices) }
+val total = LET("total", SUM(prices))
 
 // Array functions
-val unique = LET("unique") { UNIQUE(person.tags) }
+val unique = LET("unique", UNIQUE(person.tags))
 
 // Type checking
 FILTER(IS_NOT_NULL(person.email))
@@ -509,7 +523,7 @@ val first = repo.findFirst {
 // Save a modified entity
 val updated = repo.save(stored.modify { it.copy(published = true) })
 
-// Modify by ID — atomic read-modify-write
+// Modify by ID: loads, modifies and saves (not atomic, no revision check)
 repo.modifyById(stored._id) { post ->
     post.copy(published = true)
 }
@@ -518,7 +532,7 @@ repo.modifyById(stored._id) { post ->
 // condition receives Stored<T>, modify receives T
 repo.modifyByIdWhen(
     stored._id,
-    condition = { !it().published },
+    condition = { !it.value.published },
     modify = { it.copy(published = true) },
 )
 ```
@@ -552,14 +566,15 @@ Batch insert runs hooks on each entity, just like single inserts.
 
 ## Cursors
 
-Queries return `Cursor<T>`, a Flow-based wrapper. Use `asFlow()` for streaming or the suspend convenience extensions
-for common operations:
+Queries return `Cursor<T>`, a Flow-based wrapper. Use `asFlow()` for a Flow or the suspend convenience extensions for
+common operations. The first collection fetches and buffers the whole result, so a cursor can be iterated more than
+once:
 
 ```kotlin
 val cursor = repo.findAll()
 
-cursor.count      // number of results in current batch
-cursor.fullCount  // total count (when using PAGE)
+cursor.count      // number of results the query returned
+cursor.fullCount  // matches ignoring LIMIT; needs the fullCount query option (findAll sets it)
 
 // Collect all results
 cursor.toList()                                           // suspend
@@ -574,10 +589,10 @@ cursor.firstOrNull()
 cursor.groupBy { it().author }
 
 // Flow-based streaming
-cursor.asFlow().collect { ... }
+cursor.asFlow().collect { ... }  // Flow needs kotlinx-coroutines-core on your classpath
 ```
 
-Results are deserialized lazily. `Stored<T>` entities are automatically cached in the `EntityCache` for deduplication.
+Results are deserialized on the first collection. `Stored<T>` entities are automatically cached in the `EntityCache` for deduplication.
 All cursor convenience methods (`map`, `filter`, `forEach`, `toList`, etc.) are `suspend` functions.
 
 ## The Stored<T> wrapper
@@ -672,7 +687,7 @@ class SessionsRepo(driver: KarangoDriver) : EntityRepository<Session>(
     override fun KarangoIndexBuilder<Session>.buildIndexes() {
         ttlIndex {
             field { expiresAt }
-            options { expireAfter(0) }  // expire at the exact timestamp
+            options { expireAfter(0) }  // expire at the stored timestamp (also the default)
         }
     }
 }
@@ -775,7 +790,8 @@ class NormalizeHook : Hooks.OnBeforeSave<Article> {
 
 - **insert()**: OnBeforeSave -> persist -> OnAfterSave
 - **save()**: OnBeforeSave -> persist -> OnAfterSave
-- **remove()**: delete -> OnAfterDelete
+- **remove(stored)**: delete -> OnAfterDelete (removing by id or key, a list of entities, or `removeAll()` runs no
+  hooks)
 - **batchInsert()**: OnBeforeSave (each) -> persist all -> OnAfterSave (each)
 
 ---
@@ -788,14 +804,23 @@ Karango plugs into Kontainer for automatic repository discovery, dependency inje
 
 ## Setting up Karango with Kontainer
 
-One line to register all Karango infrastructure:
+One line registers the Karango infrastructure. It builds on the Vault and logging modules, and Vault's timestamp
+hooks need a `Kronos`; a Funktor app registers these through `funktor(...)`:
 
 ```kotlin
 import io.peekandpoke.karango.karango
 import io.peekandpoke.karango.config.ArangoDbConfig
+import io.peekandpoke.ultra.datetime.Kronos
 import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.log.ultraLogging
+import io.peekandpoke.ultra.vault.VaultConfig
+import io.peekandpoke.ultra.vault.ultraVault
 
 val blueprint = kontainer {
+    instance(Kronos::class, Kronos.systemUtc)
+    ultraLogging()
+    ultraVault(VaultConfig.default)   // Database, EntityCache, profiler, hook scope
+
     // Register Karango module — sets up driver, codec, and DB connection
     karango(
         ArangoDbConfig(
@@ -827,10 +852,11 @@ automatically collects all services that implement `Repository<*>` and injects t
 // Kontainer automatically discovers all Repository<*> implementations
 // and passes them to the Database class as a Lookup<Repository<*>>
 
-// You DON'T need to register the Database manually — it's wired automatically.
+// You DON'T register the Database yourself: ultraVault() does, and it picks up every repository.
 // Just register your repositories:
 
 val blueprint = kontainer {
+    // ... Kronos, ultraLogging() and ultraVault() as above
     karango(config)
 
     singleton(PersonsRepo::class)
@@ -881,8 +907,8 @@ val repo = database.getRepositoryStoring(Person::class)
 database.hasRepositoryStoring(Person::class)  // true
 database.hasRepositoryStoring(Unknown::class)  // false
 
-// Find by collection name
-val repo = database.getRepository("persons")
+// Find by repository name (the collection name)
+val byName = database.getRepository("persons")
 // -> PersonsRepo
 ```
 
@@ -893,22 +919,27 @@ On startup, ensure all collections and indexes exist:
 ```kotlin
 val database: Database = kontainer.get(Database::class)
 
-// Create collections if they don't exist
+// Create missing collections, then ensure the indexes of each
 database.ensureRepositories()
 
-// Create indexes defined in buildIndexes()
-database.ensureIndexes()
+// Ensure the indexes defined in buildIndexes() and report the result
+val report: List<VaultModels.IndexesInfo> = database.ensureIndexes()
 
-// Or validate without creating
+// Or only report, without changing anything
 database.validateIndexes()
 ```
 
+`ensureIndexes()` creates missing indexes. An index with the same name but other fields is dropped and re-created, so
+it is briefly missing. Indexes that are not defined are kept; they show in `excessIndexes`, and only
+`recreateIndexes()` removes them.
+
 ## Real-world example: Funktor app setup
 
-Here's how the Funktor demo app wires everything together:
+Simplified from the Funktor demo app:
 
 ```kotlin
-fun createBlueprint(config: AppConfig) = kontainer {
+// FunktorDemoConfig implements AppConfig and adds arangodb: ArangoDbConfig
+fun createBlueprint(config: FunktorDemoConfig) = kontainer {
     // Mount Funktor modules — each can opt into Karango storage
     funktor(
         config = config,
@@ -924,13 +955,8 @@ fun createBlueprint(config: AppConfig) = kontainer {
     singleton(AdminUsersRepo::class)
 }
 
-// On application startup:
-val app = createBlueprint(config)
-val kontainer = app.create()
-
-// Ensure all collections and indexes exist
-kontainer.get(Database::class).ensureRepositories()
-kontainer.get(Database::class).ensureIndexes()
+// No startup code needed: the cluster module calls Database.ensureRepositories()
+// when the app starts (EnsureRepositoriesOnAppStarting)
 ```
 
 Each Funktor module (`logging`, `cluster`, `auth`) registers its own repositories when `useKarango()` is called. The
@@ -938,7 +964,8 @@ Database automatically discovers all of them.
 
 ## Dynamic vs singleton repositories
 
-Repositories are typically registered as **singletons** — they hold no per-request state. The `KarangoDriver` and
+Repositories are typically registered as **singletons** — they hold no per-request state. As a repository injects the
+dynamic `KarangoDriver`, the kontainer makes it semi-dynamic: one instance per kontainer. The `KarangoDriver` and
 `KarangoCodec` are registered as **dynamic** (created per kontainer instance) because they carry per-request context
 like the `EntityCache`:
 
@@ -950,8 +977,10 @@ val KarangoModule = module { config: ArangoDbConfig ->
 
     // Per-request driver and codec
     dynamic(KarangoDriver::class)
+
+    val codecConfig = getKarangoDefaultSlumberConfig()   // built once, reused
     dynamic(KarangoCodec::class) { database: Database, cache: EntityCache ->
-        KarangoCodec(config = slumberConfig, database = database, entityCache = cache)
+        KarangoCodec(config = codecConfig, database = database, entityCache = cache)
     }
 }
 ```
@@ -968,18 +997,18 @@ Aggregation, sub-queries, atomic updates, and patterns from production code.
 
 ```kotlin
 // Count documents
-repo.findList {
+repo.queryList {
     FOR(repo) { person ->
-        COLLECT_WITH(COUNT) AS "total"
-        RETURN("total")
+        val total = COLLECT_WITH(COUNT, "total")
+        RETURN(total)
     }
 }
 
 // Group by a field
-repo.findList {
+repo.queryList {
     FOR(repo) { person ->
-        COLLECT(city, person.address.city)
-        RETURN(city)
+        val city = COLLECT("city", person.address.city)
+        RETURN(city.assignee)
     }
 }
 ```
@@ -1046,11 +1075,9 @@ Dynamic search across multiple fields:
 ```kotlin
 suspend fun search(query: String, page: Int, epp: Int): Cursor<Stored<LogEntry>> {
     return repo.find {
-        val searchLower = LET("search", query.lowercase())
-
         FOR(repo) { entry ->
             if (query.isNotBlank()) {
-                val parts = query.trim().lowercase().split(" ")
+                val parts = query.trim().lowercase().split(" ").filter { it.isNotBlank() }
                 FILTER(
                     parts.map { part ->
                         listOf(
@@ -1069,8 +1096,8 @@ suspend fun search(query: String, page: Int, epp: Int): Cursor<Stored<LogEntry>>
 }
 ```
 
-This is from the Funktor logging module — it searches log entries across message and logger name fields, splitting the
-search query into words and matching each independently.
+This is adapted from the Funktor logging module, which also searches the stack trace. It splits the search query into
+words and keeps an entry when any word is in its message or logger name.
 
 ## UPSERT
 
@@ -1084,11 +1111,11 @@ repo.find {
 ## Arithmetic in queries
 
 ```kotlin
-repo.findList {
+repo.queryList {
     val a = LET("a", 10)
     val b = LET("b", 20)
 
-    RETURN((a + b) / 2.aql)  // -> 15
+    RETURN((a + b) / 2.aql)  // (10 + 20) / 2
 }
 ```
 
@@ -1142,7 +1169,7 @@ FOR(repo) { team ->
 
 ## Real-world example: complete repository
 
-A production repository combining CRUD, custom queries, indexes, hooks, and TTL:
+Simplified from the Funktor auth records repository, combining CRUD, custom queries, indexes, hooks, and TTL:
 
 ```kotlin
 @Vault

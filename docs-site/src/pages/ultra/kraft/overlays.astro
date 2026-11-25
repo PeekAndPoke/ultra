@@ -17,14 +17,14 @@ import {kraftLiveExamples, githubRepo} from '../../../data/site';
     </p>
 
     <p>Kraft provides three overlay systems that share the same pattern: a manager you access from any component, a
-        stage that renders the overlays, and handles for controlling individual overlays. All three are registered
-        automatically when you call <code>semanticUI()</code> in your app setup.</p>
+        stage that renders the overlays, and handles for controlling individual overlays. Every app has all three;
+        <code>semanticUI()</code> in your app setup gives them SemanticUI styling.</p>
 
     <Code code={`val app = kraftApp {
     semanticUI()  // registers modals, toasts, and popups with SemanticUI styling
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>Each system is accessible from any component via a delegated property:</p>
+    <p>Each system is accessible from any component via an extension property:</p>
 
     <Code code={`class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
     // modals, toasts, and popups are available on every component, e.g. in an event handler
@@ -171,8 +171,8 @@ toasts.append(apiResponse.messages)`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Popups &amp; Context Menus</h2>
 
-    <p>Context menus appear near the triggering element. Pass a <code>UIEvent</code> and the menu renders at the event
-        position:</p>
+    <p>Context menus appear near the triggering element. Pass a <code>UIEvent</code> and the menu renders next to the
+        element that received it:</p>
 
     <Code code={`ui.button {
     onClick { evt ->
