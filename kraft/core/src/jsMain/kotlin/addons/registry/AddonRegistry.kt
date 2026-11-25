@@ -38,7 +38,7 @@ class AddonRegistry constructor(
     /** Triggers loading of all non-lazy addons. Called after the registry is built. */
     fun loadEager() {
         addons.values.forEach { addon ->
-            addon.load()
+            addon.loadIfEager()
         }
     }
 }

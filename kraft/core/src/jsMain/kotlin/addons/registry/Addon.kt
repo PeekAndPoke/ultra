@@ -36,9 +36,9 @@ class Addon<T> internal constructor(
         return source.subscribeToStream(sub)
     }
 
-    /** Triggers the load if not already started. Called by the registry for non-lazy addons. */
-    internal fun load() {
-        ensureLoading()
+    /** Starts the load of a non-lazy addon; a lazy one waits for its first read or subscriber. */
+    internal fun loadIfEager() {
+        if (!lazy) ensureLoading()
     }
 
     private fun ensureLoading() {

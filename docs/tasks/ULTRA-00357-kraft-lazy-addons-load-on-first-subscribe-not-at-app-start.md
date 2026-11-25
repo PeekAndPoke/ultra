@@ -1,6 +1,6 @@
 # ULTRA-00357: Kraft: lazy addons load on first subscribe, not at app start
 
-> **Status (2026-11-25): DESIGNED.** Maintainer chose to fix the code; implementation next.
+> **Status (2026-11-25): IN PROGRESS.** Built, tests first; review next.
 
 ## Why this exists
 
@@ -21,6 +21,20 @@ Maintainer (2026-11-25): "Fix the code".
 - Mutation check; kraft core-tests green.
 - CHANGELOG (coordinator): Fixes.
 
+## Implementation notes
+
+- `Addon.load()` became `loadIfEager()`: `if (!lazy) ensureLoading()` (kraft/core/src/jsMain/kotlin/addons/registry/Addon.kt).
+  `lazy` stays private; `AddonRegistry.loadEager()` calls `loadIfEager()`.
+- Two new tests in `AddonRegistrySpec` count loader calls instead of reading the addon (a read starts a lazy load):
+  after `loadEager()` a lazy loader has run 0 times, and once after a subscribe, a second subscribe and a read; a
+  non-lazy loader runs once over two `loadEager()` calls.
+
+## Test evidence
+
+- RED before the fix: "loadEager does not call the loader of a lazy addon" failed, expected 0 but was 1.
+- Mutant `if (lazy) ensureLoading()` in `loadIfEager`: 6 tests RED, both new ones among them. Restored (cmp).
+- `:kraft:core-tests:jsTest` green: 593 tests, 0 failures (XML).
+
 ## Acceptance
 
 - A lazy addon's loader runs on the first subscribe or value read, never in `loadEager()`; non-lazy addons unchanged.
@@ -28,3 +42,4 @@ Maintainer (2026-11-25): "Fix the code".
 ## History
 
 - 2026-11-25: created on the maintainer's decision.
+- 2026-11-25: built in wt/kraft-lazy, tests first (RED before, mutant RED), core-tests 593 / 0.
