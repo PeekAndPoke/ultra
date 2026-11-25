@@ -45,7 +45,8 @@ fun main(args: Array<String>) = app.run(args)`} lang="kotlin" theme="vitesse-dar
     <h2>Define your Kontainer blueprint</h2>
 
     <p>Services are registered in <a href="/ultra/kontainer/">Kontainer</a> modules. <code>funktor(...)</code>
-        registers the Funktor modules (the code generator is added with <code>funktorCodegen()</code>); each one's block picks its storage backend. You add your application services
+        registers the Funktor modules (the code generator is a separate dependency, <code>funktor-codegen</code>, added with
+        <code>funktorCodegen()</code>); each one's block picks its storage backend. You add your application services
         alongside them.</p>
 
     <Code code={`fun createBlueprint(config: MyConfig) = kontainer {
