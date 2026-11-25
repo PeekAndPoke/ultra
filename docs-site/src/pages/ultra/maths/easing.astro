@@ -96,13 +96,11 @@ val custom = Ease.easeFn { x -> x * x * x }  // same as cubic In`} lang="kotlin"
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>Ease.In.elastic</code></td>
-                <td class="py-2">Oscillating spring overshoot. Known defect: returns NaN wherever <code>10x - 10</code> is not a
-                    whole number (a negative base raised to that power)</td>
+                <td class="py-2">Oscillating spring overshoot</td>
             </tr>
             <tr>
                 <td class="py-2"><code>Ease.In.bounce</code></td>
-                <td class="py-2">Bouncing ball effect. Known defect: runs from 1.0 down to 0.0 (it returns
-                    <code>Out.bounce(1 - x)</code>)</td>
+                <td class="py-2">Bouncing ball effect</td>
             </tr>
             </tbody>
         </table>

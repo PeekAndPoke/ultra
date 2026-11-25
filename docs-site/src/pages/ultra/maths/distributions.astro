@@ -83,15 +83,18 @@ val skewed = BucketedDistribution.createTruncatedNormal(mean = 0.2, std = 0.1)`}
 
     <h3>Exponential</h3>
 
-    <p>High probability near zero, decaying exponentially. The tail is truncated at a configurable cutoff.
-        The curve is rescaled onto [0, 1], so <code>lambda</code> cancels out and does not change the shape;
-        <code>tailCut</code> sets how steep the decay is.</p>
+    <p>High probability near zero, decaying exponentially: the density is proportional to
+        <code>exp(-lambda * x)</code> on [0, 1], so <code>lambda</code> is the rate on that interval. A larger
+        <code>lambda</code> decays faster and moves the mean towards 0.</p>
 
-    <Code code={`// Default: lambda = 1.0
+    <Code code={`// Default: lambda = ln(1000), about 6.91; the density at 1 is 1/1000 of the density at 0
 val exp = BucketedDistribution.createExponential()
 
-// Steeper decay: a smaller tailCut
-val steep = BucketedDistribution.createExponential(tailCut = 1e-6)`} lang="kotlin" theme="vitesse-dark"/>
+// Gentler decay
+val gentle = BucketedDistribution.createExponential(lambda = 2.0)
+
+// Steeper decay
+val steep = BucketedDistribution.createExponential(lambda = 15.0)`} lang="kotlin" theme="vitesse-dark"/>
 
     <div class="not-prose my-8">
         <table class="w-full text-sm text-left">
@@ -105,13 +108,13 @@ val steep = BucketedDistribution.createExponential(tailCut = 1e-6)`} lang="kotli
             <tbody class="text-gray-400">
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>lambda</code></td>
-                <td class="py-2">1.0</td>
-                <td class="py-2">Rate parameter; must be &gt; 0, but has no effect on the shape (see above)</td>
+                <td class="py-2">ln(1000), about 6.91</td>
+                <td class="py-2">Rate on [0, 1]; finite and &gt; 0; larger = steeper decay</td>
             </tr>
             <tr>
-                <td class="py-2"><code>tailCut</code></td>
-                <td class="py-2">1e-3</td>
-                <td class="py-2">Tail probability cutoff for truncation (1e-12 to 1e-1); smaller = steeper decay</td>
+                <td class="py-2"><code>count</code></td>
+                <td class="py-2">100</td>
+                <td class="py-2">Number of buckets</td>
             </tr>
             </tbody>
         </table>

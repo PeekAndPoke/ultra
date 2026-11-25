@@ -186,20 +186,31 @@ class EasingSpec : StringSpec() {
 
         "ease-in bounce should return correct value" {
             listOf(
-                0.0 to 1.0,
-                0.1 to 0.9881249999999999,
-                0.2 to 0.94,
-                0.3 to 0.930625,
-                0.4 to 0.7725,
-                0.5 to 0.765625,
-                0.6 to 0.9099999999999998,
-                0.7 to 0.6806250000000001,
-                0.8 to 0.3024999999999999,
-                0.9 to 0.07562499999999997,
-                1.0 to 0.0,
+                0.0 to 0.0,
+                0.1 to 0.011875,
+                0.2 to 0.06,
+                0.3 to 0.069375,
+                0.4 to 0.2275,
+                0.5 to 0.234375,
+                0.6 to 0.09,
+                0.7 to 0.319375,
+                0.8 to 0.6975,
+                0.9 to 0.924375,
+                1.0 to 1.0,
             ).forEach { (input, expected) ->
                 withClue("ease-in bounce($input) should be $expected") {
                     Ease.In.bounce(input) shouldBe expected.plusOrMinus(0.001)
+                }
+            }
+        }
+
+        "ease-in bounce runs from 0 to 1 and mirrors ease-out bounce" {
+            Ease.In.bounce(0.0) shouldBe 0.0
+            Ease.In.bounce(1.0) shouldBe 1.0
+
+            (0..100).map { it / 100.0 }.forEach { x ->
+                withClue("In.bounce($x) should be 1 - Out.bounce(1 - $x)") {
+                    Ease.In.bounce(x) shouldBe (1.0 - Ease.Out.bounce(1.0 - x)).plusOrMinus(1e-12)
                 }
             }
         }
@@ -320,6 +331,41 @@ class EasingSpec : StringSpec() {
             Ease.InOut.elastic(0.0) shouldBe 0.0
             Ease.InOut.elastic(0.5) shouldBe 0.5
             Ease.InOut.elastic(1.0) shouldBe 1.0
+        }
+
+        "ease-in elastic is finite on [0, 1]" {
+            (0..1000).map { it / 1000.0 }.forEach { x ->
+                withClue("In.elastic($x) should be finite") {
+                    Ease.In.elastic(x).isFinite() shouldBe true
+                }
+            }
+        }
+
+        "ease-in elastic matches the easings.net curve" {
+            // -2^(10x - 10) * sin((10x - 10.75) * 2PI / 3)
+            listOf(
+                0.0 to 0.0,
+                0.1 to 0.001953125,
+                0.25 to -0.005524271728019903,
+                0.5 to -0.015625,
+                0.7 to 0.125,
+                0.75 to 0.08838834764831832,
+                0.9 to -0.25,
+                0.95 to 0.353553390593274,
+                1.0 to 1.0,
+            ).forEach { (input, expected) ->
+                withClue("ease-in elastic($input) should be $expected") {
+                    Ease.In.elastic(input) shouldBe expected.plusOrMinus(1e-9)
+                }
+            }
+        }
+
+        "ease-in elastic mirrors ease-out elastic" {
+            (0..100).map { it / 100.0 }.forEach { x ->
+                withClue("In.elastic($x) should be 1 - Out.elastic(1 - $x)") {
+                    Ease.In.elastic(x) shouldBe (1.0 - Ease.Out.elastic(1.0 - x)).plusOrMinus(1e-9)
+                }
+            }
         }
 
         "calc function should interpolate correctly" {
