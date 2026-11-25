@@ -12,13 +12,16 @@ Testing utilities for Kraft components — render into a TestBed, query the DOM,
 ## Quick example
 
 ```kotlin
-@Test
-fun counter_increments() = TestBed.preact {
-    Counter(Counter.Props(start = 0))
-} verify { root ->
-    root.selectCss("h2").text shouldBe "Count: 0"
-    root.selectCss("button").click()
-    root.selectCss("h2").text shouldBe "Count: 1"
+// In a kotest spec: TestBed.preact suspends
+"counter increments" {
+    TestBed.preact(
+        view = { Counter(start = 0) },
+    ) { root ->
+        root.selectCss("h2").textContent() shouldBe "Count: 0"
+        root.selectCss("button").click()
+        delay(10)  // wait for re-render
+        root.selectCss("h2").textContent() shouldBe "Count: 1"
+    }
 }
 ```
 
@@ -26,11 +29,13 @@ fun counter_increments() = TestBed.preact {
 
 ```kotlin
 // build.gradle.kts
-dependencies {
-    testImplementation("io.peekandpoke.kraft:testing:<version>")
+jsTest {
+    dependencies {
+        implementation("io.peekandpoke.kraft:testing:<version>")
+    }
 }
 ```
 
 ## Documentation
 
-Full docs at [peekandpoke.io/ultra/kraft/testing](https://peekandpoke.io/ultra/kraft/utilities).
+Full docs at [peekandpoke.io/ultra/kraft/testing](https://peekandpoke.io/ultra/kraft/testing).

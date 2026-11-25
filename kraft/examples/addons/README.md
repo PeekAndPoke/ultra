@@ -1,6 +1,6 @@
 # Kraft Addons Example
 
-Demonstrates all available Kraft addon integrations.
+Demonstrates ten of the Kraft addons.
 
 ## What it demonstrates
 
@@ -14,7 +14,7 @@ Demonstrates all available Kraft addon integrations.
 ## How to run
 
 ```bash
-./gradlew -t --parallel :examples:addons:run
+./gradlew -t :kraft:examples:addons:jsBrowserDevelopmentRun
 ```
 
 The development server will start and the app will be available in your browser.

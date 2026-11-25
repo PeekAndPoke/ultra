@@ -17,7 +17,7 @@ import {dep, kraftLiveExamples, githubRepo} from '../../../data/site';
 </p>
 
     <Aside>Every addon is dynamically imported via <code>js("import(...)")</code>. The JS library ships in its own
-        webpack chunk and only downloads when a component needs it.
+        webpack chunk, not in your main bundle.
     </Aside>
 
     <h2>The AddonRegistry pattern</h2>
@@ -138,7 +138,7 @@ class MarkdownView(ctx: NoProps) : PureComponent(ctx) {
       <td><code>nxcompile</code></td>
         <td><a href="https://www.npmjs.com/package/@nx-js/compiler-util" target="_blank" rel="noopener">@nx-js/compiler-util</a>
         </td>
-        <td>Sandboxed JS code execution</td>
+        <td>Runs JS code strings against a context object (not a security sandbox)</td>
     </tr>
     <tr>
       <td><code>sourcemappedstacktrace</code></td>
@@ -475,7 +475,7 @@ app.destroy(rendererDestroy = true)`} lang="kotlin" theme="vitesse-dark" />
         val addon = bd ?: return
         val detect = addon.forCurrentBrowser()
 
-        ui.list {
+        ui.list Ul {
             li { +"Browser: ${'$'}{detect.getBrowser().name}" }
             li { +"OS: ${'$'}{detect.getOs().name}" }
             li { +"Platform: ${'$'}{detect.getPlatform().type}" }
@@ -491,7 +491,10 @@ app.destroy(rendererDestroy = true)`} lang="kotlin" theme="vitesse-dark" />
     <Code code={`package my.app.addons.fuse
 
 import io.peekandpoke.kraft.KraftDsl
-import io.peekandpoke.kraft.addons.registry.*
+import io.peekandpoke.kraft.addons.registry.Addon
+import io.peekandpoke.kraft.addons.registry.AddonKey
+import io.peekandpoke.kraft.addons.registry.AddonRegistry
+import io.peekandpoke.kraft.addons.registry.AddonRegistryBuilder
 import kotlinx.coroutines.await
 import kotlin.js.Promise
 
@@ -523,14 +526,14 @@ fun AddonRegistryBuilder.fuse(lazy: Boolean = false): Addon<FuseAddon> = registe
 val AddonRegistry.fuse: Addon<FuseAddon>
     get() = this[fuseAddonKey]`} lang="kotlin" theme="vitesse-dark"/>
 
-    <Aside>The <code>val ctor = fuseModule</code> pattern is important: <code>js("new this.x(...)")</code> doesn't work
-        because <code>this</code> inside <code>js()</code> refers to the JavaScript <code>this</code>, not the Kotlin
-        instance. Capture the reference into a local val first.
+    <Aside>The <code>val ctor = fuseModule</code> pattern is important: <code>js()</code> code reaches Kotlin locals and
+        parameters by their name, while a property's name in the compiled JavaScript is not guaranteed. Capture the
+        reference into a local val first.
     </Aside>
 
     <h2>See it in action</h2>
 
-    <p>The <code>kraft/examples/addons</code> project demos every addon, including the PixiJS Breakout game:</p>
+    <p>The <code>kraft/examples/addons</code> project demos ten of the addons, including the PixiJS Breakout game:</p>
 
     <ExampleEmbed
             src={kraftLiveExamples.addons}

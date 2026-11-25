@@ -5,7 +5,7 @@ token decoding in Kraft applications.
 
 ## Features
 
-- Decode JWT header and payload without signature verification
+- Decode a JWT's payload without signature verification
 - Read token claims (subject, expiration, custom fields) as a map or a raw object
 - Lightweight, no cryptographic dependencies
 

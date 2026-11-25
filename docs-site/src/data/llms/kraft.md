@@ -44,7 +44,7 @@ underneath.
 
 This means:
 
-- **Zero JavaScript dependencies** beyond Preact (which itself has zero dependencies)
+- **Two npm dependencies** in kraft core: Preact and jwt-decode
 - **Kotlin idioms** everywhere — data classes for props, delegated properties for state, extension functions for the DSL
 - **Type safety** from props to HTML to CSS — your IDE catches errors before the browser does
 - **No template engine** — kotlinx.html gives you type-safe markup as code
@@ -162,12 +162,11 @@ Create `src/jsMain/resources/index.html`:
 Create `src/jsMain/kotlin/main.kt`:
 
 ```kotlin
-import io.peekandpoke.kraft.components.*
+import io.peekandpoke.kraft.kraftApp
+import io.peekandpoke.kraft.routing.RouterComponent
 import io.peekandpoke.kraft.routing.Static
-import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.kraft.semanticui.semanticUI
 import io.peekandpoke.kraft.vdom.preact.PreactVDomEngine
-import io.peekandpoke.ultra.semanticui.ui
-import kotlinx.html.*
 
 // Define the app and its routes
 val app = kraftApp {
@@ -193,10 +192,14 @@ fun main() {
 Create `src/jsMain/kotlin/HomePage.kt`:
 
 ```kotlin
-import io.peekandpoke.kraft.components.*
+import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.semanticui.ui
-import kotlinx.html.*
+import kotlinx.html.Tag
+import kotlinx.html.p
 
 // Factory function — this is how other components use yours
 @Suppress("FunctionName")
@@ -364,7 +367,7 @@ class DashboardPage(ctx: NoProps) : PureComponent(ctx) {
 }
 ```
 
-`PureComponent` is a convenience alias for `Component<Any?>` with `NoProps` context.
+`PureComponent` is a `Component<Any?>` that takes a `NoProps` context.
 
 ### Functional components
 
@@ -386,7 +389,8 @@ Functional components support up to 10 parameters.
 
 ## Lifecycle hooks
 
-Components have four lifecycle hooks:
+Components register lifecycle hooks in `init`. Besides the four below there are `onError` (error boundary for
+children), `onResize` (ResizeObserver on the component's element) and the window hooks under Window state:
 
 ```kotlin
 class LiveSearch(ctx: Ctx<Props>) : Component<LiveSearch.Props>(ctx) {
@@ -463,9 +467,7 @@ class DrawingApp(ctx: NoProps) : PureComponent(ctx) {
 
     override fun VDom.render() {
         // The SignaturePad component, tracked by our ref
-        SignaturePad {
-            // configuration...
-        }.track(padRef)
+        SignaturePad().track(padRef)
 
         // Use the ref to access the child component
         padRef { pad ->
@@ -556,7 +558,8 @@ override fun VDom.render() {
     val router = router           // Navigation
     val modals = modals           // Show modals
     val toasts = toasts           // Show notifications
-    val responsive = responsive   // Screen size info
+    val popups = popups           // Show popups and context menus
+    val responsive = responsiveCtrl()   // Screen size info
 }
 ```
 
@@ -621,7 +624,7 @@ onClick { state = state.copy(agreed = true) }
 
 ## 2. Stream-backed state
 
-For state that should be debounced, throttled, or transformed before triggering a redraw:
+For state whose changes should reach a handler debounced or otherwise transformed:
 
 ```kotlin
 class SearchBox(ctx: NoProps) : PureComponent(ctx) {
@@ -643,8 +646,8 @@ class SearchBox(ctx: NoProps) : PureComponent(ctx) {
 }
 ```
 
-The stream config lambda lets you apply operators from the Ultra streams library — `debounce`, `throttle`, `map`,
-`filter`, and more.
+The stream config lambda applies operators from the Ultra streams library that keep the value type, such as
+`debounce`. The property itself updates and redraws at once; only the handler sees the configured stream.
 
 ## 3. Subscribing to external streams
 
@@ -743,13 +746,13 @@ Loading section below.
 
 ## Patterns summary
 
-| What you need             | Use this                                 | Example           |
-|---------------------------|------------------------------------------|-------------------|
-| Simple local state        | `var x by value(0)`                      | Counter, toggles  |
-| Debounced/throttled state | `stream("") { it.debounce(300.ms) }`     | Search input      |
-| Global/shared state       | `val x by subscribingTo(stream)`         | Auth, preferences |
-| Persistent state          | `StreamSource().persistInLocalStorage()` | User settings     |
-| Async data                | `dataLoader { flow { emit(data) } }`     | API calls         |
+| What you need       | Use this                                                    | Example           |
+|---------------------|-------------------------------------------------------------|-------------------|
+| Simple local state  | `var x by value(0)`                                         | Counter, toggles  |
+| Debounced state     | `stream("", { debounce(300.milliseconds) }) { search(it) }` | Search input      |
+| Global/shared state | `val x by subscribingTo(stream)`                            | Auth, preferences |
+| Persistent state    | `StreamSource().persistInLocalStorage()`                    | User settings     |
+| Async data          | `dataLoader { flow { emit(data) } }`                        | API calls         |
 
 ---
 
@@ -764,7 +767,8 @@ you can render against -- no manual boolean flags.
 
 ## Basic usage
 
-Create a loader in your component with `dataLoader`. It starts loading immediately on mount:
+Create a loader in your component with `dataLoader`. It starts loading when the component is created and takes the
+first value the flow emits:
 
 ```kotlin
 class UserList(ctx: NoProps) : PureComponent(ctx) {
@@ -806,7 +810,8 @@ When you already have the data and don't need to load it asynchronously, use `da
 private val loader = dataLoaderOf(listOf("Alice", "Bob", "Charlie"))
 ```
 
-This creates a loader that starts in the `Loaded` state immediately.
+This creates a loader whose flow emits the value. Like any loader it starts in `Loading` and moves to `Loaded` a few
+milliseconds later.
 
 ## Reloading
 
@@ -1040,7 +1045,7 @@ object Nav {
 }
 ```
 
-`Static` is for routes with no parameters. `Route1` through `Route7` support 1-7 typed parameters.
+`Static` is for routes with no parameters. `Route1` through `Route7` take 1 to 7 string parameters.
 
 ## Setting up the router
 
@@ -1103,7 +1108,7 @@ ui.button {
 router.navBack()
 
 // Replace current URL (no history entry)
-router.replaceUri(Nav.home())
+router.replaceUri(router.strategy.render(Nav.home()))
 ```
 
 ### Link-style navigation with `A.href(route)`
@@ -1120,9 +1125,8 @@ ui.menu {
 ```
 
 **Always use `A.href(route)` for links — don't hand-write `href = "/about"`.** The helper asks the active router to
-render the URL using the configured path strategy, so the same code produces `/about` under `usePathStrategy()` and
-`#/about` under `useHashStrategy()`. Hard-coded href strings bypass the strategy and break when you switch modes (or
-when the app is mounted under a non-root base path).
+render the URL using the configured strategy, so the same code produces `/about` under `usePathStrategy()` and
+`#/about` under `useHashStrategy()`. Hard-coded href strings bypass the strategy and break when you switch modes.
 
 The helper lives in `io.peekandpoke.kraft.routing`:
 
@@ -1137,8 +1141,8 @@ fun A.href(route: Route.Bound) {
 ```
 
 Because it sets a real `href`, a plain click is routed in-app and the browser keeps Ctrl/Cmd+Click, middle-click and
-"Open in new tab". Do not add an `onClick` that calls `router.navToUri` — `onClick` does not prevent the default, so the
-click navigates twice.
+"Open in new tab". Do not add an `onClick` that calls `router.navToUri` — `onClick` does not prevent the default, so
+under `usePathStrategy()` the click navigates twice.
 
 ### Link clicks (path strategy)
 
@@ -1196,7 +1200,7 @@ routing {
         if (AppState.auth.isLoggedIn) {
             RouterMiddlewareResult.Proceed
         } else {
-            ctx.redirect(router.strategy.render(Nav.login()))
+            ctx.redirect("/login")
         }
     }) {
         layout({ LoggedInLayout(it) }) {
@@ -1307,8 +1311,8 @@ fun RootRouterBuilder.mountNav(authState: AuthState<AdminUserModel>) {
 }
 ```
 
-This pattern — defining routes as objects, mounting them with middleware and layouts — scales well from small apps to
-large ones.
+This pattern — defining routes as objects, mounting them with middleware and layouts — is how we structure all our
+apps.
 
 ---
 
@@ -1368,7 +1372,7 @@ UiInputField(value, { value = it }) {
 UiInputField(price, { price = it }) {
     label("Price")
     step(0.01)
-    leftIcon { icon.dollar_sign() }
+    leftIcon { dollar_sign }
 }
 ```
 
@@ -1438,7 +1442,8 @@ UiCheckboxField(
 
 ### Nullable fields
 
-Fields that can be empty/null:
+Input, date, date-time and time fields take a nullable value with `.nullable()`. An emptied date or time input gives
+`null`; an emptied text or number input gives `""` or `0`:
 
 ```kotlin
 UiInputField.nullable(middleName, { middleName = it }) {
@@ -1457,7 +1462,7 @@ UiInputField(username, { username = it }) {
         notBlank(),
         minLength(3),
         maxLength(20),
-        matchesPattern(Regex("^[a-z0-9_]+$")) {
+        given({ it.matches(Regex("^[a-z0-9_]+$")) }) {
             "Only lowercase letters, numbers, and underscores"
         },
     )
@@ -1481,9 +1486,9 @@ UiInputField(age, { age = it }) {
 | `maxLength(n)`          | Maximum character count     |
 | `greaterThan(n)`        | Numeric minimum (exclusive) |
 | `lessThan(n)`           | Numeric maximum (exclusive) |
-| `matchesPattern(regex)` | Regex match                 |
+| `given(check) { msg }`  | Custom predicate            |
 
-Each validator can take a custom error message:
+Most validators can take a custom error message:
 
 ```kotlin
 accepts(
@@ -1492,7 +1497,7 @@ accepts(
 )
 ```
 
-Validation errors render automatically below the field as red labels.
+Validation errors render automatically below the field as red labels, once the field is touched.
 
 ## The form controller
 
@@ -1516,7 +1521,7 @@ class RegistrationForm(ctx: NoProps) : PureComponent(ctx) {
                 accepts(notBlank())
             }
 
-            // Button disabled when form is invalid
+            // Disabled while a field shows errors
             ui.blue.button.given(!formCtrl.isValid) { disabled }.then {
                 // Runs the block only when every field passes
                 onClick { formCtrl.validate { submitForm() } }
@@ -1527,7 +1532,8 @@ class RegistrationForm(ctx: NoProps) : PureComponent(ctx) {
 }
 ```
 
-`formCtrl.isValid` reactively reflects whether all fields pass validation.
+`formCtrl.isValid` is true while no field has errors; a field is checked once touched (edited, or by `validate`), so an
+untouched invalid field does not count yet.
 `formCtrl.validate { }` touches every field, runs the rules, and calls the suspending block only if all pass. While it
 runs, `formCtrl.isBusy` is true (`status`: `VALIDATING`, then `PROCESSING`) and further calls are ignored, so a double
 click submits once. Inside a coroutine, `if (formCtrl.validate())` awaits the same check as a `Boolean` without touching
@@ -1605,12 +1611,12 @@ This pattern gives you:
 ### Icons
 
 ```kotlin
-UiInputField(search, { search = it }) {
-    leftIcon { icon.search() }
+UiInputField(query, { query = it }) {
+    leftIcon { search }
 }
 
 UiInputField(amount, { amount = it }) {
-    leftIcon { green.percent() }
+    leftIcon { green.percent }
     rightClearingIcon()
 }
 ```
@@ -1619,11 +1625,11 @@ UiInputField(amount, { amount = it }) {
 
 ```kotlin
 UiInputField(weight, { weight = it }) {
-    rightLabel { +"kg" }
+    rightLabel { ui.label { +"kg" } }
 }
 
 UiInputField(url, { url = it }) {
-    leftLabel { +"https://" }
+    leftLabel { ui.label { +"https://" } }
 }
 ```
 
@@ -1667,12 +1673,13 @@ ui.inverted.blue.segment {
 // Generates this HTML:
 // <div class="ui inverted blue segment">
 //   <h2 class="ui header">Welcome</h2>
-//   <button class="ui basic button">Click me</button>
+//   <div class="ui basic button">Click me</div>
 // </div>
 ```
 
-Every modifier is a Kotlin property that adds a CSS class. The final call (`segment {}`, `button {}`, `header H2 {}`)
-creates the HTML element and opens a block for its children.
+Every modifier is a Kotlin property that adds a CSS class. The final call creates the HTML element and opens a block
+for its children: a block alone (`segment {}`, `button {}`) creates a `div`, an infix tag (`header H2 {}`,
+`button Button {}`) creates that element.
 
 ## Core elements
 
@@ -1716,7 +1723,7 @@ ui.header H1 { +"Page title" }
 ui.header H2 { +"Section header" }
 ui.sub.header { +"Sub-header" }
 ui.icon.header {
-    icon.settings()
+    icon.cog()
     noui.content { +"Settings" }
 }
 ```
@@ -1830,7 +1837,7 @@ ui.button.given(isLoading) { loading }.then {
 
 ## Colors
 
-16 named colors plus brand colors:
+14 named colors plus brand colors:
 
 ```kotlin
 ui.red.label { +"Red" }
@@ -1878,7 +1885,7 @@ icon.grip_vertical()
 icon.eraser()
 icon.dollar_sign()
 icon.heart()
-icon.settings()
+icon.cog()
 icon.download()
 ```
 
@@ -1910,7 +1917,8 @@ ui.button {
 }
 ```
 
-Modal sizes: `mini()`, `tiny()`, `small()`, `large()`, and full-size.
+Size shorthands: `mini()`, `tiny()`, `small()`. Any other size goes through
+`OkCancelModal(handle, view = OkCancelModal.View(appearance = { large }, ...))`.
 
 ## Toast notifications
 
@@ -1979,8 +1987,8 @@ div {
 Modal dialogs, toast notifications, popup menus, and context menus.
 
 Kraft provides three overlay systems that share the same pattern: a manager you access from any component, a stage that
-renders the overlays, and handles for controlling individual overlays. All three are registered automatically when you
-call `semanticUI()` in your app setup.
+renders the overlays, and handles for controlling individual overlays. Every app has all three; `semanticUI()` in your
+app setup gives them SemanticUI styling.
 
 ```kotlin
 val app = kraftApp {
@@ -1988,7 +1996,7 @@ val app = kraftApp {
 }
 ```
 
-Each system is accessible from any component via a delegated property:
+Each system is accessible from any component via an extension property:
 
 ```kotlin
 class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
@@ -2145,7 +2153,8 @@ toasts.append(apiResponse.messages)
 
 ## Popups & Context Menus
 
-Context menus appear near the triggering element. Pass a `UIEvent` and the menu renders at the event position:
+Context menus appear near the triggering element. Pass a `UIEvent` and the menu renders next to the element that
+received it:
 
 ```kotlin
 ui.button {
@@ -2249,7 +2258,7 @@ the component's element. `dnd.current` is a `Stream<Drag<*>?>`; `dnd.cancel()` e
 # Addons
 
 Kotlin-friendly wrappers for JavaScript libraries, loaded on demand. Every addon is dynamically imported via
-`js("import(...)")`. The JS library ships in its own webpack chunk and only downloads when a component needs it.
+`js("import(...)")`. The JS library ships in its own webpack chunk, not in your main bundle.
 
 ## The AddonRegistry pattern
 
@@ -2310,7 +2319,7 @@ the addon becomes ready — subscribing is just like any other stream.
 | `jwtdecode`              | jwt-decode                                   | Decode JWT tokens client-side       |
 | `avatars`                | MinIdenticons                                | SVG identicons from strings         |
 | `browserdetect`          | Bowser                                       | Browser and OS detection            |
-| `nxcompile`              | @nx-js/compiler-util                         | Sandboxed JS code execution         |
+| `nxcompile`              | @nx-js/compiler-util                         | Runs JS code strings against a context object (not a security sandbox) |
 | `sourcemappedstacktrace` | sourcemapped-stacktrace                      | Map minified stack traces to source |
 
 ## Adding addons
@@ -2507,7 +2516,7 @@ by layout alone, which `resizeTo` misses (it listens to the window only), and re
 
 ## threejs — 3D WebGL
 
-Three.js is the standard 3D engine for the web. Register it as lazy — it's a large library and usually only needed on
+Three.js is a 3D engine for the web. Register it as lazy — it's a large library and usually only needed on
 specific pages:
 
 ```kotlin
@@ -2671,7 +2680,7 @@ class Diagnostics(ctx: NoProps) : PureComponent(ctx) {
         val addon = bd ?: return
         val detect = addon.forCurrentBrowser()
 
-        ui.list {
+        ui.list Ul {
             li { +"Browser: ${detect.getBrowser().name}" }
             li { +"OS: ${detect.getOs().name}" }
             li { +"Platform: ${detect.getPlatform().type}" }
@@ -2688,7 +2697,10 @@ The addon pattern is ~50 lines of Kotlin:
 package my.app.addons.fuse
 
 import io.peekandpoke.kraft.KraftDsl
-import io.peekandpoke.kraft.addons.registry.*
+import io.peekandpoke.kraft.addons.registry.Addon
+import io.peekandpoke.kraft.addons.registry.AddonKey
+import io.peekandpoke.kraft.addons.registry.AddonRegistry
+import io.peekandpoke.kraft.addons.registry.AddonRegistryBuilder
 import kotlinx.coroutines.await
 import kotlin.js.Promise
 
@@ -2719,8 +2731,8 @@ val AddonRegistry.fuse: Addon<FuseAddon>
     get() = this[fuseAddonKey]
 ```
 
-The `val ctor = fuseModule` pattern is important: `js("new this.x(...)")` doesn't work because `this` inside `js()`
-refers to the JavaScript `this`, not the Kotlin instance. Capture the reference into a local val first.
+The `val ctor = fuseModule` pattern is important: `js()` code reaches Kotlin locals and parameters by their name,
+while a property's name in the compiled JavaScript is not guaranteed. Capture the reference into a local val first.
 
 ## Script Loader
 
@@ -2773,9 +2785,10 @@ reactive Stream; it follows resizes and rotations and emits only on a change. Ac
 
 ```kotlin
 class MyComponent(ctx: Ctx<Props>) : Component<Props>(ctx) {
-    override fun VDom.render() {
-        val state = responsiveCtrl()
+    // Subscribing redraws the component when the display type changes
+    private val state by subscribingTo(responsiveCtrl)
 
+    override fun VDom.render() {
         when (state.displayType) {
             DisplayType.Mobile -> renderMobileLayout()
             DisplayType.Tablet -> renderTabletLayout()
@@ -2835,10 +2848,8 @@ Use the generated class names in your components:
 
 ```kotlin
 override fun VDom.render() {
-    div {
-        className = MyStyles.container.selector
-        div {
-            className = MyStyles.highlight.selector
+    div(MyStyles.container.name) {
+        div(MyStyles.highlight.name) {
             +"Highlighted content"
         }
     }
@@ -2847,7 +2858,7 @@ override fun VDom.render() {
 
 ### Scoped rules
 
-Create nested rules that apply within a parent selector:
+Create a rule that applies only together with another rule's class, on the same element:
 
 ```kotlin
 val card by rule {
@@ -2855,7 +2866,7 @@ val card by rule {
 }
 
 val cardTitle by rule(card) {
-    // generates: .card-abc123 .cardTitle-def456
+    // generates: .card_abc123.cardTitle_def456
     fontSize = FontSize(1.2.em)
     fontWeight = FontWeight.bold
 }
@@ -2863,7 +2874,9 @@ val cardTitle by rule(card) {
 
 ### Mounting stylesheets
 
-Mount a stylesheet to inject its CSS into the page. Unmount to remove it:
+All three stylesheet types mount themselves by default: `RawStyleSheet` and `StyleSheetTag` when created, a
+`StyleSheet` on the next animation frame. With `autoMount = false`, mount by hand; mounting twice does nothing.
+Unmount to remove it:
 
 ```kotlin
 import io.peekandpoke.kraft.addons.styling.StyleSheets
@@ -2917,11 +2930,12 @@ input {
 
 ### Responsive images
 
-The `SrcSetImage` component generates `srcset` and `sizes` attributes automatically from a single image URL:
+The `SrcSetImage` component generates `srcset` and `sizes` attributes automatically from a single Cloudinary image
+URL; for an image hosted elsewhere it renders a plain `img`:
 
 ```kotlin
 SrcSetImage(
-    src = "https://cdn.example.com/photo.jpg",
+    src = "https://res.cloudinary.com/demo/image/upload/photo.jpg",
     sizes = ImageSizes.default,
     alt = "A photo",
 )
@@ -2934,16 +2948,19 @@ The `kraft-testing` module provides `TestBed` for rendering components and `KQue
 ### Rendering a component
 
 ```kotlin
-@Test
-fun counter_increments() = TestBed.preact(
-    view = { Counter(start = 0) },
-) { root ->
-    // root is a KQuery<Element> wrapping the rendered DOM
-    root.selectCss("h2").textContent() shouldBe "Count: 0"
+// In a kotest spec: TestBed.preact suspends
+"counter increments" {
+    TestBed.preact(
+        view = { Counter(start = 0) },
+    ) { root ->
+        // root is a KQuery<Element> wrapping the rendered DOM
+        root.selectCss("h2").textContent() shouldBe "Count: 0"
 
-    root.selectCss<HTMLButtonElement>("button").click()
+        root.selectCss<HTMLButtonElement>("button").click()
+        delay(10)  // wait for re-render
 
-    root.selectCss("h2").textContent() shouldBe "Count: 1"
+        root.selectCss("h2").textContent() shouldBe "Count: 1"
+    }
 }
 ```
 
