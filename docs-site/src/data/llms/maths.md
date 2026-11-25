@@ -15,9 +15,6 @@ Curves are grouped as `Ease.In`, `Ease.Out`, `Ease.InOut` (sine, quad, cubic, qu
 bounce, and a `pow(power)` factory; `circ` in `In` and `Out` only), plus `Ease.linear`, `Ease.stuck`
 (always 0.0) and `Ease.immediate` (always 1.0). Custom curves: `Ease.easeFn { x -> ... }`.
 
-Known defects: `Ease.In.elastic` returns NaN wherever `10x - 10` is not a whole number (a negative base
-raised to that power); `Ease.In.bounce` runs from 1.0 down to 0.0 (it returns `Out.bounce(1 - x)`).
-
 ```kotlin
 import io.peekandpoke.ultra.maths.Ease
 import io.peekandpoke.ultra.maths.Ease.bindFromTo   // member extension — import required

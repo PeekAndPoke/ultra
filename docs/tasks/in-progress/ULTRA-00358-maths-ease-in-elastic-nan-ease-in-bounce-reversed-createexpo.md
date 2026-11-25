@@ -52,7 +52,25 @@ Easings (items 1 and 2), branch wt/maths-fixes:
 - ultra/maths/src/commonTest/kotlin/EaseCalcEdgeCasesSpec.kt:83: In.bounce joins the "0 at 0 and 1 at 1" list (it was
   excluded with a comment naming the bug).
 
-createExponential (item 3): not implemented; proposal handed to the coordinator for the maintainer.
+Docs (easings only): docs-site/src/pages/ultra/maths/easing.astro:99,103 and docs-site/src/data/llms/maths.md:18
+drop the In.elastic and In.bounce defect notes. `pnpm astro build`: 118 pages, clean. The createExponential notes on
+distributions.astro and maths.md stay until item 3 lands.
+
+createExponential (item 3): not implemented; proposal for the maintainer:
+- The shape on 0..1 is exp(-k x), one degree of freedom. Today k = ln(1 / tailCut) (default 6.91, mean 0.144) and
+  `lambda` cancels. Any two parameter form stays redundant.
+- A (recommended): pdf proportional to exp(-lambda x) on [0, 1]; `lambda` is the rate on the unit interval; `tailCut`
+  removed (the cut is always at 1, mass beyond it would be exp(-lambda)). Default lambda: ln(1000) keeps today's
+  default curve; 1.0 would turn the default nearly flat (mean 0.418).
+- B (signature kept): pdf = exp(-lambda * ln(1 / tailCut) * x); default unchanged, lambda multiplies steepness,
+  tailCut stays as a second, redundant knob.
+- Callers that change: none in production (grep over /opt/dev, kraft-examples and klang included; gfx-playground has
+  its own copy). In ultra: docs examples with lambda = 2.0 (distributions.astro:146, index.astro:72; A: mean 0.144 to
+  0.344, B: to 0.072), the tailCut example (distributions.astro:94), maths.md:85-87, tests
+  BucketedDistributionSpec:155-193 and BucketedDistributionEdgeCasesSpec:63-69. Persisted distributions keep their
+  stored pdf.
+- The lambda test at BucketedDistributionSpec:181 is vacuous: a fresh Random(42) per sample makes every sample equal
+  and `<=` accepts equal means. It gets rewritten either way.
 
 ## Test evidence
 
@@ -71,3 +89,4 @@ createExponential (item 3): not implemented; proposal handed to the coordinator 
 - 2026-11-25: IN PROGRESS. easing fixes landed; createExponential awaits the maintainer's decision
 - 2026-11-25: IN PROGRESS. Easing fixes (In.elastic, In.bounce) with tests and mutants; createExponential proposal
   pending the maintainer.
+- 2026-11-25: easing defect notes dropped from the docs and LLM mirror; createExponential proposal recorded.
