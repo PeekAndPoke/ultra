@@ -1,7 +1,7 @@
 # ULTRA-00356: Docs: light cleanup of the README files and LLM mirror files
 
-> **Status (2026-11-25): IN PROGRESS.** Light pass committed; truth audit per library running (wave 1: slumber,
-> streams, mutator, funktor).
+> **Status (2026-11-25): DONE.** Truth audit of every library except datetime (waits for ULTRA-00343, then ULTRA-00339)
+> and kontainer (ULTRA-00338); every library reviewed until clean; `pnpm astro build` green (118 pages).
 
 **Part of:** ULTRA-00260 (Epic: Docs backlog)
 
@@ -39,6 +39,30 @@ then one review per library diff. Waves, with the budget checked between them:
 - Datetime waits for ULTRA-00343 (code still changing), then ULTRA-00339.
 - Kontainer: done with ULTRA-00338.
 
+## Review ledger (rung 1, reviewer-opus-high, one domain-expert reviewer per library)
+
+| Library | Round 1 | Round 2 | MINORs |
+|---|---|---|---|
+| streams | clean | | 1 out-of-diff sentence fixed |
+| slumber | clean | | 2 fixed |
+| mutator | clean | | 3 fixed |
+| i18n, maths | clean | | 2 fixed; 3 maths code defects confirmed (to the maintainer) |
+| cache | clean | | 2 fixed |
+| vault | 3 MAJOR (hook timing in Funktor apps, timeMs 0.0 without profiling, three non-compiling selectors) | clean | 2 fixed |
+| monko | 1 MAJOR (ensureIndexes scope) | clean, 2 MINOR fixed | 3 fixed |
+| funktor | 1 MAJOR (`Stored` has no `total`) | clean, 1 MINOR fixed | 6 fixed |
+| karango | 1 MAJOR (install snippet lacks vault, examples do not compile) | clean, 1 MINOR fixed | |
+| kraft parts 1 to 3 | clean each | | 6 fixed; lazy addons are a code defect, fixed in ULTRA-00357 |
+| READMEs | clean | | 2 fixed |
+
+Found by the coordinator after the reviews: the streams artifact is `stream` (site.ts, mirror, README); a brace in
+slumber/datetime.astro broke the site build.
+
+Code defects found (for the maintainer, not fixed here): Monko `remove(entity)` through `Repository<T>` runs no
+hook; karango and monko core keep vault at implementation scope; `Ease.In.elastic` NaN, `Ease.In.bounce` reversed,
+`createExponential` ignores `lambda`; AuthRuleBuilder messages still advise `public()` inside `authorize`; the
+sdkgen-app and b2b-app dev servers share port 36591. Each is documented as it is today.
+
 ## Acceptance
 
 - Every statement and example in scope is true against the code, or listed as unverified with the reason.
@@ -51,3 +75,5 @@ then one review per library diff. Waves, with the budget checked between them:
 - 2026-11-25: light pass committed (d3908696, 7f6d271c): slogans out; karango and monko artifact coordinates, a kraft
   package and seven Kraft addon examples that called functions which do not exist fixed; ultra/README.MD rewritten as a
   module index. Maintainer: "The docs need to be truthful." Scope widened to a truth audit; wave 1 started.
+- 2026-11-25: truth audit done for streams, slumber, mutator, i18n, maths, cache, vault, monko, funktor, karango,
+  kraft and the remaining READMEs; ledger above. Site builds (118 pages). Ready to merge.
