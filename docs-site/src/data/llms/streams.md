@@ -2,7 +2,7 @@
 
 ### Overview {#streams-overview}
 
-# Streams — Reactive Values, Simplified
+# Streams — Reactive Values
 
 A lightweight reactive streams library for Kotlin Multiplatform. Every stream always has a value. No marble diagrams
 required.

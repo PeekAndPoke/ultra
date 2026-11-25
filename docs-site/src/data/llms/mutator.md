@@ -4,7 +4,7 @@
 
 # Mutator — Type-Safe Mutation of Immutable Data
 
-KSP-generated code for mutating deeply nested immutable Kotlin data classes. No `copy()` chains, no boilerplate.
+KSP-generated code for mutating deeply nested immutable Kotlin data classes. No `copy()` chains.
 Changes propagate automatically from any depth back to the root.
 
 ## The problem Mutator solves

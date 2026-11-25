@@ -5,7 +5,7 @@
 # Kraft — Build SPAs in Pure Kotlin
 
 A component-based framework for building single-page applications.
-Kotlin all the way down — no JavaScript, no template engines, no compromises.
+Written entirely in Kotlin: no JavaScript, no template engines.
 
 ## What is Kraft?
 
@@ -55,7 +55,7 @@ This means:
 - **Reactive State** — `var x by value(0)` — change the value, the UI updates. Built-in stream support.
 - **Routing** — Type-safe routes with params, middleware for auth guards, and nested layouts.
 - **Forms & Validation** — Two-way binding, field validation, draft/commit pattern — all type-safe.
-- **SemanticUI DSL** — `ui.blue.button { +"Click" }` — a beautiful, fluent API for FomanticUI.
+- **SemanticUI DSL** — `ui.blue.button { +"Click" }` — a fluent API for FomanticUI.
 - **13 Addons** — ChartJS, PrismJS, vis-network graphs, PDF viewer, PixiJS (2D WebGL), Three.js (3D WebGL), markdown, signature pad, and
   more — loaded on demand
   via the AddonRegistry.
@@ -2866,7 +2866,7 @@ val cardTitle by rule(card) {
 Mount a stylesheet to inject its CSS into the page. Unmount to remove it:
 
 ```kotlin
-import de.peekandpoke.kraft.addons.styling.StyleSheets
+import io.peekandpoke.kraft.addons.styling.StyleSheets
 
 StyleSheets.mount(MyStyles)    // injects CSS
 StyleSheets.unmount(MyStyles)  // removes CSS

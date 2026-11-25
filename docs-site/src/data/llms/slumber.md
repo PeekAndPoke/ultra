@@ -2,7 +2,7 @@
 
 ### Overview {#slumber-overview}
 
-# Slumber — Serialization That Understands Kotlin
+# Slumber — Serialization for Kotlin
 
 A serialization framework built for Kotlin's type system. Nullable types, default values, sealed classes — Slumber
 handles them all without annotations or configuration.
@@ -45,7 +45,7 @@ nullable fields, default values, generics, and all.
   storage backend.
 - **Pluggable Modules** — Custom type handling via `SlumberModule`. No annotation processors — just implement an
   interface.
-- **Polymorphism Built-In** — Sealed classes auto-detected. Custom discriminators, migration aliases, default fallback
+- **Polymorphism** — Sealed classes auto-detected. Custom discriminators, migration aliases, default fallback
   types — all supported.
 
 ## The Naming
@@ -57,7 +57,7 @@ Slumber uses a playful metaphor:
 
 ## Quick Taste
 
-Polymorphic sealed classes — zero configuration:
+Polymorphic sealed classes, no configuration:
 
 ```kotlin
 sealed class Event {
@@ -349,7 +349,7 @@ codec.awake<Pair<String, Int>>(mapOf("first" to "hello", "second" to 99))
 Slumber auto-detects sealed classes, adds type discriminators, and supports custom identifiers, default fallback types,
 and migration aliases.
 
-## Sealed classes — zero config
+## Sealed classes, no config
 
 Sealed classes just work. Slumber adds a `_type` discriminator automatically:
 

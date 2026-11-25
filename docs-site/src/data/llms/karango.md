@@ -72,8 +72,8 @@ plugins {
 }
 
 dependencies {
-    implementation("io.peekandpoke.ultra:karango-core:{{ultraVersion}}")
-    ksp("io.peekandpoke.ultra:karango-ksp:{{ultraVersion}}")
+    implementation("io.peekandpoke.karango:core:{{ultraVersion}}")
+    ksp("io.peekandpoke.karango:ksp:{{ultraVersion}}")
 }
 ```
 
