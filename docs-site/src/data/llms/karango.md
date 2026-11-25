@@ -75,6 +75,7 @@ plugins {
 
 dependencies {
     implementation("io.peekandpoke.karango:core:{{ultraVersion}}")
+    implementation("io.peekandpoke.ultra:vault:{{ultraVersion}}")  // karango core does not expose it
     ksp("io.peekandpoke.karango:ksp:{{ultraVersion}}")
 }
 ```
