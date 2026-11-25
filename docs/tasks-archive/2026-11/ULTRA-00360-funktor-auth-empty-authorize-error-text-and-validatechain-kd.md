@@ -87,3 +87,4 @@ Round 1 fixes: `:funktor:rest:jvmTest` green, XML 16 suites, 126 tests, 0 failur
 - 2026-11-25: created on the maintainer's decision.
 - 2026-11-25: IN PROGRESS. Implemented on wt/auth-port; review gate next.
 - 2026-11-25: gate round 1 PASS (0 CRITICAL, 0 MAJOR); two MINORs fixed. Ready to merge.
+- 2026-11-25: DONE.
