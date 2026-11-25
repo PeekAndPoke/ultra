@@ -1,6 +1,6 @@
 # ULTRA-00359: Karango and Monko: vault as api; Monko remove(entity) fires OnAfterDelete through Repository
 
-> **Status (2026-11-25): IN PROGRESS.** Implemented on wt/vault-api: Monko override, vault as api, docs; review gate next.
+> **Status (2026-11-25): DONE.** Gate PASS in round 1 (no findings); merged into master.
 
 ## Why this exists
 
@@ -67,6 +67,19 @@ Found by the ULTRA-00356 truth audit, both confirmed by reviewers:
   test), root project.
 - Docs site: `pnpm install --frozen-lockfile` and `pnpm astro build` complete, 117 pages.
 
+## Review ledger
+
+Round 1, standard gate, one reviewer covering the three charters (implementation and code style, domain, security),
+rung 1 reviewer-opus-high (Opus high while the Fable credits are out). Verdict: PASS, NO FINDINGS.
+
+CLEAN: override signature matches Repository.remove; one remove(entity) path, so no double hook; remove(idOrKey) and
+removeAll run no hooks; hooks go through the driver's VaultHookScope as on save (request isolation unchanged); no
+Kotlin or KSP-generated caller resolves to a different document; funktor registers no OnAfterDelete on Monko; `_key`
+and `_id` select the same document under ULTRA-00138 (keys never contain a slash); the docs are true and nothing
+left tells users to add vault. Noted, not findings: `removeStored` is a JVM binary break for already-compiled direct
+callers (CHANGELOG); hooks fire even when nothing was deleted, on both drivers (older); `dep.vault` in site.ts is now
+unused.
+
 ## Acceptance
 
 - A consumer with only `karango:core` or `monko:core` can name Vault types; Monko fires OnAfterDelete on every
@@ -77,3 +90,4 @@ Found by the ULTRA-00356 truth audit, both confirmed by reviewers:
 - 2026-11-25: created on the maintainer's decision.
 - 2026-11-25: IN PROGRESS. Implemented on wt/vault-api (Monko override with RED-first e2e and four mutants, vault as
   api in both modules, docs); review gate next.
+- 2026-11-25: gate PASS round 1, no findings; merged into master.
