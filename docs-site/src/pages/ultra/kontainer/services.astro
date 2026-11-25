@@ -75,6 +75,8 @@ val blueprint = kontainer {
     instance(AppConfig)
 }`} lang="kotlin" theme="vitesse-dark" />
 
+<p>Value types cannot be services: registering or overriding <code>String</code>, <code>Char</code>, <code>Boolean</code>, <code>Unit</code> or a primitive or unsigned number type (<code>Int</code>, <code>UInt</code>, ...) throws <code>KontainerInconsistent</code>; wrap such a value in a class of its own.</p>
+
 <h2>Hiding implementations behind interfaces</h2>
 
 <p>Register a service under its interface so consumers never see the concrete class:</p>

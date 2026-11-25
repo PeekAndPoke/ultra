@@ -283,6 +283,9 @@ val blueprint = kontainer {
 }
 ```
 
+Value types cannot be services: registering or overriding `String`, `Char`, `Boolean`, `Unit` or a primitive or
+unsigned number type (`Int`, `UInt`, ...) throws `KontainerInconsistent`; wrap such a value in a class of its own.
+
 ## Hiding implementations behind interfaces
 
 Register a service under its interface so consumers never see the concrete class:

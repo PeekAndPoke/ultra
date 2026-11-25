@@ -9,6 +9,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.peekandpoke.ultra.common.Lookup
 import io.peekandpoke.ultra.kontainer.InvalidClassProvided
+import io.peekandpoke.ultra.kontainer.KontainerInconsistent
 import io.peekandpoke.ultra.kontainer.ServiceAmbiguous
 import io.peekandpoke.ultra.kontainer.ServiceNotFound
 import io.peekandpoke.ultra.kontainer.e2e.Reported
@@ -215,28 +216,26 @@ class ProvisionPathsCharacterizationSpec : StringSpec({
         }
     }
 
-    "Aliased keys: getOrNull(Number) first, then Int and Integer share its entry, so Int finds the instance" {
+    "A value type cannot be registered: instance(5) is refused, so Int and Integer never share a key (ULTRA-00354)" {
 
-        // Int::class (Java int) and the instance's class (java.lang.Integer) are equal keys of the candidate cache,
-        // with different Java assignability: whichever form fills the shared entry first decides it
-        val kontainer = kontainer { instance(5) }.create()
-
-        assertSoftly {
-            kontainer.getOrNull(Number::class) shouldBe 5
-            kontainer.getOrNull(Int::class) shouldBe 5
-            kontainer.get(Int::class) shouldBe 5
-        }
+        // Before, Int::class (Java int) and the instance's class (java.lang.Integer) were equal keys of the candidate
+        // cache with different Java assignability: whichever form filled the shared entry first decided the answers
+        shouldThrow<KontainerInconsistent> {
+            kontainer { instance(5) }
+        }.message shouldBe "kotlin.Int is a value type and cannot be registered"
     }
 
-    "Aliased keys: getOrNull(Int) first leaves the shared entry empty, so getOrNull(Number) throws ServiceNotFound" {
+    "A Number service: getOrNull(Number) finds it and getOrNull(Int) finds nothing, in either order" {
 
-        val kontainer = kontainer { instance(5) }.create()
+        val numberFirst = kontainer { instance(Number::class, 5) }.create()
+        val intFirst = kontainer { instance(Number::class, 5) }.create()
 
         assertSoftly {
-            kontainer.getOrNull(Int::class) shouldBe null
-            shouldThrow<ServiceNotFound> {
-                kontainer.getOrNull(Number::class)
-            }.message shouldBe "Service kotlin.Int was not found"
+            numberFirst.getOrNull(Number::class) shouldBe 5
+            numberFirst.getOrNull(Int::class) shouldBe null
+
+            intFirst.getOrNull(Int::class) shouldBe null
+            intFirst.getOrNull(Number::class) shouldBe 5
         }
     }
 
@@ -347,47 +346,22 @@ class ProvisionPathsCharacterizationSpec : StringSpec({
         }
     }
 
-    "Aliased keys: getAll(Number) finds the Int instance also after getOrNull(Int) left the shared entry empty" {
+    "A Number service: getAll, a Lookup and a List injection of Number find it, and Int still finds nothing" {
 
-        // getAll hands out the registered key's provider without resolving it again, so it does not read the shared
-        // Int / Integer entry that getOrNull(Int) left empty; getOrNull keeps its order-dependent answers (above)
-        val kontainer = kontainer { instance(5) }.create()
-
-        assertSoftly {
-            kontainer.getOrNull(Int::class) shouldBe null
-            kontainer.getAll(Number::class) shouldBe listOf(5)
-        }
-    }
-
-    "Aliased keys: getAll(Number) or a Lookup entry first no longer fills the shared entry, so Int finds nothing" {
-
-        // Before ULTRA-00352 both resolved the candidate again, which filled the shared Int / Integer entry with the
-        // instance's class; afterwards getOrNull(Int) found 5 and get(Int) returned 5
-        val byGetAll = kontainer { instance(5) }.create()
-        val byLookup = kontainer { instance(5) }.create()
-
-        byGetAll.getAll(Number::class) shouldBe listOf(5)
-        byLookup.getLookup(Number::class).get(Int::class) shouldBe 5
-
-        // getOrNull(Int), then what get(Int) throws, for each: one assertion shows all four answers
-        listOf(byGetAll, byLookup).map { kontainer ->
-            kontainer.getOrNull(Int::class) to runCatching { kontainer.get(Int::class) }.exceptionOrNull()
-                ?.let { "${it::class.simpleName}: ${it.message}" }
-        } shouldBe List(2) { null to "ServiceNotFound: Service kotlin.Int was not found" }
-    }
-
-    "Aliased keys: a List injection of the super type fills the shared entry at build, so Int finds the instance" {
-
-        // The blueprint's dependency lookup asks for the candidates of each injected candidate: unchanged by ULTRA-00352
         val kontainer = kontainer {
-            instance(5)
+            instance(Number::class, 5)
             singleton(PathsNumbersHolder::class)
         }.create()
 
         assertSoftly {
-            kontainer.getOrNull(Int::class) shouldBe 5
-            kontainer.get(Int::class) shouldBe 5
+            kontainer.getAll(Number::class) shouldBe listOf(5)
+            kontainer.getLookup(Number::class).get(Number::class) shouldBe 5
             kontainer.get(PathsNumbersHolder::class).all shouldBe listOf(5)
+
+            kontainer.getOrNull(Int::class) shouldBe null
+            kontainer.getAll(Int::class) shouldBe emptyList()
+            runCatching { kontainer.get(Int::class) }.exceptionOrNull()?.message shouldBe
+                    "Service kotlin.Int was not found"
         }
     }
 
