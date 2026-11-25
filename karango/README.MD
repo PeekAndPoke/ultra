@@ -49,7 +49,6 @@ Full docs at **[peekandpoke.io/ultra/karango](https://peekandpoke.io/ultra/karan
 // build.gradle.kts
 dependencies {
     implementation("io.peekandpoke.karango:core:<version>")
-    implementation("io.peekandpoke.ultra:vault:<version>")  // karango core does not expose it
     ksp("io.peekandpoke.karango:ksp:<version>")
 }
 ```

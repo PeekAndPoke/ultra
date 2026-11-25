@@ -18,8 +18,7 @@ once, persist them in either database.
 
 Vault is not a standalone library. It is the shared foundation used by
 [Karango](https://peekandpoke.io/llms/karango.md) and [Monko](https://peekandpoke.io/llms/monko.md).
-They depend on it at runtime only: add `implementation("io.peekandpoke.ultra:vault:{{ultraVersion}}")` next to them
-(Funktor already exposes it).
+Karango, Monko and Funktor expose it, so you do not add it yourself.
 
 ---
 
@@ -226,16 +225,13 @@ Hooks run during entity lifecycle events. Three hook interfaces:
 |-----------------|-----------------------|--------------------|
 | `OnBeforeSave`  | Before insert or save | Yes                |
 | `OnAfterSave`   | After insert or save  | No (read-only)     |
-| `OnAfterDelete` | After remove(entity)* | No (read-only)     |
-
-\* With Monko, `remove(entity)` called through a `Repository<T>` reference runs no hook.
+| `OnAfterDelete` | After remove(entity)  | No (read-only)     |
 
 ### Hook execution order
 
 - **insert()**: OnBeforeSave -> persist -> OnAfterSave
 - **save()**: OnBeforeSave -> persist -> OnAfterSave
-- **remove(entity)**: delete -> OnAfterDelete (`remove(idOrKey)` and `removeAll()` run no hooks; with Monko, neither
-  does a call through a `Repository<T>` reference)
+- **remove(entity)**: delete -> OnAfterDelete (`remove(idOrKey)` and `removeAll()` run no hooks)
 - **batchInsert()** (Karango): OnBeforeSave (each) -> persist all -> OnAfterSave (each)
 
 OnAfterSave and OnAfterDelete run through the driver's `VaultHookScope`. A driver you construct yourself awaits them
