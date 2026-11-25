@@ -62,6 +62,10 @@
 - `kraft/core`: an addon registered with `lazy = true` loads on its first read or subscribe, as documented; it was
   loaded at app start like every other addon. A lazy addon read once in an event handler is `null` on that first read
   (ULTRA-00357).
+- `funktor/rest`: the error for an empty `authorize {}` no longer advises `public()` inside it, which always fails in
+  an `ApiRoutes` group; it points to a separate group with `authFloor = { public() }`. The `public()`/`forbidden()` and
+  `validateChain` KDocs say the same (ULTRA-00360).
+- `funktor-demo`: the sdkgen-app dev server moves from 36591 (b2b-app's port) to 36593 with `strictPort` (ULTRA-00360).
 
 ### Docs
 

@@ -1,6 +1,6 @@
 # ULTRA-00360: Funktor auth: empty-authorize error text and validateChain KDoc; sdkgen-app dev port
 
-> **Status (2026-11-25): IN PROGRESS.** Gate PASS, ready to merge (wt/auth-port).
+> **Status (2026-11-25): DONE.** Gate PASS in round 1; merged into master.
 
 ## Why this exists
 
