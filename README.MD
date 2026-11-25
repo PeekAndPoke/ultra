@@ -1,4 +1,4 @@
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.3.10-success.svg)](https://kotlinlang.org/docs/releases.html)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.21-success.svg)](https://kotlinlang.org/docs/releases.html)
 [![Maven Central](https://img.shields.io/maven-central/v/io.peekandpoke.ultra/common)](https://central.sonatype.com/namespace/io.peekandpoke.ultra)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![CodeFactor](https://www.codefactor.io/repository/github/peekandpoke/ultra/badge)](https://www.codefactor.io/repository/github/peekandpoke/ultra)
@@ -20,7 +20,7 @@ is in the [changelog](CHANGELOG.md).
 ### [Kontainer](https://peekandpoke.io/ultra/kontainer/) — Dependency Injection
 
 Lightweight DI container built around per-request scoping. Fresh containers per unit of work, validated dependency
-graphs. No annotations, no reflection, no runtime surprises.
+graphs. No annotations: a service gets its dependencies through its primary constructor or a factory.
 
 ```kotlin
 val blueprint = kontainer {
@@ -53,8 +53,8 @@ cleanup. Powers Kraft's reactive state management.
 val source = StreamSource(0)
 val doubled = source.map { it * 2 }
 
-doubled.subscribe { println(it) }
-source(5)  // prints: 10
+doubled.subscribeToStream { println(it) }  // prints: 0
+source(5)                                  // prints: 10
 ```
 
 ### [Karango](https://peekandpoke.io/ultra/karango/) — Type-Safe ArangoDB
@@ -75,7 +75,7 @@ val adults = repo.findList {
 ### [Kraft](https://peekandpoke.io/ultra/kraft/) — Build SPAs in Pure Kotlin
 
 Component-based SPA framework using Preact under the hood. Type-safe HTML DSL, reactive state, routing, forms,
-SemanticUI integration, and 12 addon wrappers.
+SemanticUI integration, and 14 addon wrappers.
 
 ```kotlin
 class Counter(ctx: NoProps) : PureComponent(ctx) {
@@ -128,7 +128,7 @@ All are on [Maven Central](https://central.sonatype.com/search?q=io.peekandpoke)
 dependencies {
     implementation("io.peekandpoke.ultra:kontainer:0.119.0")
     implementation("io.peekandpoke.ultra:slumber:0.119.0")
-    implementation("io.peekandpoke.ultra:streams:0.119.0")
+    implementation("io.peekandpoke.ultra:stream:0.119.0")
     implementation("io.peekandpoke.mutator:core:0.119.0")
     ksp("io.peekandpoke.mutator:ksp:0.119.0")
     implementation("io.peekandpoke.karango:core:0.119.0")
