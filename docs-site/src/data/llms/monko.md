@@ -560,7 +560,8 @@ A TTL index only expires documents whose field holds a BSON Date. Slumber stores
 ```kotlin
 // Create missing indexes. An index whose name exists with other fields, unique, sparse or
 // partial filter is dropped and re-created; a changed TTL expiry is not detected. Default names
-// come from the fields, so a changed field list creates a new index and leaves the old one
+// come from the index type and the fields, so changing either creates a new index and leaves the
+// old one
 // (use recreateIndexes()).
 // A failed create is logged as a warning, not thrown.
 repo.ensureIndexes()
@@ -582,8 +583,8 @@ See the [Vault documentation](https://peekandpoke.io/llms/vault.md#vault-reposit
 
 ### Timestamped
 
-The most common hook. Sets `createdAt` and `updatedAt` on insert; on save it sets `updatedAt` (and `createdAt` only
-while unset), in every repository that has
+The most common hook. On insert and save it sets `updatedAt`, and `createdAt` only while unset,
+in every repository that has
 `timestamped.onBeforeSave()` among its hooks.
 
 ```kotlin
