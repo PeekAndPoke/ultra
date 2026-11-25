@@ -128,8 +128,8 @@ sealed class AuthRuleBuilder<PARAMS, BODY> {
          * how the rules got there — the `authorize {}` DSL, a part-2 floor seed, part-3 auto-rules,
          * or a direct `copy(authRules = ...)`. This is the single source of truth reused by
          * [RootAuthRuleBuilder.build] (per-block early feedback) AND the boot-time route validator
-         * (whole-chain backstop). Deliberately does NOT check non-emptiness: a route that never
-         * declares `authorize` has an empty chain and is legally public (closed by the part-2 floor).
+         * (whole-chain backstop). Deliberately does NOT check non-emptiness: its callers do, and every
+         * route registered through `ApiRoutes` carries its group floor, so its chain is never empty.
          */
         internal fun validateChain(where: String, rules: List<AuthRule<*, *>>) {
             // A constant may appear ONLY as the single, BARE rule of the whole chain — a composite
@@ -179,8 +179,10 @@ class RootAuthRuleBuilder<PARAMS, BODY> internal constructor(
         val all = collected()
 
         check(all.isNotEmpty()) {
-            "$at declared no rules. Fix: add at least one rule (e.g. isSuperUser()), or declare " +
-                    "public() explicitly for a public route."
+            "$at declared no rules. Fix: add at least one rule (e.g. isSuperUser()), or remove the " +
+                    "block so the route keeps just its group's floor. For a public route, mount it in an " +
+                    "ApiRoutes group declared with authFloor = { public() } and give it no authorize {}: " +
+                    "a route's own public() always conflicts with the group floor."
         }
         validateChain(at, all)
 

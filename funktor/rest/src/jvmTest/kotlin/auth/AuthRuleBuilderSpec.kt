@@ -191,6 +191,18 @@ class AuthRuleBuilderSpec : StringSpec({
         }.message shouldContain "declared no rules"
     }
 
+    "the empty authorize {} error points a public route to the group floor (ULTRA-00360)" {
+        // A route's own public() always conflicts with the prepended group floor, so the advice
+        // must name authFloor = { public() }. Pinned verbatim: this text is what a developer reads.
+        shouldThrow<IllegalStateException> {
+            route().authorize { }
+        }.message shouldBe "authorize {} at 'GET /test' declared no rules. Fix: add at least one " +
+                "rule (e.g. isSuperUser()), or remove the block so the route keeps just its group's " +
+                "floor. For a public route, mount it in an ApiRoutes group declared with " +
+                "authFloor = { public() } and give it no authorize {}: a route's own public() always " +
+                "conflicts with the group floor."
+    }
+
     "an empty forAny {} fails at build time" {
         shouldThrow<IllegalStateException> {
             route().authorize {
