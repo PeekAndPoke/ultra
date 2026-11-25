@@ -552,13 +552,16 @@ class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
 | `uniqueIndex`     | Unique index   | Enforce uniqueness         |
 | `ttlIndex`        | TTL index      | Auto-expire documents      |
 
-A TTL index only expires documents whose field holds a BSON Date. Slumber stores an `MpInstant` as an object and an
-epoch timestamp as a number, so a TTL index on such a field deletes nothing.
+A TTL index only expires documents whose field holds a BSON Date. Slumber stores every date type (`MpInstant`,
+`Instant`, `Date`, ...) as an object and an epoch timestamp as a number, so a TTL index on such a field deletes nothing.
 
 ## Index management
 
 ```kotlin
-// Create missing indexes, drop and re-create one whose definition changed.
+// Create missing indexes. An index whose name exists with other fields, unique, sparse or
+// partial filter is dropped and re-created; a changed TTL expiry is not detected. Default names
+// come from the fields, so a changed field list creates a new index and leaves the old one
+// (use recreateIndexes()).
 // A failed create is logged as a warning, not thrown.
 repo.ensureIndexes()
 
@@ -579,7 +582,8 @@ See the [Vault documentation](https://peekandpoke.io/llms/vault.md#vault-reposit
 
 ### Timestamped
 
-The most common hook. Sets `createdAt` and `updatedAt` on insert and save, in every repository that has
+The most common hook. Sets `createdAt` and `updatedAt` on insert; on save it sets `updatedAt` (and `createdAt` only
+while unset), in every repository that has
 `timestamped.onBeforeSave()` among its hooks.
 
 ```kotlin

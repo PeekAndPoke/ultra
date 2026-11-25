@@ -91,13 +91,17 @@ import {Code} from 'astro:components';
         </table>
     </div>
 
-    <p>A TTL index only expires documents whose field holds a BSON Date. Slumber stores an
-        <code>MpInstant</code> as an object and an epoch timestamp as a number, so a TTL index on such a field
+    <p>A TTL index only expires documents whose field holds a BSON Date. Slumber stores every
+        date type (<code>MpInstant</code>, <code>Instant</code>, <code>Date</code>, ...) as an object and an epoch
+        timestamp as a number, so a TTL index on such a field
         deletes nothing.</p>
 
     <h2>Index management</h2>
 
-    <Code code={`// Create missing indexes, drop and re-create one whose definition changed.
+    <Code code={`// Create missing indexes. An index whose name exists with other fields, unique, sparse or
+// partial filter is dropped and re-created; a changed TTL expiry is not detected. Default names
+// come from the fields, so a changed field list creates a new index and leaves the old one
+// (use recreateIndexes()).
 // A failed create is logged as a warning, not thrown.
 repo.ensureIndexes()
 
@@ -117,7 +121,8 @@ val info = repo.validateIndexes()`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>Timestamped</h3>
 
-    <p>The most common hook. Sets <code>createdAt</code> and <code>updatedAt</code> on insert and save, in
+    <p>The most common hook. Sets <code>createdAt</code> and <code>updatedAt</code> on insert; on save it sets
+        <code>updatedAt</code> (and <code>createdAt</code> only while unset), in
         every repository that has <code>timestamped.onBeforeSave()</code> among its hooks.</p>
 
     <Code code={`@Vault
