@@ -2,22 +2,22 @@
 
 ### Overview {#kontainer-overview}
 
-# Kontainer — Dependency Injection, Done Right
+# Kontainer: Dependency Injection
 
 A lightweight DI container for Kotlin. Constructor injection, lifecycle management,
-and compile-time verification — no magic, no annotations, no surprises.
+and validation at startup.
 
 ## What is Kontainer?
 
 Kontainer is a dependency injection container that uses a **two-stage architecture**: you define a blueprint, then
-create container instances from it. Services are injected via constructors — no annotations, no reflection tricks, no
-runtime surprises.
+create container instances from it. Services are injected via constructors, without
+annotations.
 
 ```kotlin
 val blueprint = kontainer {
     singleton(UserRepository::class)
     singleton(UserService::class)
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
 }
 
 val kontainer = blueprint.create()
@@ -28,15 +28,15 @@ That's it. Define services, create a container, get what you need.
 
 ## The core idea: stateful, scoped containers
 
-Most DI containers give you a single, long-lived container. Kontainer is different — it's built around the idea that *
-*you create a fresh container for every unit of work**.
+Most DI containers give you a single, long-lived container. Kontainer is different: it's built around the idea that
+**you create a fresh container for every unit of work**.
 
 On the server side, every incoming HTTP request, CLI command, or scheduled job gets its own container instance, created
 from a shared blueprint. Singletons (database pools, configuration) are shared. But **dynamic services are fresh per
 container** — they can carry state that lives exactly as long as the request does, then gets garbage collected. Clean
 slate, every time.
 
-This unlocks powerful patterns:
+This enables patterns like these:
 
 - **Inject the current user everywhere** — set it once when the request starts, every service that needs it gets it via
   constructor injection. No parameter threading.
@@ -50,19 +50,18 @@ per-request.
 
 ## Why Kontainer?
 
-**Not another Dagger clone.** Kontainer doesn't generate code at compile time or scan classpath at runtime. Instead, it
+Kontainer doesn't generate code at compile time or scan the classpath at runtime. Instead, it
 validates the entire dependency graph on first use and gives you clear error messages when something doesn't wire up.
 
-- **Pure Kotlin DSL** — no annotations, no XML, no YAML. Your DI config is code.
-- **Three lifecycles** — Singleton (global), Dynamic (per-container), Prototype (per-injection). Choose what fits.
+- **Pure Kotlin DSL**: your DI config is code, not annotations or XML.
+- **Lifecycles**: Singleton (global), Dynamic (per-container), Prototype and Dynamic Prototype (per-injection).
 - **Validated on first use** — missing dependencies, ambiguous services, and inconsistencies are caught immediately with
   clear messages.
 - **Constructor injection** — services declare what they need in their constructor. Kontainer fills it in.
-- **No classpath scanning** — you control exactly what goes into the container.
 
 ## What you get
 
-- **Service Lifecycles** — Singleton, Dynamic, and Prototype — each with clear, predictable behavior.
+- **Service Lifecycles**: Singleton, Dynamic, Prototype, and Dynamic Prototype, each with clear, predictable behavior.
 - **Constructor Injection** — Declare dependencies in your constructor. Kontainer resolves them automatically.
 - **Factory Methods** — When constructors aren't enough, use factory lambdas with up to 10 injected parameters.
 - **Lazy & List Injection** — `Lazy<T>`, `List<T>`, `Lookup<T>` — inject one, many, or defer.
@@ -200,9 +199,11 @@ The first time you call `blueprint.create()`, Kontainer validates the entire dep
 - Are all required dependencies registered?
 - Are there ambiguous services (multiple implementations for one type)?
 - Can all constructors be satisfied?
+- Is there a dependency cycle?
 
-If anything is wrong, you get a `KontainerInconsistent` exception with a clear message listing every problem — not a
-cryptic runtime error later.
+If anything is wrong, you get a `KontainerInconsistent` exception with a clear message listing the problems, not a
+cryptic runtime error later. The result is remembered: every `create()` of an invalid blueprint throws the same
+exception.
 
 ---
 
@@ -210,8 +211,8 @@ cryptic runtime error later.
 
 # Defining Services
 
-Kontainer supports three service lifecycles — Singleton, Dynamic, and Prototype — plus existing instances and
-interface-based registration.
+Kontainer has four ways to declare a service (Singleton, Dynamic, Prototype, and Dynamic Prototype), plus existing
+instances and interface-based registration.
 
 ## Singleton
 
@@ -252,7 +253,9 @@ println(k1.get(Counter::class).next())  // 2  (same instance within k1)
 println(k2.get(Counter::class).next())  // 1  (fresh instance in k2)
 ```
 
-Dynamic services are the key to per-request scoping.
+Dynamic services are the key to per-request scoping. A dynamic must be creatable without an override, by a
+constructor whose parameters are all injectable services or by a default factory, because the blueprint is validated
+without overrides.
 
 ## Prototype
 
@@ -268,6 +271,28 @@ val kontainer = blueprint.create()
 println(kontainer.get(Counter::class).next())  // 1
 println(kontainer.get(Counter::class).next())  // 1  (new instance each time!)
 ```
+
+## Dynamic prototype
+
+A dynamic prototype is created like a prototype, on every injection, but is **bound to the container** like a dynamic
+service: a singleton that injects one becomes one instance per container (semi-dynamic).
+
+```kotlin
+class RequestScratchpad {
+    val notes = mutableListOf<String>()
+}
+
+class ReportService(val scratchpad: RequestScratchpad)
+
+val blueprint = kontainer {
+    dynamicPrototype(RequestScratchpad::class)
+    singleton(ReportService::class)  // one per container, as it injects a dynamic prototype
+}
+```
+
+A plain `prototype` that injects something dynamic already makes its users per container. Choose `dynamicPrototype`
+when the prototype is bound to the request although nothing it injects is dynamic; the debug tools then name it as the
+cause. A dynamic prototype cannot be overridden at `create`: only `dynamic` services can.
 
 ## Existing instances
 
@@ -310,7 +335,8 @@ kontainer.get(GreeterInterface::class)  // works
 kontainer.get(Greeter::class)           // throws ServiceNotFound
 ```
 
-This pattern works with all lifecycle types: `singleton`, `dynamic`, `prototype`, `instance`, and factory methods.
+This pattern works with all of them: `singleton`, `dynamic`, `prototype`, `dynamicPrototype`, `instance`, and factory
+methods.
 
 ---
 
@@ -323,7 +349,7 @@ manual wiring.
 
 ## Per-request containers
 
-The real power of Kontainer's lifecycle model shows up on the server side. The pattern is simple and inspired by PHP's
+Kontainer's lifecycle model matters most on the server side. The pattern is simple and inspired by PHP's
 request model:
 
 1. Define a **blueprint once** at application startup
@@ -345,7 +371,7 @@ val blueprint = kontainer {
     singleton(AuditLogRepository::class)
 
     // Fresh per request — carry request-scoped state
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext(userId = "anonymous", traceId = "none") }
     dynamic(RequestInsights::class)
     dynamic(AuditLog::class)
 }
@@ -422,8 +448,8 @@ class RequestInsights {
     )
 }
 
-// Any service in the request can record metrics
-class UserRepository(private val insights: RequestInsights) {
+// Any service in the request can record metrics; injecting a dynamic makes it semi-dynamic (one per container)
+class MeteredUserRepository(private val insights: RequestInsights) {
     fun findById(id: String): User {
         val start = System.currentTimeMillis()
         val result = db.query("SELECT * FROM users WHERE id = ?", id)
@@ -442,7 +468,8 @@ and the container is garbage collected, all that state goes with it — no manua
 
 ## Lifecycles side by side
 
-The best way to understand the three lifecycles is to see them running together:
+The best way to understand the lifecycles is to see them running together (a `dynamicPrototype` counts like the
+prototype):
 
 ```kotlin
 abstract class Counter {
@@ -506,13 +533,13 @@ class OrderService(val ctx: RequestContext)  // singleton — shared globally?
 If `OrderService` were a true singleton, it would be created once and hold a reference to the `RequestContext` from the
 *first* request forever. Every subsequent request would see the wrong user. That's a bug.
 
-Kontainer prevents this automatically. When a service is defined as `singleton` but injects a `dynamic` service (
-directly or transitively), Kontainer **promotes** it to **semi-dynamic** — it behaves like a dynamic service, getting a
-fresh instance per container.
+Kontainer prevents this automatically. When a service is defined as `singleton` but injects a `dynamic` or
+`dynamicPrototype` service (directly or transitively), Kontainer **promotes** it to **semi-dynamic**: it behaves like
+a dynamic service, getting a fresh instance per container.
 
 ```kotlin
 val blueprint = kontainer {
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
 
     // Defined as singleton, but Kontainer detects that it injects
     // a dynamic service and promotes it to semi-dynamic automatically.
@@ -541,14 +568,18 @@ class OrderController(val orders: OrderService)   // singleton -> semi-dynamic (
 The only services that remain true singletons are those with **no transitive dependency** on any dynamic service — like
 a database pool or a configuration object. Everything else is automatically scoped correctly.
 
+The `Kontainer` and the `InjectionContext` count as dynamic too, so a singleton that injects either of them is promoted
+as well. The debug tools show the kind `SemiDynamic` for promoted services, with the dynamic services that caused it.
+
 ## Comparison
 
-| Lifecycle      | Created                 | Shared across containers | Use case                                              |
-|----------------|-------------------------|--------------------------|-------------------------------------------------------|
-| `singleton`    | Once, globally          | Yes                      | Stateless services, DB pools, configs                 |
-| `dynamic`      | Once per container      | No                       | Request context, user, audit logs, metrics            |
-| `prototype`    | Every injection / get() | No                       | Disposable, short-lived objects                       |
-| *semi-dynamic* | Once per container      | No                       | Auto-promoted singletons that inject dynamic services |
+| Lifecycle          | Created                 | Shared across containers | Use case                                                                                |
+|--------------------|-------------------------|--------------------------|-----------------------------------------------------------------------------------------|
+| `singleton`        | Once, globally          | Yes                      | Stateless services, DB pools, configs                                                   |
+| `dynamic`          | Once per container      | No                       | Request context, user, audit logs, metrics                                              |
+| `prototype`        | Every injection / get() | No                       | Disposable, short-lived objects                                                         |
+| `dynamicPrototype` | Every injection / get() | No                       | Short-lived objects bound to the request: singletons injecting one become per container |
+| *semi-dynamic*     | Once per container      | No                       | Auto-promoted singletons that inject dynamic services                                   |
 
 ---
 
@@ -631,6 +662,10 @@ val blueprint = kontainer {
 If two services implement the same interface, injection becomes **ambiguous** and Kontainer reports an error. Use
 `List<T>` injection instead (see below).
 
+A decorator counts as a candidate too: `CachingRepo(inner: Repo) : Repo` next to `RealRepo : Repo` makes `inner`
+ambiguous. Let the decorator inject the concrete class, `inner: RealRepo`. Consumers injecting `Repo` still see two
+candidates, so they inject the decorator's class.
+
 ## Nullable injection
 
 Mark a dependency as nullable to make it optional. If the service isn't registered, `null` is injected instead of
@@ -651,9 +686,12 @@ val kontainer = blueprint.create()
 println(kontainer.get(MyService::class).optional)  // null
 ```
 
+Optional does not mean lenient: with two or more candidates a nullable parameter is ambiguous, exactly like a non-null
+one.
+
 ## Inject all implementations
 
-Inject all services that implement a given type as a `List`. This is powerful for building extensible, plugin-style
+Inject all services that implement a given type as a `List`. This suits extensible, plugin-style
 architectures:
 
 ```kotlin
@@ -683,6 +721,13 @@ kontainer.get(Database::class).repos.forEach {
     println(it.name)  // "users", "orders"
 }
 ```
+
+Every registered service of the type is in the list once, as itself, also when one of them is a super type of another.
+The same holds for `Lazy<List<T>>`, `Lookup<T>` and `getAll()`.
+
+A service that injects a list of its own super type is in its own list: `CompositeHandler(all: List<Handler>) : Handler`
+is a dependency cycle, and the first `create()` fails. `Lazy<List<Handler>>` only defers the problem; register the
+composite under a type outside the list.
 
 ## Lazy injection
 
@@ -845,6 +890,11 @@ val kontainer = blueprint.create()
 println(kontainer.get(Database::class).storage.name)  // "MemoryStorage"
 ```
 
+The later definition always provides the instance, but it does not always choose the lifecycle. A plain `singleton` or
+`instance` can be replaced by anything. Otherwise the first definition fixes whether the service is a singleton or a
+prototype, and if either definition is dynamic, the service is dynamic: `prototype(X)` followed by `dynamic(X)` gives a
+dynamic prototype. `extend` applies the same rule against the base blueprint.
+
 ## Parameterized modules
 
 Modules can accept parameters — up to 5 — for configuration at inclusion time:
@@ -905,7 +955,7 @@ class UserService(val ctx: RequestContext) {
 }
 
 val blueprint = kontainer {
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
     singleton(UserService::class)
 }
 
@@ -917,6 +967,18 @@ val kontainer = blueprint.create {
 println(kontainer.get(UserService::class).currentUser())
 // "User: user-42"
 ```
+
+- The default factory, here `RequestContext("anonymous")`, is needed: the blueprint is validated without overrides, so
+  every dynamic must be creatable without one.
+- Only `dynamic` services can be overridden. An override of anything else, a `dynamicPrototype` included, makes
+  `create` throw `KontainerInconsistent` before any override lambda runs.
+- The lambda runs at `create`, once per container. A caller who needs laziness builds it into the value it hands in,
+  as `UserProvider.lazy { }` of the `ultra:security` module does.
+- `with(X::class)` replaces `X` when `X` is itself a registered dynamic service, otherwise the one dynamic service `X`
+  is a subtype of; with several it throws `ServiceAmbiguous`. Getting or injecting a type that several dynamic services
+  implement stays ambiguous.
+- Two overrides for the same service under different classes, `with(Base::class)` and `with(Derived::class)`, both
+  run, and the later one wins.
 
 ## Semi-dynamic services
 
@@ -931,7 +993,7 @@ class RequestContext(val userId: String)
 class UserService(val ctx: RequestContext)
 
 val blueprint = kontainer {
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
     singleton(UserService::class)  // automatically becomes semi-dynamic
 }
 ```
@@ -953,9 +1015,12 @@ val extended = base.extend {
 // 'base' still only has Counter
 ```
 
+A service defined again in the extension follows the same redefinition rule as within one blueprint (see Modules).
+
 ## Cloning containers
 
-Clone a container to get a fresh instance with reset dynamic services. Optionally apply new overrides:
+Clone a container to get a fresh instance with reset dynamic services. The overrides given at `create` are kept and
+their lambdas run again; new overrides take precedence. `clone` runs the same checks as `create`:
 
 ```kotlin
 val kontainer = blueprint.create {
@@ -974,6 +1039,7 @@ The `Kontainer` itself and the `KontainerBlueprint` are automatically available 
 them:
 
 ```kotlin
+// Injects the Kontainer, which is dynamic: one ServiceLocator per container
 class ServiceLocator(val kontainer: Kontainer) {
     fun <T : Any> resolve(cls: KClass<T>): T = kontainer.get(cls)
 }
@@ -987,6 +1053,9 @@ val blueprint = kontainer {
     singleton(BlueprintAware::class)
 }
 ```
+
+`Kontainer`, `KontainerBlueprint` and `InjectionContext` are managed by the container itself. Registering one of them,
+in any form, or overriding one at `create` throws `KontainerInconsistent`.
 
 ## Injection context
 
@@ -1020,7 +1089,7 @@ kontainer.use(MyService::class) {
     println(this.doSomething())
 }
 
-// GetAll — all implementations of a type
+// GetAll: all implementations of a type, each as itself
 val allRepos: List<Repository> = kontainer.getAll(Repository::class)
 
 // GetLookup — lazy lookup of implementations
@@ -1029,34 +1098,61 @@ val lookup: LazyServiceLookup<Repository> = kontainer.getLookup(Repository::clas
 
 ## Debug tools
 
-Every container comes with debugging tools:
+Every container comes with debugging tools.
+
+Each service has a **type** (`ServiceType`): `Singleton` or `Prototype`, and a **kind** (`ServiceKind`): `Static` (the
+same for every container), `Dynamic` (declared bound to one container) or `SemiDynamic` (declared static, but reaches a
+dynamic service, so bound to one container too). Only `Static` and `Dynamic` are declared; `SemiDynamic` is derived.
+
+| Declaration             | Type        | Declared kind |
+|-------------------------|-------------|---------------|
+| `singleton`, `instance` | `Singleton` | `Static`      |
+| `dynamic`               | `Singleton` | `Dynamic`     |
+| `prototype`             | `Prototype` | `Static`      |
+| `dynamicPrototype`      | `Prototype` | `Dynamic`     |
+
+A dynamic singleton replaced at `create` is additionally flagged `overridden`.
 
 ```kotlin
+import io.peekandpoke.ultra.kontainer.domain.DebugInfo
+
 val kontainer = blueprint.create()
 
-// Dump all services, their types, and instances
+// A table: Service ID | Type | Kind | Created ("n, first <time>, last <time>"; empty when never created).
+// The kind names the cause: "SemiDynamic (RequestContext)", "Dynamic (overridden)".
 println(kontainer.tools.dumpKontainer())
 
-// Get structured debug info
-val debugInfo = kontainer.tools.getDebugInfo()
+// Structured debug info
+val debugInfo: DebugInfo = kontainer.tools.getDebugInfo()
 debugInfo.services.forEach { service ->
-    println("${service.cls.fqn} [type=${service.type}]")
+    println("${service.cls.fqn} [${service.type}, ${service.kind}, overridden=${service.overridden}]")
+    println("  created: ${service.created.count}, bound by: ${service.semiDynamicBecauseOf.map { it.fqn }}")
     service.definition.injects.forEach { param ->
         println("  -> ${param.name}: ${param.classes.map { it.fqn }}")
     }
 }
+
+// One provider: how often it created its service (a global singleton counts across all kontainers of the blueprint)
+val count = kontainer.getProvider(MyService::class).created.count
 ```
+
+- A global singleton is created in an internal kontainer shared by the whole blueprint: it shows as created in every
+  container, while the prototypes it creates (directly or through `Lazy`, `List` or `Lookup`) show in no request's dump.
+- `definition.codeLocation.location` points to where a service was defined; for an override handed in at `create` it
+  names the class in which the override lambda was written.
+- `definition.overwrites` chains the definitions a service replaced within one blueprint (a module, then the app) or at
+  `create`. A definition from `extend` does not link to the one it replaced in the base blueprint.
 
 ## Error handling
 
 Kontainer throws specific exceptions for different problems:
 
-| Exception               | When                                                               |
-|-------------------------|--------------------------------------------------------------------|
-| `KontainerInconsistent` | Dependency graph has problems (missing deps, configuration errors) |
-| `ServiceNotFound`       | Requested service is not registered                                |
-| `ServiceAmbiguous`      | Multiple services match the requested type                         |
-| `InvalidClassProvided`  | Tried to register an interface or abstract class directly          |
-| `InvalidServiceFactory` | Factory method is invalid                                          |
+| Exception               | When                                                                                                        |
+|-------------------------|-------------------------------------------------------------------------------------------------------------|
+| `KontainerInconsistent` | Dependency graph has problems (missing or ambiguous deps, cycles), or a registration or override is refused |
+| `ServiceNotFound`       | Requested service is not registered                                                                         |
+| `ServiceAmbiguous`      | Multiple services match the requested type                                                                  |
+| `InvalidClassProvided`  | Tried to register an interface or abstract class directly                                                   |
+| `InvalidServiceFactory` | Factory method is invalid                                                                                   |
 
 ---

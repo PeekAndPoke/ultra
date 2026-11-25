@@ -72,6 +72,8 @@ val blueprint = kontainer {
 val kontainer = blueprint.create()
 println(kontainer.get(Database::class).storage.name)  // "MemoryStorage"`} lang="kotlin" theme="vitesse-dark" />
 
+<p>The later definition always provides the instance, but it does not always choose the lifecycle. A plain <code>singleton</code> or <code>instance</code> can be replaced by anything. Otherwise the first definition fixes whether the service is a singleton or a prototype, and if either definition is dynamic, the service is dynamic: <code>prototype(X)</code> followed by <code>dynamic(X)</code> gives a dynamic prototype. <code>extend</code> applies the same rule against the base blueprint.</p>
+
 <h2>Parameterized modules</h2>
 
 <p>Modules can accept parameters — up to 5 — for configuration at inclusion time:</p>

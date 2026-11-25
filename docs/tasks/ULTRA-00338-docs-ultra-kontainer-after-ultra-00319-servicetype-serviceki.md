@@ -1,6 +1,6 @@
 # ULTRA-00338: Docs: ultra/kontainer after ULTRA-00319 (ServiceType, ServiceKind, dynamicPrototype)
 
-> **Status (2026-11-14): NOT STARTED.** 
+> **Status (2026-11-25): IN PROGRESS.** Pages, mirror and README updated on `wt/kontainer`; review by the coordinator next.
 >
 > **Part of:** ULTRA-00260 (Epic: Docs backlog)
 
@@ -79,3 +79,35 @@ ULTRA-00329 removed the instance API and changed the dump; these spots describe 
   service, while reads through the base type stay ambiguous (ULTRA-00345); factories are not constructed by callers
   (ULTRA-00346).
 - 2026-11-24: spots from ULTRA-00329 added (instance API removed, dump column "Created").
+- 2026-11-25: docs track on `wt/kontainer`. Changed: `introspection` (dump with the Kind and Created columns and the
+  built-ins, the type and kind model replacing the five-value table, debug info with `kind`, `overridden`,
+  `semiDynamicBecauseOf` and `created`, `provider.created.count`, the global singleton note, the override code
+  location; `isProviderCreated` was described as "instantiated", it reports the provider; the `overwrites` chain is
+  not kept across `extend`, the page said it was), `lifecycle` (`dynamicPrototype` row, promotion by `Kontainer` and
+  `InjectionContext`, broken link `advanced#debug-tools` now `introspection`), `services` (four declarations, a
+  `dynamicPrototype` section with when to choose it), `index`, `getting-started` (cycles, remembered validation),
+  `injection` (decorator, ambiguous nullable, each candidate as itself, the composite in its own list), `modules`
+  (redefinition rule, `extend`), `advanced` (what can be overridden, eager overrides, exact match, two overrides for
+  one service, `clone` keeps and reruns the overrides with the same checks, the built-ins); the mirror moves with
+  them (also "compile-time verification", which was false); `ultra/kontainer/README.MD` line "Three service types".
+  Deleted the stale `ultra/kontainer/docs/ultra::docs/index.md`; one reference remains, the EXAMPLES link in
+  `ultra/README.MD` (line 28), which already resolved to a path that does not exist (`ultra/ultra/kontainer/...`), as
+  does its mutator neighbour; left for the coordinator. `pnpm astro build`: 118 pages, green.
+- 2026-11-25: review round 1 fixes. Every `dynamic(RequestContext::class)` whose class takes a `String` got a default
+  factory (validation builds a kontainer without overrides): `index`, `introspection`, `advanced` (two), `lifecycle`
+  (two), mirror (five). The other `dynamic(` registrations were checked: their constructors take only injectable
+  services. One sentence on why, in `services` (Dynamic) and in the `advanced` override list, mirror alike. The
+  introspection comment on `created.count` names the global singleton; the decorator advice says consumers of `Repo`
+  inject the decorator's class (the second alternative proposed, "registered under its own type only", left out: a
+  decorator is a `Repo` under any key that is one, and under any other key `Repo` consumers get the undecorated
+  service); the Kontainer card on `ultra/tools` no longer says "three lifecycles". Override precedence wording
+  untouched (with the maintainer). `pnpm astro build`: 118 pages, green.
+- 2026-11-25: round 2 clean; last batch. `lifecycle` and mirror: the repository that writes insights is
+  `MeteredUserRepository`, with a comment that injecting a dynamic makes it semi-dynamic, so the "Shared" list of the
+  first example holds nothing that injects a dynamic. Light pass of ULTRA-00356 on the two kontainer files:
+  `ultra/kontainer/README.MD` (heading without "Done Right", slogans "no surprises" and "no magic" gone, validation on
+  the first `create`, version snippet `0.119.0`) and the mirror ("no reflection tricks" gone, as Kontainer reads
+  constructors with Kotlin reflection; "Not another Dagger clone", "powerful", "The real power", a duplicate "No
+  classpath scanning" bullet, a bold broken across two lines); the two page sentences the mirror shares
+  (`lifecycle`, `injection`) moved with it. Override precedence wording untouched (ULTRA-00355).
+  `pnpm astro build`: 118 pages, green.
