@@ -154,3 +154,4 @@ is unpublished and `ultra/kontainer` has no JMH plugin.
 - 2026-11-25: merged into master (692e743a); gate PASS in round 1. Open: strip the `$$Lambda...` suffix from the override location (maintainer).
 - 2026-11-25: the `$$Lambda...` suffix is dropped from the override location (maintainer). Hand-checked; the mutant
   without the cut is RED (4 assertions in ServiceDefinitionsSpec). Kontainer 626 / 0 / 0 (XML). Merged (2adf2df0).
+- 2026-11-25: DONE.
