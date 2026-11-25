@@ -10,7 +10,7 @@ handles them all without annotations or configuration.
 ## The Problem
 
 You have a Kotlin data class. You want to serialize it to a Map (for a database, an API, a cache). Jackson needs
-annotations. Gson ignores nullability. kotlinx.serialization needs a compiler plugin.
+its Kotlin module. Gson ignores nullability. kotlinx.serialization needs a compiler plugin.
 
 And when deserialization fails, you get a cryptic exception with no idea which nested field caused it.
 
@@ -39,8 +39,8 @@ nullable fields, default values, generics, and all.
   level.
 - **Graceful Degradation** — Nullable field receives bad data? Returns `null` instead of crashing. Required field fails?
   Detailed path in the error.
-- **Two-Pass Error Handling** — Fast pass first, no overhead. Only builds full diagnostic path on failure — performance
-  when it works, clarity when it doesn't.
+- **Two-Pass Error Handling** — Fast pass first, without path tracking. Only builds the full diagnostic path on failure —
+  performance when it works, clarity when it doesn't.
 - **Format-Agnostic** — Works with Maps and Lists, not JSON strings. Use it for databases, REST APIs, caches, or any
   storage backend.
 - **Pluggable Modules** — Custom type handling via `SlumberModule`. No annotation processors — just implement an
@@ -107,13 +107,15 @@ Slumber requires **Kotlin reflection** (included transitively) and runs on the *
 import io.peekandpoke.ultra.slumber.Codec
 
 // The default codec handles: primitives, data classes, enums, collections,
-// sealed classes, java.time.*, kotlinx.datetime.*, and MpDateTime types.
+// sealed classes, the common java.time and kotlinx.datetime types, and MpDateTime types.
 val codec = Codec.default
 ```
 
 ## 3. Serialize (slumber)
 
 ```kotlin
+import io.peekandpoke.ultra.slumber.slumber
+
 data class Address(val city: String, val zip: String)
 data class Person(val name: String, val age: Int, val address: Address)
 
@@ -197,7 +199,7 @@ codec.awake<Config>(emptyMap<String, Any>())
 ```kotlin
 data class Stats(val count: Int, val label: String)
 
-// String "42" -> Int 42, Number 100L -> Int 100
+// String "42" -> Int 42, Number 100 -> String "100"
 codec.awake<Stats>(mapOf("count" to "42", "label" to 100))
 // -> Stats(count=42, label="100")
 
@@ -230,7 +232,7 @@ codec.awake<User>(mapOf("name" to "Bob", "age" to 25))
 
 ## Nested data classes
 
-Nesting works recursively — no depth limit:
+Nesting works recursively:
 
 ```kotlin
 data class Address(val city: String, val zip: String)
@@ -285,6 +287,8 @@ val restored = codec.awake<AppConfig>(data)
 By default, only constructor parameters are serialized. To include computed properties, use `@Slumber.Field`:
 
 ```kotlin
+import io.peekandpoke.ultra.common.slumber.Slumber
+
 data class Invoice(val items: List<Double>, val taxRate: Double) {
     @Slumber.Field
     val subtotal get() = items.sum()
@@ -401,8 +405,8 @@ sealed class Vehicle {
     companion object : Polymorphic.Parent {
         override val discriminator = "kind"
 
-        // childTypes has no default — supply it, usually via indexedSubClasses()
-        override val childTypes: Set<KClass<*>> get() = indexedSubClasses()
+        // childTypes has no default. Sealed subclasses are found without it.
+        override val childTypes: Set<KClass<*>> = emptySet()
     }
 
     data class Car(val seats: Int) : Vehicle() {
@@ -431,7 +435,7 @@ sealed class Message {
     companion object : Polymorphic.Parent {
         override val defaultType = Text::class
 
-        override val childTypes: Set<KClass<*>> get() = indexedSubClasses()
+        override val childTypes: Set<KClass<*>> = emptySet()
     }
 
     data class Text(val body: String) : Message()
@@ -602,7 +606,7 @@ data class StrictItems(val items: List<String>)
 codec.awake<StrictItems>(mapOf(
     "items" to listOf("hello", null)
 ))
-// -> AwakerException: "root.items.1 must not be null"
+// -> AwakerException: "Value at path 'root.items.1' must not be null"
 ```
 
 ## Nested collections
@@ -630,7 +634,7 @@ Slumber supports three datetime libraries out of the box: `java.time`, `kotlinx.
 
 ## The format
 
-All datetime types serialize to the same structure:
+Most datetime types serialize to the same structure:
 
 ```json
 {
@@ -640,8 +644,11 @@ All datetime types serialize to the same structure:
 }
 ```
 
-This format stores both the precise timestamp and the timezone, so no information is lost. The `human` field is for
-debugging — deserialization uses only `ts` and `timezone`.
+`ts` is in epoch milliseconds, so anything finer than a millisecond is dropped. `timezone` is the zone of a zoned type
+and `"UTC"` for every other type. The `human` field is for debugging — deserialization uses only `ts` and `timezone`.
+
+The exceptions: `LocalTime` and `MpLocalTime` are stored as a number (seconds and milliseconds of the day), `ZoneId`
+and `MpTimezone` as a plain string, and `MpLocalTimeSlot` as `{from, duration, to}`.
 
 ## java.time types
 
@@ -697,17 +704,21 @@ codec.slumber(dateTime)
 // -> { "ts": ..., "timezone": "UTC", "human": "..." }
 ```
 
+Supported `kotlinx.datetime` types: `LocalDate` and `LocalDateTime`.
+
 ## MpDateTime types (Ultra multiplatform)
 
-Ultra's own multiplatform datetime types follow the same format:
+Ultra's own multiplatform datetime types use the same formats:
 
 ```kotlin
-import io.peekandpoke.ultra.common.datetime.*
+import io.peekandpoke.ultra.datetime.MpLocalDate
+import io.peekandpoke.ultra.datetime.MpTimezone
+import kotlinx.datetime.Month
 
 val codec = Codec.default
 
-val instant = MpLocalDate.of(2022, kotlinx.datetime.Month.APRIL, 5)
-    .atStartOfDay(kotlinx.datetime.TimeZone.UTC)
+val instant = MpLocalDate.of(2022, Month.APRIL, 5)
+    .atStartOfDay(MpTimezone.UTC)
     .toInstant()
 
 codec.slumber(instant)
@@ -715,7 +726,7 @@ codec.slumber(instant)
 ```
 
 Supported MpDateTime types: `MpInstant`, `MpZonedDateTime`, `MpLocalDate`, `MpLocalDateTime`, `MpLocalTime`,
-`MpTimezone`.
+`MpLocalTimeSlot`, `MpTimezone`.
 
 ## DateTime in data classes
 
@@ -767,10 +778,11 @@ Slumber's two-pass strategy gives you speed when things work and precision when 
 When you call `codec.awake()`, two things happen:
 
 1. **Fast pass** — Deserializes with no path tracking. Minimal overhead. If it succeeds, you're done.
-2. **Tracking pass** — Only runs if the fast pass throws. Re-deserializes with full path tracking, collecting diagnostic
-   information at every level.
+2. **Tracking pass** — Only runs if the fast pass throws an `AwakerException`. Re-deserializes with full path tracking,
+   collecting diagnostic information at every level.
 
-This means you pay zero cost for path tracking in the success case — which is the common case.
+So the success case, which is the common case, tracks no paths and collects no logs. A failure pays for that: the whole
+input is awoken a second time.
 
 ## Nullable vs non-nullable errors
 
@@ -831,7 +843,7 @@ data class User(val name: String, val age: Int)
 codec.awake<User>(mapOf("name" to "Alice"))
 // -> AwakerException with message containing:
 //   "Value at path 'root' must not be null"
-//   "'root': User misses parameters 'age'"
+//   "'root': com.example.User misses parameters 'age'"
 ```
 
 ## Exception types
@@ -839,7 +851,7 @@ codec.awake<User>(mapOf("name" to "Alice"))
 Slumber defines three exception classes:
 
 ```kotlin
-// Base class for all Slumber errors
+// Base class of the two below. A type no module handles throws IllegalStateException instead.
 open class SlumberException(message: String) : Throwable(message)
 
 // Thrown when deserialization fails
@@ -972,10 +984,10 @@ Modules are queried in order. Use `prependModules` when your module should overr
 
 ```kotlin
 // Override: your module takes priority over built-in handlers
-val config = SlumberConfig.default.prependModules(MoneyModule)
+val overriding = SlumberConfig.default.prependModules(MoneyModule)
 
 // Fallback: your module only handles types the built-in modules don't
-val config = SlumberConfig.default.appendModules(FallbackModule)
+val fallback = SlumberConfig.default.appendModules(FallbackModule)
 ```
 
 ## Passing context via attributes
@@ -991,17 +1003,28 @@ val config = SlumberConfig.default
     .prependModules(MyDbModule)
     .plusAttributes(TypedAttributes.of { add(DatabaseKey, myDatabase) })
 
-// Access it in your module
+// Read it from the context, at awake time
 object MyDbModule : SlumberModule {
     override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {
-        val db = attributes[DatabaseKey] // Access the database
-        // ... use db to resolve references
+        if (type.classifier != MyRef::class) return null
+
+        return type.wrapIfNonNull(object : Awaker {
+            override fun awake(data: Any?, context: Awaker.Context): Any? {
+                val db = context.attributes[DatabaseKey] ?: return null
+                return db.resolve(data) // your own lookup
+            }
+        })
     }
+
+    override fun getSlumberer(type: KType, attributes: TypedAttributes): Slumberer? = null
 }
 ```
 
+Read attributes from the `context`, not in `getAwaker`: the config caches what a module returns per type, and
+`plusAttributes` keeps that cache.
+
 This is how the Vault and Karango integrations work — they pass `Database` and `EntityCache` references through
-attributes so their custom modules can resolve entity references during serialization.
+attributes, and Vault's `RefCodec` reads them from the context to resolve entity references when awaking.
 
 ## The default module stack
 

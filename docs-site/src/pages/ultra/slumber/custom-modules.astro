@@ -84,10 +84,10 @@ codec.awake<Money>(mapOf("amount" to 1099, "currency" to "EUR"))
 <p>Modules are queried in order. Use <code>prependModules</code> when your module should override built-in behavior, and <code>appendModules</code> when it's a fallback:</p>
 
 <Code code={`// Override: your module takes priority over built-in handlers
-val config = SlumberConfig.default.prependModules(MoneyModule)
+val overriding = SlumberConfig.default.prependModules(MoneyModule)
 
 // Fallback: your module only handles types the built-in modules don't
-val config = SlumberConfig.default.appendModules(FallbackModule)`} lang="kotlin" theme="vitesse-dark" />
+val fallback = SlumberConfig.default.appendModules(FallbackModule)`} lang="kotlin" theme="vitesse-dark" />
 
 <h2>Passing context via attributes</h2>
 
@@ -101,15 +101,25 @@ val config = SlumberConfig.default
     .prependModules(MyDbModule)
     .plusAttributes(TypedAttributes.of { add(DatabaseKey, myDatabase) })
 
-// Access it in your module
+// Read it from the context, at awake time
 object MyDbModule : SlumberModule {
     override fun getAwaker(type: KType, attributes: TypedAttributes): Awaker? {
-        val db = attributes[DatabaseKey] // Access the database
-        // ... use db to resolve references
+        if (type.classifier != MyRef::class) return null
+
+        return type.wrapIfNonNull(object : Awaker {
+            override fun awake(data: Any?, context: Awaker.Context): Any? {
+                val db = context.attributes[DatabaseKey] ?: return null
+                return db.resolve(data) // your own lookup
+            }
+        })
     }
+
+    override fun getSlumberer(type: KType, attributes: TypedAttributes): Slumberer? = null
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>This is how the Vault and Karango integrations work — they pass <code>Database</code> and <code>EntityCache</code> references through attributes so their custom modules can resolve entity references during serialization.</p>
+<p>Read attributes from the <code>context</code>, not in <code>getAwaker</code>: the config caches what a module returns per type, and <code>plusAttributes</code> keeps that cache.</p>
+
+<p>This is how the Vault and Karango integrations work — they pass <code>Database</code> and <code>EntityCache</code> references through attributes, and Vault's <code>RefCodec</code> reads them from the context to resolve entity references when awaking.</p>
 
 <h2>The default module stack</h2>
 

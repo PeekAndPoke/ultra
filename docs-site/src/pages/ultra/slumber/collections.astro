@@ -84,7 +84,7 @@ data class StrictItems(val items: List<String>)
 codec.awake<StrictItems>(mapOf(
     "items" to listOf("hello", null)
 ))
-// → AwakerException: "root.items.1 must not be null"`} lang="kotlin" theme="vitesse-dark" />
+// → AwakerException: "Value at path 'root.items.1' must not be null"`} lang="kotlin" theme="vitesse-dark" />
 
 <h2>Nested collections</h2>
 

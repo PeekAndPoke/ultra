@@ -18,10 +18,10 @@ import { Code } from 'astro:components';
 
 <ol>
   <li><strong>Fast pass</strong> — Deserializes with no path tracking. Minimal overhead. If it succeeds, you're done.</li>
-  <li><strong>Tracking pass</strong> — Only runs if the fast pass throws. Re-deserializes with full path tracking, collecting diagnostic information at every level.</li>
+  <li><strong>Tracking pass</strong> — Only runs if the fast pass throws an <code>AwakerException</code>. Re-deserializes with full path tracking, collecting diagnostic information at every level.</li>
 </ol>
 
-<p>This means you pay zero cost for path tracking in the success case — which is the common case.</p>
+<p>So the success case, which is the common case, tracks no paths and collects no logs. A failure pays for that: the whole input is awoken a second time.</p>
 
 <h2>Nullable vs non-nullable errors</h2>
 
@@ -75,13 +75,13 @@ codec.awake<Container>(mapOf(
 codec.awake<User>(mapOf("name" to "Alice"))
 // → AwakerException with message containing:
 //   "Value at path 'root' must not be null"
-//   "'root': User misses parameters 'age'"`} lang="kotlin" theme="vitesse-dark" />
+//   "'root': com.example.User misses parameters 'age'"`} lang="kotlin" theme="vitesse-dark" />
 
 <h2>Exception types</h2>
 
 <p>Slumber defines three exception classes:</p>
 
-<Code code={`// Base class for all Slumber errors
+<Code code={`// Base class of the two below. A type no module handles throws IllegalStateException instead.
 open class SlumberException(message: String) : Throwable(message)
 
 // Thrown when deserialization fails

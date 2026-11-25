@@ -28,12 +28,14 @@ import { dep } from '../../../data/site';
     <Code code={`import io.peekandpoke.ultra.slumber.Codec
 
 // The default codec handles: primitives, data classes, enums, collections,
-// sealed classes, java.time.*, kotlinx.datetime.*, and MpDateTime types.
+// sealed classes, the common java.time and kotlinx.datetime types, and MpDateTime types.
 val codec = Codec.default`} lang="kotlin" theme="vitesse-dark" />
 
 <h2>3. Serialize (slumber)</h2>
 
-<Code code={`data class Address(val city: String, val zip: String)
+<Code code={`import io.peekandpoke.ultra.slumber.slumber
+
+data class Address(val city: String, val zip: String)
 data class Person(val name: String, val age: Int, val address: Address)
 
 val alice = Person("Alice", 30, Address("Berlin", "10115"))
@@ -105,7 +107,7 @@ codec.awake<Config>(emptyMap<String, Any>())
 
 <Code code={`data class Stats(val count: Int, val label: String)
 
-// String "42" → Int 42, Number 100L → Int 100
+// String "42" → Int 42, Number 100 → String "100"
 codec.awake<Stats>(mapOf("count" to "42", "label" to 100))
 // → Stats(count=42, label="100")
 
