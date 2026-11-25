@@ -1,6 +1,6 @@
 # ULTRA-00355: Kontainer: the override given last wins, also across clone
 
-> **Status (2026-11-25): IN PROGRESS.** Implemented on `wt/kontainer-values`; the review gate is next.
+> **Status (2026-11-25): IN PROGRESS.** Implemented on `wt/kontainer-values`; gate PASS, ready to merge.
 
 ## Why this exists
 
@@ -72,8 +72,30 @@ take precedence over the parent's. This makes the docs' "the later one wins" and
 
 - Full suite not run (coordinator: only if something outside kontainer breaks; nothing outside kontainer changed).
 
+## Review ledger
+
+Round 1, standard gate, three charters (implementation and code style, domain, security), for ULTRA-00354 and
+ULTRA-00355 together. Zero CRITICAL, zero MAJOR: gate PASS in round 1. This ticket's rows:
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MINOR (domain) | `CHANGELOG.md` | The CHANGELOG must name the run-order change of the override lambdas | coordinator | CHANGELOG names the run order |
+| 1 | MINOR (impl) | `ultra/kontainer/src/main/kotlin/DynamicOverrides.kt:29`, `:36` | The lambdas run in a new order, not covered by "every other case unchanged" | coordinator | CHANGELOG names the run order |
+| 1 | security | | NO FINDINGS | | |
+
+CLEAN in round 1, one line each:
+- Bypass paths: none; every registration form and `with` at create and clone reach the checks.
+- Allowed types are not refused: `Number`, `CharSequence`, arrays, value classes of one's own, a factory returning a
+  value, `instance(Number::class, 5)`.
+- Request isolation: overrides stay per kontainer; a clone does not change its parent.
+- Concurrency of `merge`: it builds new immutable maps and shares no mutable state.
+- Messages carry class names only, no values.
+- Pins changed by the decisions: none weaker; each changed pin asserts the new behaviour as strictly as before.
+
 ## History
 
 - 2026-11-25: created on the maintainer's decision.
 - 2026-11-25: IN PROGRESS.
 - 2026-11-25: implemented on `wt/kontainer-values`; spec RED before, 4 mutants RED; status IN PROGRESS, review gate next.
+- 2026-11-25: gate round 1 PASS (0 CRITICAL, 0 MAJOR); both MINORs go to the CHANGELOG (coordinator: names the
+  run order). Kontainer 661 / 0 / 0 (XML). Ready to merge.

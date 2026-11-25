@@ -1,6 +1,6 @@
 # ULTRA-00354: Kontainer: refuse value types (numbers, chars, strings) as services
 
-> **Status (2026-11-25): IN PROGRESS.** Implemented on `wt/kontainer-values`; the review gate is next.
+> **Status (2026-11-25): IN PROGRESS.** Implemented on `wt/kontainer-values`; gate PASS, ready to merge.
 
 ## Why this exists
 
@@ -54,7 +54,8 @@ happen, and no cache change is needed.
   - `ServiceBuilder.invoke(srv, impl)` (`:127`, `:128`): both sides, before `forClass(impl)`.
   - `instance(value)` (`:748`) and `instance(srv, value)` (`:768`).
   - `with` at create and clone: `KontainerBlueprint.createChecked` (`KontainerBlueprint.kt:233`), after the built-in
-    check and before the dynamics checker: "kotlin.Int is a value type and cannot be overridden".
+    check and before the dynamics checker: "kotlin.Int is a value type and cannot be overridden; name the service class
+    instead: with(Service::class) { ... }" (hint added in gate round 1).
 - JVM forms reaching the builder: `Int::class` is `int`; `Int::class.javaObjectType.kotlin`, `5::class` (so
   `instance(5)`) and the reified `with<Int>` are `java.lang.Integer`. The unsigned types are value classes with one
   form: `UInt::class.java` and `5u::class.java` are both `kotlin.UInt` (`javaPrimitiveType` is null), pinned by the
@@ -115,8 +116,30 @@ happen, and no cache change is needed.
   19147 tests, 0 failures, 0 errors (kontainer 652). No value-type registration elsewhere in the repo; no tracked
   file changed by `generateDocs`.
 
+## Review ledger
+
+Round 1, standard gate, three charters (implementation and code style, domain, security), for ULTRA-00354 and
+ULTRA-00355 together. Zero CRITICAL, zero MAJOR: gate PASS in round 1. This ticket's rows:
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MINOR (domain) | `ultra/kontainer/src/main/kotlin/KontainerBlueprint.kt:233` | The override refusal names the value type as if it were the target: with `dynamic(Number::class) { 0.5 }`, `create { with { 5 } }` says "kotlin.Int is a value type and cannot be overridden" while Number was meant, per request at runtime | fix | Hint appended: "...; name the service class instead: with(Service::class) { ... }"; `ValueTypeServicesSpec` expects it for every class and JVM form |
+| 1 | MINOR (impl) | `ultra/kontainer/src/test/kotlin/e2e/ValueTypeServicesSpec.kt:32`, `:70`, `:72` | The expected messages are built with the production `getName()`, so a regression of it stays green | fix | The fixture carries a literal name per class (`"kotlin.Int"` ...); labels and expected messages use it; the `getName` import is gone |
+| 1 | security | | NO FINDINGS | | |
+
+CLEAN in round 1, one line each:
+- Bypass paths: none; every registration form and `with` at create and clone reach the checks.
+- Allowed types are not refused: `Number`, `CharSequence`, arrays, value classes of one's own, a factory returning a
+  value, `instance(Number::class, 5)`.
+- Request isolation: overrides stay per kontainer; a clone does not change its parent.
+- Concurrency of `merge`: it builds new immutable maps and shares no mutable state.
+- Messages carry class names only, no values.
+- Pins changed by the decisions: none weaker; each changed pin asserts the new behaviour as strictly as before.
+
 ## History
 
 - 2026-11-25: created on the maintainer's word; type list chosen by the maintainer (value types, exact classes).
 - 2026-11-25: IN PROGRESS.
 - 2026-11-25: implemented on `wt/kontainer-values`; spec RED before, 12 mutants RED; status IN PROGRESS, review gate next.
+- 2026-11-25: gate round 1 PASS (0 CRITICAL, 0 MAJOR); MINOR batch applied: the override refusal hints at the service
+  class, the spec pins every name by literal. Kontainer 661 / 0 / 0 (XML). Ready to merge.

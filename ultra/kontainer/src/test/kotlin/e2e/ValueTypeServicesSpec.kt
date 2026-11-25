@@ -5,7 +5,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
-import io.peekandpoke.ultra.kontainer.getName
 import io.peekandpoke.ultra.kontainer.kontainer
 import io.peekandpoke.ultra.kontainer.module
 import kotlin.reflect.KClass
@@ -23,39 +22,37 @@ value class ValueTypeId(val value: String)
  */
 class ValueTypeServicesSpec : StringSpec({
 
-    /** One refused class in one JVM form, with a [sample] value of it. */
-    class ValueType(val cls: KClass<*>, val sample: Any) {
+    /** One refused class in one JVM form, with a [sample] value of it and the [name] the messages must give. */
+    class ValueType(val cls: KClass<*>, val sample: Any, val name: String) {
         @Suppress("UNCHECKED_CAST")
         val any = cls as KClass<Any>
 
         /** Names the JVM form: `kotlin.Int` is `int` or `java.lang.Integer`. */
-        val label = "${cls.getName()} (${cls.java.name})"
+        val label = "$name (${cls.java.name})"
     }
 
-    val primitives: List<Pair<KClass<*>, Any>> = listOf(
-        Boolean::class to true,
-        Byte::class to 1.toByte(),
-        Short::class to 1.toShort(),
-        Int::class to 5,
-        Long::class to 5L,
-        Float::class to 1.5f,
-        Double::class to 2.5,
-        Char::class to 'c',
+    /** `Int::class` is Java `int`; its object type is `java.lang.Integer`, the class of a boxed value. */
+    val primitiveForms = listOf(
+        ValueType(Boolean::class, true, "kotlin.Boolean"),
+        ValueType(Byte::class, 1.toByte(), "kotlin.Byte"),
+        ValueType(Short::class, 1.toShort(), "kotlin.Short"),
+        ValueType(Int::class, 5, "kotlin.Int"),
+        ValueType(Long::class, 5L, "kotlin.Long"),
+        ValueType(Float::class, 1.5f, "kotlin.Float"),
+        ValueType(Double::class, 2.5, "kotlin.Double"),
+        ValueType(Char::class, 'c', "kotlin.Char"),
     )
 
-    /** `Int::class` is Java `int`; its object type is `java.lang.Integer`, the class of a boxed value. */
-    val primitiveForms = primitives.map { (cls, sample) -> ValueType(cls, sample) }
-
-    val objectForms = primitives.map { (cls, sample) -> ValueType(cls.javaObjectType.kotlin, sample) }
+    val objectForms = primitiveForms.map { v -> ValueType(v.cls.javaObjectType.kotlin, v.sample, v.name) }
 
     /** One JVM form each: the unsigned types are value classes, boxed as `kotlin.UInt` and so on. */
     val singleForms = listOf(
-        ValueType(UByte::class, 1.toUByte()),
-        ValueType(UShort::class, 1.toUShort()),
-        ValueType(UInt::class, 5u),
-        ValueType(ULong::class, 5uL),
-        ValueType(String::class, "text"),
-        ValueType(Unit::class, Unit),
+        ValueType(UByte::class, 1.toUByte(), "kotlin.UByte"),
+        ValueType(UShort::class, 1.toUShort(), "kotlin.UShort"),
+        ValueType(UInt::class, 5u, "kotlin.UInt"),
+        ValueType(ULong::class, 5uL, "kotlin.ULong"),
+        ValueType(String::class, "text", "kotlin.String"),
+        ValueType(Unit::class, Unit, "kotlin.Unit"),
     )
 
     val refused = primitiveForms + objectForms + singleForms
@@ -67,9 +64,10 @@ class ValueTypeServicesSpec : StringSpec({
         "${e::class.simpleName}: ${e.message}"
     }
 
-    fun notRegistered(v: ValueType) = "KontainerInconsistent: ${v.cls.getName()} is a value type and cannot be registered"
+    fun notRegistered(v: ValueType) = "KontainerInconsistent: ${v.name} is a value type and cannot be registered"
 
-    fun notOverridden(v: ValueType) = "KontainerInconsistent: ${v.cls.getName()} is a value type and cannot be overridden"
+    fun notOverridden(name: String) = "KontainerInconsistent: $name is a value type and cannot be overridden; " +
+            "name the service class instead: with(Service::class) { ... }"
 
     class Form(val name: String, val register: KontainerBuilder.(ValueType) -> Unit)
 
@@ -95,8 +93,8 @@ class ValueTypeServicesSpec : StringSpec({
     "The fixture: both JVM forms of each primitive are equal as KClass, but not as Java classes" {
 
         assertSoftly {
-            primitiveForms.map { it.cls.java.isPrimitive } shouldBe List(primitives.size) { true }
-            objectForms.map { it.cls.java.isPrimitive } shouldBe List(primitives.size) { false }
+            primitiveForms.map { it.cls.java.isPrimitive } shouldBe List(primitiveForms.size) { true }
+            objectForms.map { it.cls.java.isPrimitive } shouldBe List(primitiveForms.size) { false }
             primitiveForms.map { it.cls } shouldBe objectForms.map { it.cls }
             objectForms.map { it.cls.java } shouldBe objectForms.map { it.sample::class.java }
             singleForms.map { it.cls.java } shouldBe singleForms.map { it.sample::class.java }
@@ -147,7 +145,7 @@ class ValueTypeServicesSpec : StringSpec({
 
             refused.associate { v ->
                 v.label to outcome { blueprint.create { with(v.any) { v.sample } } }
-            } shouldBe refused.associate { v -> v.label to notOverridden(v) }
+            } shouldBe refused.associate { v -> v.label to notOverridden(v.name) }
         }
 
         "With $name, an override of a value type at clone is refused in every JVM form" {
@@ -156,17 +154,15 @@ class ValueTypeServicesSpec : StringSpec({
 
             refused.associate { v ->
                 v.label to outcome { original.clone { with(v.any) { v.sample } } }
-            } shouldBe refused.associate { v -> v.label to notOverridden(v) }
+            } shouldBe refused.associate { v -> v.label to notOverridden(v.name) }
         }
     }
 
     "The reified with<Int> and with { text } are refused" {
 
         assertSoftly {
-            outcome { anyBlueprint.create { with<Int> { 5 } } } shouldBe
-                    "KontainerInconsistent: kotlin.Int is a value type and cannot be overridden"
-            outcome { anyBlueprint.create { with { "text" } } } shouldBe
-                    "KontainerInconsistent: kotlin.String is a value type and cannot be overridden"
+            outcome { anyBlueprint.create { with<Int> { 5 } } } shouldBe notOverridden("kotlin.Int")
+            outcome { anyBlueprint.create { with { "text" } } } shouldBe notOverridden("kotlin.String")
         }
     }
 
