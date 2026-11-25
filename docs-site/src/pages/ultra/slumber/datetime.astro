@@ -25,7 +25,7 @@ import { Code } from 'astro:components';
 
 <p><code>ts</code> is in epoch milliseconds, so anything finer than a millisecond is dropped. <code>timezone</code> is the zone of a zoned type and <code>"UTC"</code> for every other type. The <code>human</code> field is for debugging — deserialization uses only <code>ts</code> and <code>timezone</code>.</p>
 
-<p>The exceptions: <code>LocalTime</code> and <code>MpLocalTime</code> are stored as a number (seconds and milliseconds of the day), <code>ZoneId</code> and <code>MpTimezone</code> as a plain string, and <code>MpLocalTimeSlot</code> as <code>{from, duration, to}</code>.</p>
+<p>The exceptions: <code>LocalTime</code> and <code>MpLocalTime</code> are stored as a number (seconds and milliseconds of the day), <code>ZoneId</code> and <code>MpTimezone</code> as a plain string, and <code>MpLocalTimeSlot</code> as <code>{'{'}from, duration, to{'}'}</code>.</p>
 
 <h2>java.time types</h2>
 
