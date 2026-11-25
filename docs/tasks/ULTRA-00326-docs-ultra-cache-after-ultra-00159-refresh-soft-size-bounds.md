@@ -35,3 +35,5 @@ Pages `docs-site/src/pages/ultra/cache/*` and the mirror `docs-site/src/data/llm
 ## History
 
 - 2026-11-14: created on the maintainer's word ("We need to anyway do a docs-sweep ... so yes").
+- 2026-11-25: the ULTRA-00356 truth audit (merged 9636ac3a) fixed the false spots this ticket lists where the code is
+  settled; the new documentation it asks for is still open.

@@ -80,3 +80,5 @@ Two findings are worth remembering as evidence, not just history:
 ## History
 
 - 2026-10-21: numbered ULTRA-00135 (was `docs/tasks/20260728-docs-sync-remaining.md`).
+- 2026-11-25: the ULTRA-00356 truth audit (merged 9636ac3a) fixed the false spots this ticket lists where the code is
+  settled; the new documentation it asks for is still open.

@@ -60,3 +60,5 @@ commit since 2026-07-23. The moving part is org isolation: ULTRA-00094 (route ch
 ## History
 
 - 2026-10-21: numbered ULTRA-00091 (was `docs/tasks/20260722-docs-auth-dsl-and-floor.md`).
+- 2026-11-25: the ULTRA-00356 truth audit (merged 9636ac3a) fixed the false spots this ticket lists where the code is
+  settled; the new documentation it asks for is still open.
