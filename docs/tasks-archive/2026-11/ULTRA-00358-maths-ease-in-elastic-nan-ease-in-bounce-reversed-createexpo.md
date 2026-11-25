@@ -132,3 +132,4 @@ The proposal as handed to the maintainer:
 - 2026-11-25: maintainer chose option A; createExponential is lambda only (default ln(1000)), tailCut removed, tests,
   mutants and docs done.
 - 2026-11-25: gate PASS round 1, no findings; merged into master.
+- 2026-11-25: DONE.
