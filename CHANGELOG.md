@@ -59,6 +59,15 @@
   one service under different classes, `create { with(Base){A}; with(Derived){B} }.clone { with(Base){C} }` kept B.
   Override lambdas also run in the order given: at `clone` the parent's remaining lambdas first, then the clone's
   (ULTRA-00355).
+- `kraft/core`: an addon registered with `lazy = true` loads on its first read or subscribe, as documented; it was
+  loaded at app start like every other addon. A lazy addon read once in an event handler is `null` on that first read
+  (ULTRA-00357).
+
+### Docs
+
+- Every library's docs pages, LLM files and READMEs checked against the code, except datetime (after ULTRA-00343):
+  dozens of examples that did not compile or threw, wrong behaviour claims and dead links fixed. The streams artifact
+  is `io.peekandpoke.ultra:stream`; the docs named `streams` (ULTRA-00338, ULTRA-00356).
 
 ### Build
 
