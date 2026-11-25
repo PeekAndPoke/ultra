@@ -16,8 +16,8 @@ import {Code} from 'astro:components';
 
     <h2>Locale</h2>
 
-    <p>A locale is a language plus an optional region, in BCP-47 shape. Normalization happens at
-        construction, so casing and separator never matter.</p>
+    <p>A locale is a language plus an optional region, in BCP-47 shape. Casing is normalized at
+        construction; <code>Locale.parse</code> also accepts <code>-</code> or <code>_</code> as separator.</p>
 
     <Code code={`Locale("de")             // de
 Locale("de", "CH")       // de-CH
@@ -29,8 +29,9 @@ Locale("de").base            // de     — a base locale returns itself
 Locale.parse("de-CH").tag    // "de-CH"`} lang="kotlin" theme="vitesse-dark"/>
 
     <p><strong>Always parse untrusted tags.</strong> A language stored on a user record is free-form text;
-        <code>Locale.parse</code> is what makes a stored <code>"DE"</code> or <code>"de_CH"</code> resolve
-        like the <code>de-CH</code> it means instead of missing every catalog and falling to English.</p>
+        <code>Locale.parse</code> is what makes a stored <code>"de_CH"</code> or <code>"de-ch"</code> resolve
+        like the <code>de-CH</code> it means; <code>Locale("de_CH")</code> would take the whole string as the
+        language, miss every catalog and fall to the fallback.</p>
 
     <h2>The fallback chain</h2>
 
@@ -79,7 +80,7 @@ Locale.parse("de-CH").tag    // "de-CH"`} lang="kotlin" theme="vitesse-dark"/>
         about it.</p>
 
     <p><code>i18n.format</code> is the <strong>closed</strong> surface for dates, numbers and currency. It is
-        currently a seam that exposes the locale and little else &mdash; CLDR-backed formatting is not
+        currently a seam that exposes only the locale &mdash; CLDR-backed formatting is not
         implemented yet. Route formatting through it anyway, so the implementation can land later without
         moving call sites.</p>
 

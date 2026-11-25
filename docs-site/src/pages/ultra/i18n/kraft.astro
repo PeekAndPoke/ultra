@@ -26,7 +26,7 @@ import {Code} from 'astro:components';
             locale = Locale("en"),
             fallback = Locale("en"),
         ) {
-            install(AppI18nCatalog)
+            install(AppCatalog)
         }
     )
 }`} lang="kotlin" theme="vitesse-dark"/>
@@ -62,11 +62,12 @@ import {Code} from 'astro:components';
 
     <h2>Switching language</h2>
 
-    <Code code={`i18nController.setLang(Locale("de"))`} lang="kotlin" theme="vitesse-dark"/>
+    <Code code={`// inside a component; setLang is suspend, so call it from a coroutine
+launch { i18nCtrl.setLang(Locale("de")) }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>The controller maps the chosen tag through <code>Locale.parse</code> onto a fresh <code>I18n</code>
-        snapshot and emits it. Every subscribed component re-renders in the new language, and the choice is
-        persisted.</p>
+        snapshot and emits it. Every subscribed component re-renders in the new language. A controller from
+        <code>create</code> also persists the choice.</p>
 
     <h2>Form validation</h2>
 
@@ -75,7 +76,7 @@ import {Code} from 'astro:components';
 
     <Code code={`UiInputField(value, onChange = { value = it }) {
     label("Email")
-    accepts(notBlank(), isEmail())
+    accepts(notBlank(), validEmail())
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>Rules produce their message via the i18n surface rather than a hardcoded string, and an app overrides

@@ -40,10 +40,11 @@ checkout:
   items_one: "{{count}} item in your basket"
   items_other: "{{count}} items in your basket"`} lang="yaml" theme="vitesse-dark"/>
 
-    <p>The Gradle plugin turns that into typed accessors and a baked catalog. Call them like functions:</p>
+    <p>The Gradle plugin (part of Ultra's own build, not published yet) turns that into typed accessors and a
+        baked catalog. Call them like functions:</p>
 
     <Code code={`val i18n = I18n(locale = Locale("de"), fallback = Locale("en")) {
-    install(AppI18nCatalog)
+    install(AppCatalog)
 }
 
 i18n.translate.checkout.greeting(name = "Alice")   // named params, no string keys
@@ -83,8 +84,8 @@ i18n.translate.checkout.items(count = 3)           // plural form picked for you
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Reactive in Kraft</h3>
-            <p class="text-sm text-gray-400">Switching language re-renders subscribed components. The
-                choice persists in localStorage.</p>
+            <p class="text-sm text-gray-400">Switching language re-renders subscribed components. With
+                <code>I18nController.create</code> the choice persists in localStorage.</p>
         </div>
     </div>
 
@@ -93,8 +94,8 @@ i18n.translate.checkout.items(count = 3)           // plural form picked for you
     <p>The locale model covers language and region &mdash; <code>de</code>, <code>de-CH</code>. Script and
         variant subtags such as <code>zh-Hant</code> are not modelled: the second subtag is always read as a
         region, so those tags are mis-parsed. Plural selection is currently the simple
-        <code>count == 1</code> rule rather than full CLDR, and <code>i18n.format</code> is a seam with a
-        default implementation rather than locale-aware date and number formatting.</p>
+        <code>count == 1</code> rule rather than full CLDR, and <code>i18n.format</code> is a seam that exposes
+        only the locale rather than locale-aware date and number formatting.</p>
 
     <Aside>Those three gaps are known and deliberate &mdash; shipping the build step mattered more than
         shipping CLDR. The seams are in place so filling them in later does not move any call sites.
