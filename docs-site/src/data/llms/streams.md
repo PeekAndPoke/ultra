@@ -206,8 +206,9 @@ println(sum())  // 105
 
 ## How subscriptions work
 
-Streams use **lazy subscriptions**. When you chain operators like `source.map { }.filter { }`, no work happens until
-someone subscribes to the end of the chain. The subscription propagates upstream — and when the last subscriber
+Streams use **lazy subscriptions**. When you chain operators like `source.map { }.filter { }`, nothing upstream is
+subscribed until someone subscribes to the end of the chain (reading a value without a subscriber still runs the
+operators). The subscription propagates upstream — and when the last subscriber
 unsubscribes, the entire chain tears down.
 
 This means unused streams cost nothing.
