@@ -79,7 +79,7 @@ import {Code} from 'astro:components';
 
     <h3>onUpdate</h3>
 
-    <p>Fires after every re-render (state change, props change, parent redraw). Use this when you need to run code after
+    <p>Fires after every re-render (state change, or new props from a parent redraw). Use this when you need to run code after
         the DOM has been updated — for example, scrolling a container into view or syncing a third-party widget.</p>
 
     <Code code={`init {

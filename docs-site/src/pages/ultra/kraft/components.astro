@@ -79,7 +79,7 @@ fun Tag.Greeting(name: String) = comp(
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p><code>PureComponent</code> is a convenience alias for <code>Component&lt;Any?&gt;</code> with <code>NoProps</code> context.</p>
+<p><code>PureComponent</code> is a <code>Component&lt;Any?&gt;</code> that takes a <code>NoProps</code> context.</p>
 
 <h3>Functional components</h3>
 
@@ -132,9 +132,7 @@ override fun VDom.render() {
 
     override fun VDom.render() {
         // The SignaturePad component, tracked by our ref
-        SignaturePad {
-            // configuration...
-        }.track(padRef)
+        SignaturePad().track(padRef)
 
         // Use the ref to access the child component
         padRef { pad ->
@@ -226,8 +224,8 @@ override fun VDom.render() {
 
     <h2>Keys for list rendering</h2>
 
-    <p>When rendering a list of items, set a <code>key</code> on each element so Preact can efficiently track which
-        items changed, moved, or were removed:</p>
+    <p>When rendering a list of items, set a <code>key</code> on each element so Preact can track which items changed,
+        moved, or were removed:</p>
 
     <Code code={`ui.list {
     items.forEach { item ->
@@ -238,14 +236,12 @@ override fun VDom.render() {
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>Without keys, Preact re-creates every element on each render. With keys, it only updates what actually changed.
-        Use a stable identifier (database ID, unique string) — not the list index.</p>
+    <p>Without keys, Preact matches children by position, so inserting or removing an item makes the following
+        elements take over their neighbours' DOM and state. Use a stable identifier (database ID, unique string), not
+        the list index.</p>
 
-    <Code code={`// Also works on components
+    <Code code={`// A component call takes no key: set it on a wrapper element
 users.forEach { user ->
-    UserCard(user) // implicit key from props
-
-    // Or set explicitly on the wrapper
     div {
         key = user.id
         UserCard(user)
@@ -268,20 +264,19 @@ users.forEach { user ->
     </Aside>
 
     <Code code={`// SAFE: sanitize untrusted content before injecting
-import io.peekandpoke.kraft.addons.marked.markdown2html
-
+// marked: the MarkedAddon, subscribed from addons.marked (see Addons)
 div {
     unsafe {
-        // markdown2html uses DOMPurify internally
-        +markdown2html(untrustedMarkdown)
+        // markdown2html sanitizes with DOMPurify
+        +marked.markdown2html(untrustedMarkdown)
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>Key the parent of <code>unsafe</code></h3>
 
-    <p>Preact cannot diff raw HTML — it treats the entire <code>unsafe</code> block as an opaque blob. On each
-        re-render, the raw DOM is destroyed and recreated from scratch. To prevent this, set a <code>key</code> on the
-        parent element. If the key doesn't change, Preact preserves the DOM subtree:</p>
+    <p>Preact cannot diff raw HTML: the <code>unsafe</code> block becomes the element's <code>innerHTML</code>, which
+        Preact rewrites only when the HTML string changes. In a list whose items are added, removed or reordered, set a
+        <code>key</code> on the parent element so each raw subtree stays with its item:</p>
 
     <Code code={`div {
     key = "article-${'$'}{article.id}"
@@ -290,8 +285,8 @@ div {
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>Without the key, every component re-render rebuilds the raw HTML DOM — which is wasteful for large content and
-        causes visible flicker. With a stable key, the DOM is only rebuilt when the key changes.</p>
+    <p>Without the key, an element matched to another item by position gets that item's HTML string, and Preact
+        rebuilds its raw DOM.</p>
 
     <h2>See it in action</h2>
 

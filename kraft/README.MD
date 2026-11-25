@@ -41,9 +41,9 @@ See Kraft in action at [peekandpoke.io/ultra/kraft/examples](https://peekandpoke
 locally:
 
 ```bash
-./gradlew -t --parallel :examples:hello-world:run
-./gradlew -t --parallel :examples:fomanticui:run
-./gradlew -t --parallel :examples:addons:run
+./gradlew -t :kraft:examples:hello-world:jsBrowserDevelopmentRun
+./gradlew -t :kraft:examples:fomanticui:jsBrowserDevelopmentRun
+./gradlew -t :kraft:examples:addons:jsBrowserDevelopmentRun
 ```
 
 ## Documentation
@@ -53,10 +53,16 @@ Full docs, guides, and API reference at **[peekandpoke.io/ultra/kraft](https://p
 ## Installation
 
 ```kotlin
-// build.gradle.kts
-dependencies {
-    implementation("io.peekandpoke.kraft:core:<version>")
-    implementation("io.peekandpoke.kraft:semanticui:<version>")
+// build.gradle.kts (Kotlin Multiplatform, js target)
+kotlin {
+    sourceSets {
+        jsMain {
+            dependencies {
+                implementation("io.peekandpoke.kraft:core:<version>")
+                implementation("io.peekandpoke.kraft:semanticui:<version>")
+            }
+        }
+    }
 }
 ```
 
