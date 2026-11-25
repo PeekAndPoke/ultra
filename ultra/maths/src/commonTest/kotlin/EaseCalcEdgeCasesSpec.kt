@@ -80,7 +80,7 @@ class EaseCalcEdgeCasesSpec : StringSpec() {
                 "In.quart" to Ease.In.quart,
                 "In.quint" to Ease.In.quint,
                 "In.elastic" to Ease.In.elastic,
-                // In.bounce is excluded: its implementation returns 1.0 at t=0 and 0.0 at t=1
+                "In.bounce" to Ease.In.bounce,
                 "Out.sine" to Ease.Out.sine,
                 "Out.circ" to Ease.Out.circ,
                 "Out.quad" to Ease.Out.quad,

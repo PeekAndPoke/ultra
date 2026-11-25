@@ -169,12 +169,12 @@ object Ease {
             when {
                 x <= 0.0 -> 0.0
                 x >= 1.0 -> 1.0
-                else -> (-2.0).pow(10.0 * x - 10.0) * sin((x * 10.0 - 10.75) * c4)
+                else -> -(2.0.pow(10.0 * x - 10.0)) * sin((x * 10.0 - 10.75) * c4)
             }
         }
 
         /** Bouncing shaped */
-        val bounce: Fn = easeFn { x -> Out.bounce(1 - x) }
+        val bounce: Fn = easeFn { x -> 1.0 - Out.bounce(1.0 - x) }
     }
 
     /** Ease Out */
