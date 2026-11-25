@@ -50,9 +50,9 @@ cache.put("greeting", "Hello, World!")
 val value = cache.get("greeting")  // "Hello, World!"
 
 // Get-or-put — the most common pattern
-val user = cache.getOrPut("user:42") {
+val name = cache.getOrPut("name:42") {
     // Only called on cache miss
-    database.findUser("42")
+    database.findUserName("42")
 }
 
 // Check existence
@@ -66,7 +66,7 @@ cache.clear()`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>The Cache interface</h2>
 
-    <p>All caches implement the <code>Cache&lt;K, V&gt;</code> interface:</p>
+    <p><code>FastCache</code> implements the <code>Cache&lt;K, V&gt;</code> interface:</p>
 
     <div class="not-prose my-8">
         <table class="w-full text-sm text-left">
@@ -81,7 +81,7 @@ cache.clear()`} lang="kotlin" theme="vitesse-dark"/>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>get(key)</code></td>
                 <td class="py-2"><code>V?</code></td>
-                <td class="py-2">Returns the value or null if not present</td>
+                <td class="py-2">Returns the value, or null if not present or cached as null</td>
             </tr>
             <tr class="border-b border-white/5">
                 <td class="py-2"><code>put(key, value)</code></td>
