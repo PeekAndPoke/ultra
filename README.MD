@@ -102,7 +102,7 @@ propagation, dirty tracking — zero boilerplate.
 
 ```kotlin
 // Without Mutator: nested copy() hell
-val updated = company.copy(
+val updatedByHand = company.copy(
     ceo = company.ceo.copy(
         address = company.ceo.address.copy(city = "Amsterdam")
     )

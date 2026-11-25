@@ -44,7 +44,7 @@ underneath.
 
 This means:
 
-- **Two npm dependencies** in kraft core: Preact and jwt-decode
+- **Three npm packages** come with kraft core: Preact, jwt-decode, and @js-joda/core (through kotlinx-datetime)
 - **Kotlin idioms** everywhere — data classes for props, delegated properties for state, extension functions for the DSL
 - **Type safety** from props to HTML to CSS — your IDE catches errors before the browser does
 - **No template engine** — kotlinx.html gives you type-safe markup as code
@@ -233,7 +233,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 ## 5. Run it
 
 ```bash
-./gradlew -t --parallel jsRun
+./gradlew -t --parallel jsBrowserDevelopmentRun
 ```
 
 The `-t` flag enables continuous build — save a file and the browser refreshes.
@@ -1992,7 +1992,7 @@ app setup gives them SemanticUI styling.
 
 ```kotlin
 val app = kraftApp {
-    semanticUI()  // registers modals, toasts, and popups with SemanticUI styling
+    semanticUI()  // renders popups and toasts with SemanticUI
 }
 ```
 

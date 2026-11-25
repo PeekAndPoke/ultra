@@ -33,7 +33,7 @@ is NOT served on plain `localhost:36587` — a request there 404s. The app uses
 `http://api.funktor-demo.localhost:36587`, the same base the Kraft frontends use
 (`AdminAppConfig.apiBaseUrl`), and the server's CORS list allows this app's origin on **36591** —
 next in the series after adminapp 36588, www 36589, ops 36590. The b2b-app dev server uses 36591
-as well, so the two do not run at the same time.
+as well: if it runs, Vite moves this app to the next free port.
 
 `src/funktorsdk/` is **generated and git-ignored**. The generator owns that directory outright —
 every run replaces it wholesale, so nothing hand-written may live there.

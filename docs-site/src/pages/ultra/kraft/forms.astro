@@ -662,7 +662,7 @@ accepts(allRulesOf(notBlank(), minLength(3), maxLength(50)))`} lang="kotlin" the
     private val pageFormCtrl = formObserver()
 
     override fun VDom.render() {
-        // Their fields reach this page only if they use formObserver() too: a formController() stops them
+        // A formController() in a sub-form stops its fields here; use formObserver() there
         AddressForm()
         PaymentForm()
 

@@ -140,7 +140,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
 <h2>5. Run it</h2>
 
-<Code code={`./gradlew -t --parallel jsRun`} lang="bash" theme="vitesse-dark" />
+<Code code={`./gradlew -t --parallel jsBrowserDevelopmentRun`} lang="bash" theme="vitesse-dark" />
 
 <p>The <code>-t</code> flag enables continuous build — save a file and the browser refreshes.</p>
 
@@ -207,7 +207,7 @@ fun Tag.HomePage() = comp {
 }
 
 fun main() {
-    app.mount("#spa", PreactVDomEngine()) {
+    app.mount("#app", PreactVDomEngine()) {
         App()  // your root component
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
