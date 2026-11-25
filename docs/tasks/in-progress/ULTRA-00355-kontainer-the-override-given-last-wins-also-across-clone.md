@@ -1,6 +1,6 @@
 # ULTRA-00355: Kontainer: the override given last wins, also across clone
 
-> **Status (2026-11-25): IN PROGRESS.** Implemented on `wt/kontainer-values`; gate PASS, ready to merge.
+> **Status (2026-11-25): DONE.** Gate PASS in round 1; merged into master (143328c3).
 
 ## Why this exists
 
@@ -74,7 +74,7 @@ take precedence over the parent's. This makes the docs' "the later one wins" and
 
 ## Review ledger
 
-Round 1, standard gate, three charters (implementation and code style, domain, security), for ULTRA-00354 and
+Round 1, standard gate, three charters (implementation and code style, domain, security), rung 1 reviewer-opus-high (Opus high while the Fable credits are out), for ULTRA-00354 and
 ULTRA-00355 together. Zero CRITICAL, zero MAJOR: gate PASS in round 1. This ticket's rows:
 
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
@@ -99,3 +99,6 @@ CLEAN in round 1, one line each:
 - 2026-11-25: implemented on `wt/kontainer-values`; spec RED before, 4 mutants RED; status IN PROGRESS, review gate next.
 - 2026-11-25: gate round 1 PASS (0 CRITICAL, 0 MAJOR); both MINORs go to the CHANGELOG (coordinator: names the
   run order). Kontainer 661 / 0 / 0 (XML). Ready to merge.
+- 2026-11-25: MINOR batch hand-checked by the coordinator (message hint, literal names); merged into master
+  (143328c3); CHANGELOG written. Docs: the services page and the mirror carry the value-type sentence.
+  No DOCS follow-up needed.

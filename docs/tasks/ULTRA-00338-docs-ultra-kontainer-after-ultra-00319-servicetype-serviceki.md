@@ -1,6 +1,6 @@
 # ULTRA-00338: Docs: ultra/kontainer after ULTRA-00319 (ServiceType, ServiceKind, dynamicPrototype)
 
-> **Status (2026-11-25): IN PROGRESS.** Pages, mirror and README updated on `wt/kontainer`; review by the coordinator next.
+> **Status (2026-11-25): DONE.** Two review rounds (round 2 clean); merged into master (9199a9ea).
 >
 > **Part of:** ULTRA-00260 (Epic: Docs backlog)
 
@@ -111,3 +111,6 @@ ULTRA-00329 removed the instance API and changed the dump; these spots describe 
   classpath scanning" bullet, a bold broken across two lines); the two page sentences the mirror shares
   (`lifecycle`, `injection`) moved with it. Override precedence wording untouched (ULTRA-00355).
   `pnpm astro build`: 118 pages, green.
+- 2026-11-25: round 2 clean; its older MINOR (UserRepository under "shared") fixed; README and mirror light pass
+  (ULTRA-00356); README version back to `<version>`. Merged into master (9199a9ea) after ULTRA-00355, which makes
+  "the later one wins" true.
