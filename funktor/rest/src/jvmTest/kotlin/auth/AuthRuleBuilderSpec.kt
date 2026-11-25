@@ -198,9 +198,10 @@ class AuthRuleBuilderSpec : StringSpec({
             route().authorize { }
         }.message shouldBe "authorize {} at 'GET /test' declared no rules. Fix: add at least one " +
                 "rule (e.g. isSuperUser()), or remove the block so the route keeps just its group's " +
-                "floor. For a public route, mount it in an ApiRoutes group declared with " +
+                "floor. For a public route, mount it in a separate ApiRoutes group declared with " +
                 "authFloor = { public() } and give it no authorize {}: a route's own public() always " +
-                "conflicts with the group floor."
+                "conflicts with the group floor. Changing an existing group's floor to public() instead " +
+                "opens every route in it that has no authorize {}."
     }
 
     "an empty forAny {} fails at build time" {

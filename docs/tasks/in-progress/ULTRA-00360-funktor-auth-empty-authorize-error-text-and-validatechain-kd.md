@@ -1,6 +1,6 @@
 # ULTRA-00360: Funktor auth: empty-authorize error text and validateChain KDoc; sdkgen-app dev port
 
-> **Status (2026-11-25): IN PROGRESS.** Implemented on wt/auth-port; review gate next.
+> **Status (2026-11-25): IN PROGRESS.** Gate PASS, ready to merge (wt/auth-port).
 
 ## Why this exists
 
@@ -32,9 +32,12 @@ Found by the ULTRA-00356 truth audit:
 
 ## Implementation notes
 
-- `funktor/rest/src/jvmMain/kotlin/auth/AuthRuleBuilder.kt:182`: the empty-`authorize {}` error now says: add a rule,
-  or remove the block so the route keeps just its group floor; for a public route, use a group with
-  `authFloor = { public() }` and no `authorize {}`, because a route's own `public()` conflicts with the floor.
+- `funktor/rest/src/jvmMain/kotlin/auth/AuthRuleBuilder.kt:190`: the empty-`authorize {}` error now says: add a rule,
+  or remove the block so the route keeps just its group floor; for a public route, use a separate group with
+  `authFloor = { public() }` and no `authorize {}`, because a route's own `public()` conflicts with the floor; and
+  changing an existing group's floor to `public()` opens every route in it that has no `authorize {}`.
+- `AuthRuleBuilder.kt:171-183`: the KDocs of the route-level `public()` and `forbidden()` say they always conflict
+  with the group floor inside an `ApiRoutes` group, and point to `authFloor = { public() }` / `{ forbidden() }`.
 - `AuthRuleBuilder.kt:131`: the `validateChain` KDoc no longer claims an empty chain is legally public. It says the
   callers check non-emptiness (all four production callers do: `RootAuthRuleBuilder.build`,
   `FloorAuthRuleBuilder.build`, `ApiRoutes.addRoute`, `AuthChainBootCheck`) and that every `ApiRoutes` route carries
@@ -63,7 +66,24 @@ Found by the ULTRA-00356 truth audit:
 - Vite: `pnpm install --frozen-lockfile`, then `vite.resolveConfig({}, 'serve')` loads `vite.config.ts`:
   port 36593, strictPort true (vite 8.2.0). No dev server started.
 
+## Review ledger
+
+Round 1, standard gate, one reviewer covering the three charters (implementation and code style, domain, security),
+rung 1 reviewer-opus-high. Verdict: PASS, 0 CRITICAL, 0 MAJOR.
+
+| Round | Sev | `path:line` | Claim | Disposition | Reason |
+|---|---|---|---|---|---|
+| 1 | MINOR | AuthRuleBuilder.kt:190 | "mount it in an ApiRoutes group with authFloor = { public() }" reads as "change this group's floor", which opens every sibling route without `authorize {}` | fix | now "a separate ApiRoutes group", plus a sentence that changing an existing group's floor opens those routes; pinned test string updated; mutant without "separate" RED |
+| 1 | MINOR | AuthRuleBuilder.kt:171-183 | the route-level `public()`/`forbidden()` KDocs do not say they always conflict with the group floor | fix | one line each, pointing to `authFloor = { public() }` / `{ forbidden() }` |
+
+CLEAN: every statement in the error message and the KDocs is true when followed literally; all four `validateChain`
+callers check non-emptiness; no other place gives the old advice; no sdkgen-app 36591 left; the CORS hosts are
+correct; vite `strictPort` is set.
+
+Round 1 fixes: `:funktor:rest:jvmTest` green, XML 16 suites, 126 tests, 0 failures, 0 errors, 0 skipped.
+
 ## History
 
 - 2026-11-25: created on the maintainer's decision.
 - 2026-11-25: IN PROGRESS. Implemented on wt/auth-port; review gate next.
+- 2026-11-25: gate round 1 PASS (0 CRITICAL, 0 MAJOR); two MINORs fixed. Ready to merge.

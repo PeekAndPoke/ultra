@@ -168,10 +168,18 @@ class RootAuthRuleBuilder<PARAMS, BODY> internal constructor(
     private val route: ApiRoute<*>,
 ) : AuthRuleBuilder<PARAMS, BODY>() {
 
-    /** Declares the route public. Must be the ONLY rule of the route. */
+    /**
+     * Declares the route public. Must be the ONLY rule of the route.
+     * Inside an ApiRoutes group this always conflicts with the group floor; declare the group with
+     * `authFloor = { public() }` instead.
+     */
     fun public() = appendRule(PublicRule())
 
-    /** Declares the route dead (deny-all). Must be the ONLY rule of the route. */
+    /**
+     * Declares the route dead (deny-all). Must be the ONLY rule of the route.
+     * Inside an ApiRoutes group this always conflicts with the group floor; declare the group with
+     * `authFloor = { forbidden() }` instead.
+     */
     fun forbidden() = appendRule(ForbiddenRule())
 
     internal fun build(): List<AuthRule<PARAMS, BODY>> {
@@ -180,9 +188,11 @@ class RootAuthRuleBuilder<PARAMS, BODY> internal constructor(
 
         check(all.isNotEmpty()) {
             "$at declared no rules. Fix: add at least one rule (e.g. isSuperUser()), or remove the " +
-                    "block so the route keeps just its group's floor. For a public route, mount it in an " +
-                    "ApiRoutes group declared with authFloor = { public() } and give it no authorize {}: " +
-                    "a route's own public() always conflicts with the group floor."
+                    "block so the route keeps just its group's floor. For a public route, mount it in a " +
+                    "separate ApiRoutes group declared with authFloor = { public() } and give it no " +
+                    "authorize {}: a route's own public() always conflicts with the group floor. Changing " +
+                    "an existing group's floor to public() instead opens every route in it that has no " +
+                    "authorize {}."
         }
         validateChain(at, all)
 
