@@ -36,6 +36,10 @@
 - `monko/core`: `MonkoRepository.remove(stored: Stored<T>)` (JVM name `removeStored`) is replaced by an override of
   `Repository.remove(entity)`. Kotlin sources compile unchanged; classes compiled against 0.119.0 that call it directly
   must be recompiled (ULTRA-00359).
+- `ultra/maths`: `BucketedDistribution.createExponential(lambda, count)`: the density is `exp(-lambda * x)` on
+  [0, 1] and `tailCut` is removed. `lambda` had no effect before (it cancelled out); the default `ln(1000)` keeps the
+  default curve, but a caller that passed `lambda` now gets a different curve. NaN or infinite `lambda` throws
+  `IllegalArgumentException` (ULTRA-00358).
 
 ### Performance
 
@@ -71,6 +75,8 @@
 - `monko/core`, behaviour change (no compile signal): `remove(entity)` called through a `Repository<T>` reference
   (`Database.getRepository`, generic code) now runs `OnAfterDelete`, as Karango does; it deleted without the hook
   (ULTRA-00359).
+- `ultra/maths`: `Ease.In.elastic` returns the standard curve (it was NaN for most inputs), and `Ease.In.bounce` runs
+  from 0 to 1 (it ran from 1 to 0) (ULTRA-00358).
 - `funktor-demo`: the sdkgen-app dev server moves from 36591 (b2b-app's port) to 36593 with `strictPort` (ULTRA-00360).
 
 ### Docs
