@@ -13,7 +13,7 @@ once, persist them in either database.
 - **Storable Hierarchy** — `Stored<T>`, `New<T>`, `Ref<T>` wrappers that keep database metadata out of your domain
   classes.
 - **Repository Interface** — CRUD operations, lifecycle hooks, and entity caching.
-- **Flow-Based Cursors** — Lazy result streaming with 29 suspend convenience extensions.
+- **Flow-Based Cursors** — `Cursor<T>` wraps a `Flow` and adds 29 suspend convenience extensions.
 - **KSP Annotation** — `@Vault` triggers compile-time generation of type-safe property paths.
 
 Vault is not a standalone library. It is the shared foundation used by
@@ -32,7 +32,7 @@ Your data class is just data. Database metadata (`_id`, `_key`, `_rev`) lives in
 `Storable<T>` is sealed. It defines two key operations:
 
 ```kotlin
-sealed class Storable<T> {
+sealed class Storable<out T> {
     suspend fun resolve(): T
     suspend operator fun invoke(): T  // shorthand for resolve()
 }
@@ -42,8 +42,8 @@ Three concrete types represent different entity states:
 
 | Type        | When to use                      | Has value?        | Has ID?                     |
 |-------------|----------------------------------|-------------------|-----------------------------|
-| `New<T>`    | Entity not yet persisted         | Yes (`val value`) | Empty until inserted        |
-| `Stored<T>` | Loaded from or saved to database | Yes (`val value`) | Yes (`_id`, `_key`, `_rev`) |
+| `New<T>`    | Entity not yet persisted         | Yes               | Empty until inserted        |
+| `Stored<T>` | Loaded from or saved to database | Yes               | Yes (`_id`, `_key`, `_rev`) |
 | `Ref<T>`    | Lazy reference to another entity | Via `resolve()`   | Yes                         |
 
 ## New<T> -- entities before persistence
@@ -116,10 +116,11 @@ Creating refs explicitly:
 
 ```kotlin
 // Eager ref -- value already loaded
-val eager: Ref<Person> = Ref.eager(storedPerson)
+val eager: Ref<Person> = storedPerson.asRef
+val eager2: Ref<Person> = Ref.eager(person, id, key, rev)
 
 // Lazy ref -- resolved on demand
-val lazy: Ref<Person> = Ref.lazy("persons/abc123")
+val lazy: Ref<Person> = Ref.lazy(id) { repo.findById(id)!! }
 ```
 
 When serialized to the database, `Ref<T>` is stored as just the ID string. When deserialized, a lazy ref is created
@@ -138,8 +139,9 @@ Queries return `Cursor<T>`, a Flow-based wrapper for result sets.
 ```kotlin
 val cursor = repo.findAll()
 
-cursor.count      // number of results in current batch
+cursor.count      // number of results returned
 cursor.fullCount  // total count (when using pagination)
+cursor.timeMs     // query time in ms (always 0.0 with Monko)
 
 // Stream results
 cursor.asFlow(): Flow<T>
@@ -150,8 +152,8 @@ cursor.toList(): List<T>  // suspend
 
 ## Suspend convenience extensions
 
-Cursor provides 29 suspend convenience methods. All operate on the underlying Flow without materializing the full
-result set upfront:
+Cursor provides 29 suspend convenience extensions (counting the predicate overloads of `first` and `firstOrNull`).
+Each collects the cursor and returns a List, Map or value, never a Flow:
 
 **Transform:** `map`, `mapNotNull`, `mapIndexed`, `flatMap`
 
@@ -183,7 +185,11 @@ cursor.groupBy { it().author }
 cursor.forEach { stored -> println(stored().title) }
 ```
 
-All cursor convenience methods are `suspend` functions. Results are deserialized lazily.
+All cursor convenience methods are `suspend` functions. A cursor does not save memory: Karango buffers every result on
+the first collection (so the cursor can be collected again), Monko hands over a list that is already loaded.
+
+`filterIsInstance<R>()` checks the erased class only: on `Stored<Animal>` items use
+`mapNotNull { it.castTyped<Animal.Dog>() }`.
 
 ---
 
@@ -214,19 +220,24 @@ Hooks run during entity lifecycle events. Three hook interfaces:
 |-----------------|-----------------------|--------------------|
 | `OnBeforeSave`  | Before insert or save | Yes                |
 | `OnAfterSave`   | After insert or save  | No (read-only)     |
-| `OnAfterDelete` | After remove          | No (read-only)     |
+| `OnAfterDelete` | After remove(entity)  | No (read-only)     |
 
 ### Hook execution order
 
 - **insert()**: OnBeforeSave -> persist -> OnAfterSave
 - **save()**: OnBeforeSave -> persist -> OnAfterSave
-- **remove()**: delete -> OnAfterDelete
-- **batchInsert()**: OnBeforeSave (each) -> persist all -> OnAfterSave (each)
+- **remove(entity)**: delete -> OnAfterDelete (`remove(idOrKey)` and `removeAll()` run no hooks)
+- **batchInsert()** (Karango): OnBeforeSave (each) -> persist all -> OnAfterSave (each)
+
+OnAfterSave and OnAfterDelete run through the driver's `VaultHookScope`: awaited by default
+(`VaultHookScope.Inline`), launched in the background by `DeferredVaultHookScope` once it is bound to an application
+scope. Hook failures are logged, never thrown.
 
 ## EntityCache
 
-The `EntityCache` deduplicates entities within a request scope. When the same entity is loaded multiple times
-(directly or via `Ref<T>`), the cache returns the same instance.
+The `EntityCache` deduplicates entity lookups within a request scope. `Ref<T>` resolution goes through it, so a
+referenced entity is loaded once per cache. Karango cursors put every `Stored` they read into it; `findById` does not
+read from it.
 
 ```kotlin
 // Synchronous
@@ -250,7 +261,7 @@ val stored: Stored<Person> = repo.findById(id)!!
 // Stored -> Ref (eager, value already loaded)
 val ref: Ref<Person> = stored.asRef
 
-// Any Storable -> Stored
+// Any Storable -> Stored (a lazy Ref must be resolved first, otherwise this throws)
 val backToStored: Stored<Person> = ref.asStored
 ```
 
@@ -286,6 +297,6 @@ sealed class Animal {
 val stored: Stored<Animal> = repo.findById(id)!!
 
 // Safe downcast -- returns null if the type doesn't match
-val dog: Stored<Dog>? = stored.castTyped<Dog>()
-val cat: Stored<Cat>? = stored.castTyped<Cat>()
+val dog: Stored<Animal.Dog>? = stored.castTyped<Animal.Dog>()
+val cat: Stored<Animal.Cat>? = stored.castTyped<Animal.Cat>()
 ```

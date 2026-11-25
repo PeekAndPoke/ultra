@@ -30,7 +30,7 @@ val stored: Stored<Person> = repo.insert(Person("Alice", 30))
 stored()      // Person(name="Alice", age=30) — your data
 stored._id    // "persons/abc123" — database ID
 stored._key   // "abc123" — document key
-stored._rev   // "_abc123def" — revision for optimistic locking`} lang="kotlin" theme="vitesse-dark"/>
+stored._rev   // "_abc123def" — revision (always empty with Monko)`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>The Storable hierarchy</h2>
 
@@ -72,13 +72,10 @@ stored._rev   // "_abc123def" — revision for optimistic locking`} lang="kotlin
 
     <p>All <code>Storable</code> subtypes provide <code>suspend fun resolve(): T</code> and
         <code>suspend operator fun invoke(): T</code> for accessing the wrapped value.
-        For <code>Stored</code> and <code>New</code>, resolution is instant (they also expose <code>val value: T</code>).
+        For <code>Stored</code> and <code>New</code>, resolution is instant.
         For <code>Ref</code>, resolution may suspend to load the entity from the database.</p>
 
-    <Code code={`// Stored and New keep a public .value property for direct access:
-stored.value  // instant, no suspension
-
-// But the uniform way across all Storable types is:
+    <Code code={`// The uniform way across all Storable types:
 stored.resolve()  // suspend, works on Stored, New, AND Ref
 stored()          // shorthand for resolve()
 
@@ -88,7 +85,7 @@ stored.resolve().name
 
 // Ref resolution
 val author = post.author.resolve()  // suspend, loads from DB
-val author = post.author()          // shorthand`} lang="kotlin" theme="vitesse-dark"/>
+post.author()                       // shorthand`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>New&lt;T&gt; — entities before persistence</h2>
 
@@ -154,7 +151,7 @@ comment().author()            // shorthand for resolve()
 
 // Create refs explicitly
 val eager = Ref.eager(person, id, key, rev)   // already-loaded value
-val lazy  = Ref.lazy(id) { loadFromDb(id) }   // deferred resolution`} lang="kotlin" theme="vitesse-dark"/>
+val lazy  = Ref.lazy(id) { repo.findById(id)!! }   // deferred resolution`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>When serialized to the database, <code>Ref&lt;T&gt;</code> is stored as just the ID string. When deserialized,
         a lazy resolver is attached that loads the entity from the cache or database on first access.</p>
@@ -169,7 +166,7 @@ val lazy  = Ref.lazy(id) { loadFromDb(id) }   // deferred resolution`} lang="kot
 // Stored → Ref (wraps the already-loaded value)
 val ref: Ref<Person> = stored.asRef
 
-// Any Storable → Stored
+// Any Storable → Stored (a lazy Ref must be resolved first, otherwise this throws)
 val backToStored: Stored<Person> = ref.asStored
 
 // Resolve any Storable to its value
@@ -201,8 +198,8 @@ a hasIdIn list     // true`} lang="kotlin" theme="vitesse-dark"/>
 val stored: Stored<Animal> = repo.findById(id)!!
 
 // Safe downcast — returns null if the type doesn't match
-val dog: Stored<Dog>? = stored.castTyped<Dog>()
-val cat: Stored<Cat>? = stored.castTyped<Cat>()`} lang="kotlin" theme="vitesse-dark"/>
+val dog: Stored<Animal.Dog>? = stored.castTyped<Animal.Dog>()
+val cat: Stored<Animal.Cat>? = stored.castTyped<Animal.Cat>()`} lang="kotlin" theme="vitesse-dark"/>
 
     <div class="not-prose mt-8 flex gap-4">
         <a href="/ultra/vault/cursor"

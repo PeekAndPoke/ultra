@@ -16,8 +16,9 @@ import {Code} from 'astro:components';
 
     <h2>Flow-based iteration</h2>
 
-    <p>At its core, a Cursor is a <code>Flow&lt;T&gt;</code>. Results are deserialized lazily, chunk by chunk,
-        so you can stream large result sets without loading everything into memory at once:</p>
+    <p>At its core, a Cursor is a <code>Flow&lt;T&gt;</code>. It does not save memory: Karango buffers every
+        result on the first collection, so the cursor can be collected again, and Monko hands over a list that is
+        already loaded.</p>
 
     <Code code={`val cursor: Cursor<Stored<Person>> = repo.findAll()
 
@@ -29,7 +30,7 @@ cursor.asFlow().collect { stored ->
 // Metadata
 cursor.count      // number of results returned
 cursor.fullCount  // total matches (when using pagination)
-cursor.timeMs     // query execution time in milliseconds`} lang="kotlin" theme="vitesse-dark"/>
+cursor.timeMs     // query time in milliseconds (always 0.0 with Monko)`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Convenience extensions</h2>
 
@@ -67,8 +68,9 @@ val adults: List<Stored<Person>> = cursor.filter { it().age >= 18 }
 // filterNot — keep non-matching items
 val minors: List<Stored<Person>> = cursor.filterNot { it().age >= 18 }
 
-// filterIsInstance — keep items of a specific type
-val dogs: List<Stored<Dog>> = animalCursor.filterIsInstance<Stored<Dog>>()`} lang="kotlin" theme="vitesse-dark"/>
+// filterIsInstance — keep items of a specific type (type arguments are erased,
+// so for Stored<Animal> items use mapNotNull { it.castTyped<Animal.Dog>() })
+val dogs: List<Animal.Dog> = animals.filterIsInstance<Animal.Dog>()  // animals: Cursor<Animal>`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>Element access</h3>
 
