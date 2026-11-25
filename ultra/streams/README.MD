@@ -39,6 +39,6 @@ Full docs at **[peekandpoke.io/ultra/streams](https://peekandpoke.io/ultra/strea
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.peekandpoke.ultra:streams:<version>")
+    implementation("io.peekandpoke.ultra:stream:<version>")
 }
 ```

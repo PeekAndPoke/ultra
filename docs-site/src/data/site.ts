@@ -100,7 +100,7 @@ export const pathToCategory: Record<string, keyof typeof categoryTints> = {
 export const dep = {
     kontainer: `${ultraGroup}:kontainer:${ultraVersion}`,
     slumber: `${ultraGroup}:slumber:${ultraVersion}`,
-    streams: `${ultraGroup}:streams:${ultraVersion}`,
+    streams: `${ultraGroup}:stream:${ultraVersion}`,
     datetime: `${ultraGroup}:datetime:${ultraVersion}`,
     cache: `${ultraGroup}:cache:${ultraVersion}`,
     i18n: `${ultraGroup}:i18n:${ultraVersion}`,

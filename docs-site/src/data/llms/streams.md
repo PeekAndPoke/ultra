@@ -94,7 +94,7 @@ In your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("io.peekandpoke.ultra:streams:{{ultraVersion}}")
+    implementation("io.peekandpoke.ultra:stream:{{ultraVersion}}")
 }
 ```
 
