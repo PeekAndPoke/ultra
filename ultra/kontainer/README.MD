@@ -45,6 +45,6 @@ Full docs at **[peekandpoke.io/ultra/kontainer](https://peekandpoke.io/ultra/kon
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.peekandpoke.ultra:kontainer:0.119.0")
+    implementation("io.peekandpoke.ultra:kontainer:<version>")
 }
 ```
