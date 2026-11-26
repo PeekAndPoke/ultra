@@ -559,6 +559,629 @@ or `MpLocalDateRangeLazySpec`, green on JVM, JS and native):**
 - Independent of the values, still open: `toIsoString` pads years -1 to -999 wrongly (`00-2`), `format("yyyy")` prints
   `0000` for every BC year (see the analysis of 2026-11-14).
 
+
+## Plan for batches B and C (2026-11-26, planner)
+
+Where this plan and the section "Decided (maintainer, 2026-11-26, second set)" differ, the decisions win
+(S1-S3, D2-D7, G, O1, serializer).
+
+Master at `e2196fba`. Nothing was built, compiled or run for this plan. Markers:
+
+- **[code]** read on master; file:line refer to master.
+- **[model]** a Python model of master's `numberOfDays` (noon-to-noon UTC, clamp, round half to even, +1) on
+  Hinnant's days-from-civil, sanity-checked against Python `datetime` and against three literals master pins
+  (`GenesisDoomsdaySpec.kt:141-142`: 2,913,175 / 2,913,173; `MpLocalDateRangeLazySpec.kt:26`: 7,304,851). All three
+  match. The implementer confirms every [model] number on master by a RED run before relying on it.
+- **[memory]** database semantics from general knowledge, not checked in this session.
+
+Settled and not reopened here: the list in the brief (Partial with null ends, factories return Partial, the query
+set, plain two-ended classes, `hasStart`/`hasEnd`/`isOpen` on Partial only, lengths on two-ended only, Genesis and
+Doomsday gone without decoder translation, `numberOfDays` calendar-exact).
+
+**Update 2026-11-26 (master `b044d015`):** the maintainer answered the ten questions. The answers are in ULTRA-00343,
+section "Decided (maintainer, 2026-11-26): the batch B and C plan questions". Questions 1-8 and 10 went as recommended.
+Question 9 was overturned: `MpLocalTimeSlot.Partial` gets the null defaults too. The guiding rule: "the behaviour must
+be equivalent across all types for the same operations / predicates". The sections below are updated. Section 8
+covers the slot Partial, section 9 the operations x types matrix and its divergences, and section 7 the questions
+still open.
+
+Build in the worktree `wt/datetime` through `console/wt-gradle.sh` (CLAUDE.md), B first, then C, each its own gate.
+
+---
+
+### 1. API changes
+
+### Batch B: queries on `Partial` (additive; no sentinel touched; buildable alone)
+
+Same pattern on the four Partials: `MpInstantRange.Partial` (`MpInstantRange.kt:39-57`), `MpZonedDateTimeRange.Partial`
+(`MpZonedDateTimeRange.kt:48-66`), `MpLocalDateRange.Partial` (`MpLocalDateRange.kt:37-50`),
+`MpClosedLocalDateRange.Partial` (`MpClosedLocalDateRange.kt:37-50`). `P` = the Partial, `R` = its two-ended range,
+`X` = the point type (`MpAbsoluteDateTime` for instant and zoned, `MpLocalDate` for the date types).
+
+| Member | Before | After |
+|---|---|---|
+| constructor | `Partial(val from: X?, val to: X?)` | `Partial(val from: X? = null, val to: X? = null)` (confirmed "defaults only") |
+| `hasStart` | - | `val hasStart: Boolean get() = from != null` |
+| `hasEnd` | - | `val hasEnd: Boolean get() = to != null` |
+| `isOpen` / `isNotOpen` | - | `from == null \|\| to == null` / its negation (isNotOpen mirrors the two-ended API) |
+| `contains(point: X)` | - | null end = unbounded; ends in wrong order (or empty, half-open `from == to`) contain nothing |
+| `contains(other: R)` | - | `other.isValid` and each set end of this encloses other's end |
+| `contains(other: P)` | - | as above; a null end of `other` is only enclosed by a null end of this |
+| `intersects(other: R)`, `intersects(other: P)` | - | overlap with null read as unbounded; wrong order or empty on either side: false |
+| `asValidRange()` | both ends set and in order | unchanged |
+| KDoc | none | "null is unbounded for the queries; a form that needs both ends uses `asValidRange()`" |
+
+Rules per kind (both ends compared with `<` on the half-open side, as the two-ended code does):
+
+- Half-open (instant, zoned, `MpLocalDateRange`): `inOrder = from == null || to == null || from < to`;
+  `contains(p) = inOrder && (from == null || p >= from) && (to == null || p < to)`;
+  `intersects(o) = inOrder && o in order && (from == null || o.to == null || from < o.to) && (o.from == null || to == null || o.from < to)`.
+- Closed (`MpClosedLocalDateRange`): `inOrder = ... from <= to`; `<=` on both ends.
+  - Decided (3): the two-ended closed `intersects` is fixed in B to agree.
+  - Write it directly as `isValid && other.isValid && other.from <= to && from <= other.to`, not through
+    `asOpenRange`, which throws on 999999999-12-31 (D7 in section 9).
+- Zoned: every comparison by instant (`toInstant()`), as the two-ended zoned range does since ULTRA-00211
+  (`MpZonedDateTimeRange.kt:74-78`). Zoned `contains` also gets the two `(MpLocalDateTime, zone)` overloads of the
+  two-ended range (`MpZonedDateTimeRange.kt:137-146`).
+- Two-ended equivalence used for the tests: for valid ranges master's `intersects` (`MpInstantRange.kt:148-155`) is
+  `other.from < to && from < other.to` [code, by case analysis].
+
+Null-preserving conversions (decided 1, in B):
+
+| New on | Signature | Mirrors |
+|---|---|---|
+| `MpInstantRange.Partial` | `fun atZone(timezone: MpTimezone): MpZonedDateTimeRange.Partial` (+ `TimeZone` overload) | `MpInstantRange.kt:101-113` |
+| `MpZonedDateTimeRange.Partial` | `fun atZone(timezone: MpTimezone)` (+ `TimeZone`), `fun toInstantRange(): MpInstantRange.Partial` | `MpZonedDateTimeRange.kt:110-119, 204-209` |
+| `MpLocalDateRange.Partial` | `val asClosedRange: MpClosedLocalDateRange.Partial` (`to?.minusDays(1)`) | `MpLocalDateRange.kt:52-54` |
+| `MpClosedLocalDateRange.Partial` | `val asOpenRange: MpLocalDateRange.Partial` (`to?.plusDays(1)`) | `MpClosedLocalDateRange.kt:52-54` |
+
+Already there and already null-preserving: `MpInstantRange.Partial.asDateRange(tz)` (`MpInstantRange.kt:53-56`),
+`MpZonedDateTimeRange.Partial.asDateRange()` (`MpZonedDateTimeRange.kt:62-65`). Not on Partial (decided 1 and 2):
+`plus` / `minus`, `mergeWith`, `cutAway`, `touches`, `isAdjacentTo`, `toZonedTimeRange` / the converter, and
+cross-type queries between the two date Partials. Shortcuts as extension methods may come later, not in B or C.
+
+`MpLocalTimeSlot.Partial` (`MpLocalTimeSlot.kt:91-106`) also gets `= null` defaults (decided 9). What a null means
+for a slot, and which members follow, is in section 8 (questions S1-S4).
+
+### Batch C: no sentinels; factories return `Partial` (breaking)
+
+Removed:
+
+| What | Where |
+|---|---|
+| `GENESIS_TIMESTAMP`, `DOOMSDAY_TIMESTAMP` (file deleted) | `commonMain/kotlin/constants.kt:6, 11` |
+| `GenesisInstant`, `DoomsdayInstant`, `Genesis/DoomsdayLocalDateTime`, `Genesis/DoomsdayLocalDate`, `internal val utc`; the JVM facade `ConstantsJvm` (file deleted; `utc` has no other user [code]) | `jvmMain/kotlin/constants.kt:1-19` |
+| `MpInstant.Genesis`, `.Doomsday` | `MpInstant.kt:62-74` |
+| `MpLocalDate.Genesis`, `.Doomsday` | `MpLocalDate.kt:27-39` |
+| `MpLocalDateTime.Genesis`, `.Doomsday` | `MpLocalDateTime.kt:125-131` |
+| `MpZonedDateTime.Genesis`, `.Doomsday` | `MpZonedDateTime.kt:154-162` |
+| `hasStart`, `hasEnd`, `isOpen`, `isNotOpen` on two-ended ranges | `MpInstantRange.kt:68-86`; `MpLocalDateRange.kt:110-116`; `MpClosedLocalDateRange.kt:63-69`; `MpZonedDateTimeRange.kt:80-86` |
+
+Changed (per range type `R`, its `R.Partial` = `P`):
+
+| Member | Before | After | Where |
+|---|---|---|---|
+| `forever` | `val forever: R = R(Genesis, Doomsday)` | `val forever: P = P()` (equal to `P.empty`) | `MpInstantRange.kt:15-18`, `MpLocalDateRange.kt:16-19`, `MpClosedLocalDateRange.kt:12-16`, `MpZonedDateTimeRange.kt:16-19` |
+| `beginningAt(from: X)` | `: R` = `R(from, Doomsday)` | `: P` = `P(from = from)` | `MpInstantRange.kt:28-31`, `MpLocalDateRange.kt:31-34`, `MpClosedLocalDateRange.kt:30-34`, `MpZonedDateTimeRange.kt:37-40` |
+| `endingAt(to: X)` | `: R` = `R(Genesis, to)` | `: P` = `P(to = to)` | `MpInstantRange.kt:33-36`, `MpLocalDateRange.kt:26-29`, `MpClosedLocalDateRange.kt:24-28`, `MpZonedDateTimeRange.kt:42-45` |
+| `numberOfDays` (half-open) | `by lazy`: noon-to-noon UTC via the converter, clamped, `round(...)`, +1 | `get() = if (isNotValid) 0 else (to.value.toEpochDays() - from.value.toEpochDays()).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()` | `MpLocalDateRange.kt:89-104` |
+| `numberOfDays` (closed) | `asOpenRange.numberOfDays` | same formula with `+ 1`, validity `from <= to`, computed directly (no `to.plusDays(1)`, which throws at 999999999-12-31) | `MpClosedLocalDateRange.kt:58-59` |
+| `numberOfNights` | `max(0, numberOfDays - 1)` | unchanged formula; `get()` | `MpLocalDateRange.kt:106-108`, `MpClosedLocalDateRange.kt:61` |
+| `asListOfDates()` | `ComputedList(numberOfDays) { from.plusDays(it) }` | code unchanged; KDoc drops "counted up to Doomsday", gains "at most `Int.MAX_VALUE` dates" | `MpLocalDateRange.kt:126-140`, `MpClosedLocalDateRange.kt:79-80` |
+| `numDaysInMonth` | `by lazy { atLastOfMonth().day }` | `get() = atLastOfMonth().day` (deferred MINOR of 3b-1 delta round 2); KDoc without "Genesis / Doomsday clamp" | `MpLocalDate.kt:124-127` |
+| `DateTimeRangeConverter.create` | clamps `from`/`to` to Genesis/Doomsday by instant | `MpZonedDateTimeRange(from, to)`, comment gone | `DateTimeRangeConverter.kt:42-49` |
+| KDoc of `numberOfDays` | the clamp, half-even rounding, "open with the maintainer" | "the calendar days from `from` to `to` (closed: +1); 0 when invalid; at most `Int.MAX_VALUE`" | `MpLocalDateRange.kt:89-95`, `MpClosedLocalDateRange.kt:58` |
+
+`numberOfDays` was checked against its neighbours:
+
+- **`numberOfNights`:** nothing changes but the input. The existing rows (`MpLocalDateRangeSpec.kt:160-191`,
+  `MpClosedLocalDateRangeSpec.kt:230-269`) stay green. On UTC noon-to-noon is an exact multiple of a day, so the old
+  and new counts agree wherever no clamp acts [code + model].
+- **`asListOfDates()`:** no code change. It is exact now for every range: BC, before -10000, after 10000.
+- **`numDaysInMonth` / `getDatesInMonth`:** already from the calendar (`MpLocalDate.kt:124-127`, `:523-551`). Only
+  `by lazy` becomes `get()`, and the KDoc changes.
+- **`asDatePeriod`, `compareTo(MpDatePeriod)`:** already calendar-iterative (`MpLocalDateRange.kt:56-87, 142-144`),
+  unchanged. The year loop is O(years); a range of a million years walks a million steps (pre-existing, not changed).
+- **The cap:** at `Int.MAX_VALUE` days (about 5,879,610 years). On master such a span gives `round(x).toInt() + 1` =
+  `Int.MIN_VALUE`, so an empty list [code reading, not run]; after C it gives `Int.MAX_VALUE` and a list cut there
+  (decided 6).
+- **What the length no longer depends on:** `toZonedTimeRange` / the zone engine.
+
+Two-ended range classes otherwise unchanged: same fields, same `isValid`, same set operations, same wire shape.
+
+---
+
+### 2. Compile breaks and behaviour changes in the repo
+
+Search on master (`grep -rln` for the four range types, the converter and `toZonedTimeRange` outside `ultra/datetime`,
+excluding `build`): one file. No main code outside `ultra/datetime` uses a range type, a sentinel or `Partial`
+[code]: karango, monko, funktor, kraft, funktor-demo, codegen and the TS runtime (`ultra/codegen/src/main/resources/ts/runtime/datetime.ts`,
+93 lines, no range code) are clean. No committed generated TS file contains a range type (`git grep` over codegen,
+funktor/codegen, funktor-demo).
+
+| File:line | Batch | Break / change | Fix |
+|---|---|---|---|
+| `ultra/slumber/src/jvmTest/kotlin/builtin/datetime/mp/MpZonedDateTimeRangeCodecSpec.kt:17-26` | C | `beginningAt(..)` is a Partial: `.atZone` resolves only with decided 1; `codec.awake(MpZonedDateTimeRange::class, ..)` of `{from, to=null}` gives null (non-null `to`), so the test goes RED, not a compile error (`shouldBe` is untyped) | awake `MpZonedDateTimeRange.Partial::class`; assert `to == null`, `hasEnd == false`, equality |
+| same file `:12` | C | KDoc names Doomsday | "an open end stays null through `atZone` and slumber" |
+| `ultra/datetime/src/commonMain/kotlin/MpLocalDate.kt:124` | C | KDoc names the clamp | reword |
+| `ultra/datetime/src/commonMain/kotlin/MpLocalTime.kt:129` | - | names `DateTimeRangeConverter.fromHourToHour(_, 24)` only | none |
+
+Datetime's own tests (C unless noted; B adds new specs only):
+
+| Spec:lines | What | Becomes |
+|---|---|---|
+| `GenesisDoomsdaySpec.kt:1-158` | sentinel values, open predicates, clamp, converter clamp | deleted. The open-range rows move to the new `OpenRangeSpec` (B: queries; C: factories). The length rows move to `NoSentinelsSpec` (C, section 5) |
+| `jvmTest/ConstantsSpec.kt:1-31` | JVM helpers | deleted |
+| `MpInstantSpec.kt:29-34, 65-73`; `MpLocalDateSpec.kt:31-39`; `MpLocalDateTimeSpec.kt:41-49, 91-147`; `MpZonedDateTimeSpec.kt:119-126` | text and parse of ±10000 through the constants | kept as literal rows (`of(-10000, 1, 1)`, `fromEpochMillis(-377_736_739_200_000)`, ...). They pin five-digit-year text that ULTRA-00347 builds on |
+| `MpInstantRangeSpec.kt:21-84` | `forever` / `beginningAt` / `endingAt` with predicates and `duration` | `shouldBe MpInstantRange.Partial(...)`, the predicates on the Partial; `duration` row deleted |
+| `MpLocalDateRangeSpec.kt:716-761`; `MpClosedLocalDateRangeSpec.kt:563-607` | the same, plus `hasStart`/`hasEnd`/`isNotOpen` on two-ended | Partial rows; the two-ended predicate rows deleted |
+| `MpZonedDateTimeRangeSpec.kt:18-88` | the same, plus `forever.isValid` | Partial rows |
+| `MpZonedDateTimeRangeZoneSpec.kt:23-36, 82-91` | ULTRA-00211: an open end survives `atZone` and kotlinx | `Partial.atZone(zone).to == null`; kotlinx round trip of `MpZonedDateTimeRange.Partial` |
+| `MpZonedDateTimeRangeZoneSpec.kt:94-108, 119-124` | converter clamp ties | replaced by "no clamp": `DateTimeRangeConverter(+01:00, -12000-01-01, 12000-01-01).fromHourToHour(1, 1)` keeps both ends |
+| `MpLocalDateRangeLazySpec.kt:11-28` | `forever` lists | `MpLocalDateRange(of(-10000,1,1), of(10000,1,1))`: 7,304,850 dates, first -10000-01-01, last 9999-12-31, `[1_000_000]` = -7263-11-28 (the same literals); closed with the same ends: 7,304,851, last 10000-01-01 [model] |
+
+Behaviour changes without a compile signal, for consumers: kotlinx JSON of a Partial omits a null end (B); a range
+stored with the old sentinels decodes as a two-ended range of 20,000 years (C, no translation, settled); the
+converter no longer clamps (C); `numberOfDays` exact (C).
+
+Docs (for ULTRA-00339, the DOCS follow-up, written after C settles):
+
+- `docs-site/src/data/llms/datetime.md:65-66, 209, 214-227`
+- `docs-site/src/pages/ultra/datetime/ranges.astro:47-55, 135-143, 186-195`
+- `mp-instant.astro:49-50`, `mp-local-date.astro:37-38`, `mp-local-date-time.astro:41-42`, `mp-zoned-date-time.astro:51-52`
+
+---
+
+### 3. The list "to settle before building"
+
+### 3.1 Stored shape of an open range; database queries on a null end
+
+Example: `MpInstantRange.beginningAt(MpInstant.parse("2024-07-01T10:00:00Z"))`.
+
+| | Master (two-ended, sentinel) | After C (Partial) |
+|---|---|---|
+| kotlinx `Json` (default) | `{"from":{"ts":1719828000000,"timezone":"UTC","human":"2024-07-01T10:00:00.000Z"},"to":{"ts":253402300800000,"timezone":"UTC","human":"+10000-01-01T00:00:00.000Z"}}` | `{"from":{"ts":1719828000000,"timezone":"UTC","human":"2024-07-01T10:00:00.000Z"}}` (a null end equals its default, so it is not written) |
+| kotlinx with `encodeDefaults = true` | - | `..., "to":null}` |
+| slumber (karango, monko documents) | `{from={ts=..}, to={ts=253402300800000, ..}}` | `{from={ts=1719828000000, timezone=UTC, human=..}, to=null}`: `DataClassSlumberer` writes every ctor field, null included (`ultra/slumber/src/jvmMain/kotlin/builtin/objects/DataClassSlumberer.kt:201-205`) [code] |
+| reads | - | missing key and `null` both read as null: kotlinx through the default; slumber nullable-first (`DataClassAwaker.kt:100-105`) [code] |
+
+Query paths: karango and monko generate paths for ctor fields of any reachable data class
+(`KarangoKspProcessor.kt:164-184`, blacklist only `java.`, `javax.`, `kotlin.`, `kotlinx.` at `:34-39`). Nullability
+is dropped in the path type (`toFullyQualifiedString`, `:251-270`), so `r.period.to` is a path of `MpInstant`, and
+`.ts` exists through `@Slumber.As(MpDateTimeRawData)` (`MpInstant.kt:14`; karango `SlumberAsCodeGenSpec.kt:71`)
+[code; not compiled with a Partial field].
+
+"Bookings whose period contains t" (`period: MpInstantRange.Partial`, `t = instant.toEpochMillis()`):
+
+```kotlin
+// karango (karango/core/src/main/kotlin/aql/functions_typecheck.kt:79, operator_boolean.kt:110-149, 205-215)
+FOR(repo) { r ->
+    FILTER(
+        (IS_NULL(r.period.from) OR (r.period.from.ts LTE t)) AND
+                (IS_NULL(r.period.to) OR (r.period.to.ts GT t))
+    )
+    RETURN(r)
+}
+
+// monko (monko/core/src/main/kotlin/lang/dsl/filters.kt:14-35, 94; path_utils.kt toFieldPath)
+find { r ->
+    filter(
+        and(
+            or(Filters.eq(r.period.from.toFieldPath(), null), r.period.from.ts lte t),
+            or(Filters.eq(r.period.to.toFieldPath(), null), r.period.to.ts gt t),
+        )
+    )
+}
+```
+
+- `r.period.to eq null` does not compile in monko: `eq(value: T)` on an invariant `MongoPropertyPath<*, T>` with
+  `T = MpInstant` [code reading]. The precedent is `Filters.eq(path.toFieldPath(), null)` in `notDeleted`
+  (`monko/core/src/main/kotlin/lang/dsl/softdelete.kt:19`), which matches null and a missing field.
+- AQL: `IS_NULL` is true for null and for a missing attribute. `null.ts` is null, and `null > t` is false, so the
+  `IS_NULL` branch on `to` is required. On `from`, `null <= t` holds by itself (null sorts first), but the explicit
+  branch is clearer [memory].
+- MongoDB: `$gt` / `$lte` never match null or missing, so both ends need the `$or` [memory].
+- Indexes: a persistent index on `period.to.ts` keeps nulls unless it is sparse. `OR` / `$or` can lower index use
+  [memory].
+- Wrong-order and empty ranges match nothing in these queries, the same as `Partial.contains` (`from <= t < to` cannot
+  hold) [arithmetic].
+- Date Partials store `ts` at the start of the day in UTC (`MpLocalDateCodec.kt:44-45`). A closed range uses
+  `to.ts GTE d.ts`.
+
+Batch C adds a DB spec per backend that stores `forever`, `beginningAt`, `endingAt`, a two-ended range and a
+wrong-order Partial, and then runs exactly these queries (decided 8). No query helper goes into karango or monko.
+
+### 3.2 `Partial` for form input vs `asValidRange()`
+
+Example: a form binds `MpLocalDateRange.Partial`; the user fills in only "from" = 2024-07-01.
+
+- `Partial(from = 2024-07-01).asValidRange()` is null: the form stays invalid, unchanged.
+- The same value as a query: `contains(2030-01-01)` is true, `isOpen` true, `hasEnd` false (new in B).
+- `Partial.empty == MpLocalDateRange.forever` (C): "nothing entered" and "no bounds" are one value.
+
+B and C: `asValidRange()` stays "both set and in order" (`MpLocalDateRange.kt:46-49` and the three siblings). The
+Partial KDoc states both readings. No new member is needed: `asValidRange() != null` is the form check. Settled by
+decided 7 (keep both names).
+
+### 3.3 Master's behaviours "back and not fixed" (ULTRA-00343, section "Master's values restored")
+
+| Behaviour on master | Example | After |
+|---|---|---|
+| Doomsday 1 ms past ArangoDB's date range, Genesis outside it, five-digit text stored | `beginningAt(d)` stores `to.ts = 253402300800000`, `human "+10000-01-01..."` | C removes it: the open end is stored as null. Real dates outside 0000-9999 still lie outside AQL's date functions; compare `ts` numerically |
+| `MpClosedLocalDateRange.beginningAt(d).asOpenRange.to` = 10000-01-02 | `ts 253402387200000` (`GenesisDoomsdaySpec.kt:117-123`) | C: `beginningAt` is a Partial; with decided 1 `asOpenRange.to == null` |
+| Genesis in a zone west of UTC on -10001-12-31 | `GenesisDoomsdaySpec.kt:145-148` | C: gone (no Genesis) |
+| The clamp counts Doomsday for every second start; the closed `forever` lists 10000-01-01 | 2024-01-01 to 12000-01-01: 2,913,175; from 2024-01-02: 2,913,173 (`GenesisDoomsdaySpec.kt:141-142`) | C: 3,643,659 and 3,643,658 [model]; `forever` has no list (Partial) |
+| A range wholly outside -10000..10000 gets a wrong count and an empty list | `(-12000-03-15, -12000-03-20)`: -730,405 and `[]` [model] | C: 5 and five dates |
+| `toIsoString` pads years -1..-999 wrongly; `format("yyyy")` prints 0000 for BC | `MpLocalDate.of(-2,12,30).toIsoString()` = `"00-2-12-30..."` | left to ULTRA-00347 |
+
+### 3.4 Sentinel-restore review items
+
+1. **A range that starts before Genesis lists wrong dates.**
+   - Example: `MpLocalDateRange(of(-12000,1,1), of(2024,1,1))`. On master `numberOfDays` = 4,391,677 and the list
+     ends on 0024-01-01. Exact: 5,122,161, ending 2023-12-31 [model].
+   - The count-1 case: `(of(-10001,12,30), of(-10000,1,1))` counts 1 and lists `[-10001-12-30]`; exact is 2 [model].
+   - C fixes both (calendar-exact, no clamp). RED rows on master first.
+2. **An open end lost in a zone conversion.**
+   - Example: `MpLocalDateRange.beginningAt(2024-01-01).toZonedTimeRange(Asia/Tokyo).fromMorningToEvening.hasEnd` is
+     true on master. The end is 9999-12-31 at 24:00 Tokyo = 9999-12-31T15:00Z, before Doomsday, so the converter
+     does not clamp it. In New York it is false. [code reading with master's values; probed with 3b-1's values in
+     the analysis]
+   - C removes it by construction: `beginningAt` is a Partial, and every Partial conversion maps null to null
+     (decided 1). `Partial.toZonedTimeRange` is not offered (decided 1).
+3. **Shifting an open range closes it.**
+   - Example: `MpInstantRange.forever.plus(1.days).hasStart` is true (`MpInstantRange.kt:231-236` shifts Genesis).
+   - C: `forever` is a Partial and Partial has no `plus`, so the call does not compile. A two-ended range has no
+     open end to lose.
+4. **An empty range counts as adjacent.**
+   - Example: `MpInstantRange.forever.isAdjacentTo(MpInstantRange.beginningAt(MpInstant.Doomsday))` is true; the
+     other range is `(Doomsday, Doomsday)` (`MpInstantRange.kt:171-173`).
+   - After C the sentinel form is gone, but the general case stays on every two-ended type:
+     `MpInstantRange(a, b).isAdjacentTo(MpInstantRange(b, b))` is true, and
+     `MpClosedLocalDateRange(d1, d5).isAdjacentTo(MpClosedLocalDateRange(d6, d5))` (invalid) is true via
+     `asOpenRange` [code reading].
+   - Decided 4 (require both valid, as slots do since 0.119.0, `CHANGELOG.md:149-150`).
+5. **The two date range types disagree on the open end by a day.**
+   - Examples on master: `MpClosedLocalDateRange.forever.contains(of(10000,1,1))` is true, the half-open `forever`
+     gives false. `MpLocalDateRange.forever.asClosedRange != MpClosedLocalDateRange.forever` (to 9999-12-31 vs
+     10000-01-01). `numberOfDays` is 7,304,850 vs 7,304,851.
+   - C: both are `Partial(null, null)`; `asOpenRange` / `asClosedRange` on Partial keep null, so they agree.
+
+Found while checking 4 and the Partial rules, pre-existing and not on the ticket's list: the two-ended **closed
+`intersects` misses a shared boundary day**. `MpClosedLocalDateRange(2024-01-01, 2024-01-05).intersects(MpClosedLocalDateRange(2024-01-05, 2024-01-09))`
+is false (`MpClosedLocalDateRange.kt:101-108` uses half-open logic). The same days through
+`intersects(MpLocalDateRange)` (`:110-112`, via `asOpenRange`) give true [code reading; no test covers it:
+`MpClosedLocalDateRangeSpec.kt:369-395`]. The closed Partial's `intersects` must agree with one of them: decided 3, the two-ended is fixed in B.
+
+### 3.5 The three text / test MINORs
+
+| MINOR | State on master | B/C |
+|---|---|---|
+| The count-1 case lists one date, not none (KDoc `MpLocalDateRange.kt:93-94` says "negative (with an empty list), or 1") | the KDoc is still there | C deletes the sentence. The exact count pins `(-10001-12-30, -10000-01-01)` at 2 days and 2 dates |
+| `numDaysInMonth` is pinned in `MpLocalDateSpec` | done: `MpLocalDateSpec.kt:842-869` [code] | C keeps those rows when `GenesisDoomsdaySpec` goes; nothing new |
+| `MpLocalTimeSlotOnDateSpec.kt:134` needs `+12000-01-01T09:00:00Z` | moot: batch A deleted that test (ticket, batch A table); `:134` is now a JS row of another test; no `12000` in the file [code] | nothing |
+
+---
+
+### 4. Serialization
+
+| Codec | Two-ended ranges | Partials |
+|---|---|---|
+| kotlinx (`@Serializable` data classes) | unchanged | B: null ends are no longer written (default `Json`); a missing key now decodes to null (was `MissingFieldException`). Old payloads with `"to":null` read the same. C: the factories produce Partials, so a field that held `beginningAt(..)` changes type to `R.Partial` |
+| slumber (karango, monko) | unchanged | unchanged: writes `to=null`, reads missing as null |
+| stored old data | a range with ts -377736739200000 / 253402300800000 reads as two-ended, 20,000 years long; into a Partial field: both ends set (settled, no translation) | - |
+| TypeScript (codegen) | unchanged | the generator marks a ctor parameter with a default as optional (`ultra/codegen/src/main/kotlin/model/TypeWalker.kt:500-514`). After B: `from?: MpInstant \| null`, schema `MpInstant.nullable().optional()`. Clients regenerate. `datetime.ts` has no range code: no change |
+
+A test must serialize (B, `commonTest` on all three platforms, plus slumber on the JVM):
+
+- each of the four Partials through kotlinx: encode `P()`, `P(from=x)`, `P(to=y)`, `P(x, y)` and pin the exact JSON
+  (null ends absent); decode the same from `{}`, from `{"to":null}`, from missing keys and from explicit nulls.
+- the same four through slumber: `to=null` written, a missing key read as null.
+- C adds one row: a two-ended range written by master's `forever` (`ts` -377736739200000 / 253402300800000) decodes as
+  a two-ended range with those instants (pins "no translation").
+
+---
+
+### 5. Test plan
+
+**Specs.**
+
+- B: new `OpenRangeSpec` (commonTest), one block per Partial type. It covers `hasStart`, `hasEnd`, `isOpen`, the
+  predicates at both ends and at the boundary (half-open: `to` excluded; closed: `to` included), wrong order and
+  empty, null on each side, zoned in two zones (by instant), the conversions, and serialization.
+- C: `NoSentinelsSpec` covers the factories (`beginningAt(x) shouldBe P(from = x)`, `forever shouldBe P.empty`) and
+  the length rows. It also has rows for BC ranges, ranges beyond ±10000 and the cap row, no clamp in the converter,
+  and the slumber spec fix.
+- C: the karango e2e `karango/core/src/test/kotlin/e2e/E2E-OpenRangeQuery-Spec.kt`, with a testdomain entity that uses
+  the generated paths (`kspTest` is on, `karango/core/build.gradle.kts:48`).
+- C: monko `monko/core/src/test/kotlin/io/peekandpoke/monko/MonkoOpenRangeQuerySpec.kt`, modelled on
+  `MonkoRepositoryFilterCombineSpec.kt` (string paths; monko/core has no `kspTest`).
+
+**RED first, for the right reason.**
+
+| Batch | Row | Red on master because |
+|---|---|---|
+| B | kotlinx decode `{"from":{..}}` into each Partial | `MissingFieldException` (no default yet) |
+| B | kotlinx encode `P(from = x)` has no `"to"` key | master writes `"to":null` |
+| B | predicates | members added first as stubs returning a wrong constant, then run; every predicate row red; then implemented |
+| B (d3) | closed `[01-01..01-05].intersects([01-05..01-09])` is true | master gives false |
+| C | `beginningAt(x) shouldBe P(from = x)` (untyped `shouldBe` compiles on master) | master returns a two-ended range |
+| C | `(-12000-01-01, 2024-01-01).numberOfDays` = 5,122,161; list last 2023-12-31 | master 4,391,677 [model] |
+| C | `(2024-01-01, 12000-01-01)` = 3,643,659; `(2024-01-02, 12000-01-01)` = 3,643,658 | master 2,913,175 / 2,913,173 (pinned today) |
+| C | `(-12000-03-15, -12000-03-20)` = 5, five dates | master -730,405, `[]` [model] |
+| C | `(-10001-12-30, -10000-01-01)` = 2, two dates | master 1 [model] |
+| C (d6) | `(of(-3_000_000,1,1), of(3_000_000,1,1)).numberOfDays == Int.MAX_VALUE` | master `Int.MIN_VALUE` [code reading] |
+| C (d4) | `MpInstantRange(a, b).isAdjacentTo(MpInstantRange(b, b))` is false; the same on the three other types | master true |
+| C | converter `(+01:00, -12000-01-01, 12000-01-01).fromHourToHour(1, 1)` keeps the ends | master clamps to Genesis / Doomsday |
+
+The removals (constants, predicates on two-ended) need no RED: the compile sweep proves every use is gone.
+
+**Mutation targets** (persistence and query building, per CLAUDE.md; each restored with `cmp`, backups keep the
+source-set path):
+
+- MB1, persistence: drop `= null` on `to` of one Partial. The kotlinx decode row goes red.
+- MB2, persistence: `@EncodeDefault` on `to`. The "no `to` key" row goes red.
+- MB3: in `contains(point)`, `to == null ||` becomes `to != null &&`, per type.
+- MB4: `<` becomes `<=` on the half-open end, and the reverse on the closed end.
+- MB5: drop the wrong-order guard.
+- MB6: zoned Partial compares with `MpZonedDateTime.compareTo` instead of by instant (the two-zone row).
+- MB7: `Partial.atZone` drops `to`; `asOpenRange` maps null to `from`.
+- MC1: closed `numberOfDays` without `+1`.
+- MC2: drop `isNotValid -> 0` (negative count).
+- MC3: drop the cap (`toInt()` wraps).
+- MC4: back to noon-to-noon. After C, without the clamp, it agrees except at the cap, so the cap row is its only
+  killer. Say so in the record.
+- MC5: `isAdjacentTo` without the validity check (decided 4).
+- MQ1, query building: karango without the `IS_NULL(to)` branch; `forever` and `beginningAt` rows go red.
+- MQ2, query building: monko without `Filters.eq(to, null)`.
+- MQ3, query building: monko without the `from` null branch. `endingAt` / `forever` go red here, while MQ3's karango
+  twin is expected to survive (AQL null <= t). Record it as equivalent, with the reason.
+
+**Platforms and counts.**
+
+- datetime `commonTest` on the JVM, JS (ChromeHeadless, the module's fixed Karma port) and native (linuxX64).
+- slumber on the JVM.
+- karango and monko on the JVM against docker Arango / Mongo.
+- codegen (326) re-run: the TS optional flag.
+- A repo-wide compile sweep including `compileKotlinLinuxX64`; 0 `e:` lines.
+- Counts come from the XML with `--rerun`, not from a filtered gradle call (`.claude/skills/testing/`).
+
+---
+
+### 6. CHANGELOG draft (Unreleased; plain ASCII)
+
+### New
+
+- `ultra/datetime`: `MpInstantRange.Partial`, `MpZonedDateTimeRange.Partial`, `MpLocalDateRange.Partial`,
+  `MpClosedLocalDateRange.Partial` and `MpLocalTimeSlot.Partial` answer queries. On a slot a null end is the edge
+  of the day: no start is 00:00, no end is 24:00 (if S1-A, section 8).
+  - A null end is unbounded: `hasStart`, `hasEnd`, `isOpen`, `isNotOpen`, `contains(point)`, `contains(range)`,
+    `contains(partial)`, `intersects(range)`, `intersects(partial)`. Ends in the wrong order contain nothing; no
+    exception. The zoned Partial compares by instant.
+  - Conversions keep a null end null: `atZone` and `toInstantRange` on the instant and zoned Partials, `asOpenRange`
+    and `asClosedRange` on the date Partials.
+  - `asValidRange()` is unchanged: both ends set and in order (ULTRA-00343).
+
+### Breaking changes
+
+- `ultra/datetime`: `Genesis` and `Doomsday` are removed from `MpInstant`, `MpLocalDate`, `MpLocalDateTime` and
+  `MpZonedDateTime`, together with `GENESIS_TIMESTAMP`, `DOOMSDAY_TIMESTAMP` and the JVM helpers `GenesisInstant`,
+  `DoomsdayInstant`, `GenesisLocalDateTime`, `DoomsdayLocalDateTime`, `GenesisLocalDate`, `DoomsdayLocalDate`.
+  - An open range is a `Partial` with a null end: `forever`, `beginningAt(x)` and `endingAt(x)` return the
+    `Partial` of their range type (`from = null` is no start, `to = null` no end). `forever` equals `Partial.empty`.
+  - `hasStart`, `hasEnd`, `isOpen` and `isNotOpen` are removed from the two-ended ranges: a two-ended range always
+    has both ends.
+  - Code that stored `beginningAt(..)` in a field of a two-ended type changes the field to the `Partial`.
+  - Dates BC and beyond year 9999 work in ranges with no edge (ULTRA-00343).
+- `ultra/datetime`, behaviour change (no compile signal):
+  - The `from` and `to` of the five `Partial`s (the four ranges and `MpLocalTimeSlot`) default to null. kotlinx `Json` (default settings) no longer
+    writes a null end: `{"from":{...}}` instead of `{"from":{...},"to":null}`. A missing key reads as null; it was
+    an error. Slumber still writes `to: null`.
+  - Generated TypeScript types mark both ends optional (`from?: ... | null`); regenerate clients (ULTRA-00343).
+- `ultra/datetime`, stored data: nothing translates the old values. A range stored with -10000-01-01 /
+  +10000-01-01 (ts -377736739200000 / 253402300800000) reads as a two-ended range of those dates, also into a
+  `Partial` field. Querying an open range needs the null case: karango
+  `(IS_NULL(r.p.to) OR r.p.to.ts GT t)`, monko `or(Filters.eq(path, null), r.p.to.ts gt t)` (ULTRA-00343).
+- `ultra/datetime`, behaviour change (no compile signal): `numberOfDays` of `MpLocalDateRange` and
+  `MpClosedLocalDateRange` counts calendar days: `to` minus `from`, plus 1 for the closed range, 0 when invalid, at
+  most `Int.MAX_VALUE`. `numberOfNights` and `asListOfDates()` follow. Ordinary ranges count as before.
+  - Ranges past the old sentinels count in full: 2024-01-01 to 12000-01-01 is 3,643,659 days (was 2,913,175).
+  - A range before -10000-01-01 counts and lists its own dates: -12000-03-15 to -12000-03-20 is 5 days (was
+    -730,405 with an empty list).
+  - A span of `Int.MAX_VALUE` days or more gives `Int.MAX_VALUE` and a list cut there (was `Int.MIN_VALUE`, an empty
+    list) (ULTRA-00343).
+- `ultra/datetime`, behaviour change (no compile signal): `DateTimeRangeConverter` (`toZonedTimeRange`) no longer
+  clamps to -10000-01-01 / +10000-01-01 (ULTRA-00343).
+- `ultra/datetime`, behaviour change (no compile signal): `isAdjacentTo` on the four range types is false when
+  either range is empty or invalid. `10:00-11:00` and `11:00-11:00` were adjacent; slots behave this way since 0.119.0
+  (ULTRA-00343).
+
+(Entries for D2 to D7 of section 9 follow the maintainer's answers to D2, D3 and D5, and for D6 and D7 the gate.)
+
+### Fixes
+
+- `ultra/datetime`: `MpClosedLocalDateRange.intersects(MpClosedLocalDateRange)` is true for two ranges that
+  share only a boundary day (2024-01-01..2024-01-05 and 2024-01-05..2024-01-09). It was false, while
+  `intersects(MpLocalDateRange)` with the same days said true (ULTRA-00343).
+
+---
+
+### 7. Decided, and the questions still open
+
+**Decided (2026-11-26, ULTRA-00343), folded in above:**
+
+- 1: null-preserving conversions on Partial, no arithmetic on it (B).
+- 2: no cross-type queries between the date Partials.
+- 3: closed `intersects` fixed (B, direct formula).
+- 4: `isAdjacentTo` requires both valid (C).
+- 5: delete outright.
+- 6: cap at `Int.MAX_VALUE`.
+- 7: keep `empty` and `forever`.
+- 8: karango and monko DB pins (C).
+- 9: slot Partial gets defaults (section 8).
+- 10: plain getters (C).
+
+**Open (each one line plus a recommendation; the details are in sections 8 and 9):**
+
+- S1. What does null mean on `MpLocalTimeSlot.Partial`? Rec A: the edge of the day (no start = 00:00, no end =
+  24:00), with the same queries as the range Partials; a slot stays finite.
+- S2. `MpLocalTimeSlot.beginningAt(t)`, `endingAt(t)`, `forever` returning the slot Partial, like the four ranges?
+  Rec: yes, for the guiding rule. `forever` is the whole day in queries; KDoc names `completeDay` as its two-ended
+  twin.
+- S3. Confirm two differences that come from the slot's nature: a Partial with `to` before `from` is overnight, not
+  "contains nothing"; `asValidRange()` on the slot Partial means "both set and not empty". Rec: confirm.
+- D2. Zoned `isAdjacentTo` compares by instant, like every other zoned predicate, instead of by equality (instant and
+  zone)? Rec: yes, in C. It reverses the "current behaviour" pinned in `MpZonedDateTimeRangeZoneSpec.kt:9-11`.
+- D3. `touches` (and with it `mergeWith`) is false when either range is reversed (`from > to`), while an empty range
+  still touches as a point, as an empty slot does? Rec: yes, in C, with decided 4.
+- D5. `duration` of an invalid `MpInstantRange` / `MpZonedDateTimeRange` is `Duration.ZERO` instead of negative,
+  like `numberOfDays` (0) and slots (never negative)? Rec: yes, in C.
+- D7. A closed date range ending on 999999999-12-31 throws in predicates (`asOpenRange` cannot add a day). Make the
+  closed predicates direct, and give `mergeWith` / `cutAway` / lengths KDoc only? Rec: yes, predicates direct in C.
+- G. Fill the gaps of section 9 (operations absent on some types) now, or in a ticket after C? Rec: a ticket after
+  C; they are additions, not divergences of behaviour.
+
+D1 is decided (4). D4 and D6 need no decision: D4 follows D3, and D6 is a plain fix in C (section 9).
+
+---
+
+### 8. `MpLocalTimeSlot.Partial` with null defaults (decided 9): implications
+
+**What the type is** [code]:
+
+- The slot is a start and a length, `MpLocalTimeSlot(from: MpLocalTime, duration: Duration)` with a private
+  constructor (`MpLocalTimeSlot.kt:26-29`). Its `to` is derived, the end's clock time (`:126-133`), and the factories
+  normalise (`:43-88`).
+- Its Partial is the two time pickers of a form: `Partial(from: MpLocalTime?, to: MpLocalTime?)` (`:91-106`). So the
+  Partial has `from` / `to` like the ranges, but `to` is a clock time, not a length.
+- `asValidRange()` = `of(from, to)` unless an end is missing or the slot is empty (`:101-105`). `to` before `from`
+  is overnight there, not an error (`MpLocalTimeSlotClockSpec.kt:99-105`).
+- `asPartialRange()` is lossy for a slot of 24 hours or more (`:151-154`).
+
+**S1, what null means.** Ranges read null as unbounded on the time line. A slot lives on the 24-hour clock face, and
+since batch A a slot is finite (`MAX_DURATION_MILLIS`, `:35`; `isInfinite` and the open end of `toRange` are gone).
+
+| Option | `from = null` | `to = null` | Examples | Verdict |
+|---|---|---|---|---|
+| A (rec) | 00:00 | 24:00 (`EndOfDay`) | `Partial()` = whole day (= `completeDay` in queries); `Partial(22:00)` = 22:00-24:00, no wrap past midnight; `Partial(to = 06:00)` = 00:00-06:00; `Partial(to = 00:00)` and `Partial(EndOfDay)` are empty (equal times, the `of(from, to)` rule) | "unbounded within the type's universe": the analogue of the ranges; finite, so batch A holds; queries delegate to `of(from ?: Min, to ?: EndOfDay)` and its clock-face rules |
+| B | not filled in, no meaning | same | defaults only; no `contains` / `hasStart` on the slot Partial | the one Partial without queries: against the guiding rule |
+| C | around the clock | until `from` again | `Partial(22:00)` = 24 h from 22:00, so every Partial with a null covers the whole clock | `hasEnd` without effect; reads like the infinite slot batch A removed; rejected |
+
+Members under A (in B, next to the range Partials):
+
+- `hasStart`, `hasEnd`, `isOpen`, `isNotOpen`: `from` / `to` set or not.
+- `contains(time: MpLocalTime)`, `contains(slot)`, `contains(partial)`, `intersects(slot)`, `intersects(partial)`:
+  on the resolved slot with the two-ended slot's rules (`:170-190`). 24:00 counts as 00:00, so
+  `Partial(10:00).contains(EndOfDay)` is false: the clock wraps. That is the slot's nature, as is
+  `night.contains(EndOfDay)` today (`MpLocalTimeSlotClockSpec.kt:114-115`).
+- With a null on the other side, resolving gives the same answers as the ranges' rule "a null end is enclosed only by a
+  null end": `Partial(10:00).contains(Partial(12:00))` is true; `Partial(10:00, 23:00).contains(Partial(12:00))`
+  is false.
+- `asValidRange()` is unchanged (S3). `Partial(10:00).asValidRange()` stays null, as on the ranges: both ends must be
+  set.
+- No conversion to a date. Under A, null is 24:00 of that day. Mapping it to an open `MpZonedDateTimeRange.Partial`
+  end (the null-preserving rule of decided 1) would change its meaning. Callers write
+  `partial.asValidRange()?.let { date.toRange(it, zone) }`. Decided 1 lists no such conversion anyway.
+- Factories (S2): `MpLocalTimeSlot.beginningAt(t) = Partial(from = t)`, `endingAt(t) = Partial(to = t)`,
+  `forever = Partial()`.
+
+**Batch A:** untouched. A resolved Partial is at most 24 h (`of(from, to)`, `:61-74`), so `MAX_DURATION_MILLIS`,
+`splitWithGaps` and `toRange(slot, zone)` (`:336-417`, two-ended only) see only two-ended slots.
+
+**Serialization and stored data:**
+
+- **kotlinx:** `Partial` is a plain `@Serializable` data class with `MpLocalTime` as a number
+  (`MpLocalTimeSerializer.kt:17`). With the defaults: `Partial(10:00)` -> `{"from":36000000}` (was
+  `{"from":36000000,"to":null}`), `Partial()` -> `{}`. A missing key reads as null; it was `MissingFieldException`.
+- **slumber:** the generic data class codec, unchanged: `{from=36000000, to=null}`; a missing key reads as null.
+- **TypeScript:** codegen makes both optional, `from?: MpLocalTime | null` (`TypeWalker.kt:500-514`). `datetime.ts`
+  has only the two-ended `MpLocalTimeSlot` (`:58-69`) and no Partial, so nothing changes there.
+- **Stored data:** nothing in the repo stores a slot Partial (grep: only datetime's tests) [code].
+
+**Consumers:**
+
+- In the repo: `MpLocalTimeSlotSpec.kt:451-490` and `MpLocalTimeSlotClockSpec.kt:99-105` use positional arguments,
+  so they compile unchanged. The slumber `MpLocalTimeSlotCodecSpec` covers the two-ended slot only. No kraft, funktor
+  or TypeScript use.
+- Side finding, not in scope: `MpLocalTimeSerializer` declares `PrimitiveKind.STRING` but encodes a `Long`
+  (`MpLocalTimeSerializer.kt:12-13, 17`). JSON does not care; a format that checks the kind would. Worth a ticket.
+
+**Tests (B):**
+
+- The rows of `OpenRangeSpec` again for the slot Partial: null at each end, overnight, empty, `EndOfDay`, the
+  resolve-equals-slot rows.
+- kotlinx and slumber round trips of `Partial(10:00)` and `Partial()`.
+- Mutants: drop `= null` on the slot Partial's `to` (kotlinx decode red); resolve a null `to` as 00:00 instead of
+  24:00.
+
+**Changelog:** the slot Partial is part of the New entry and of the defaults entry in section 6.
+
+---
+
+### 9. Operations x types (after B and C as planned), checked on master
+
+Columns: **I** `MpInstantRange`, **Z** `MpZonedDateTimeRange`, **D** `MpLocalDateRange`, **C**
+`MpClosedLocalDateRange`, **S** `MpLocalTimeSlot`, **P** the four range Partials (B), **SP** the slot Partial
+(section 8, option A). "empty" = half-open `from == to` or a slot of length 0; "rev" = `from > to`. Line numbers are
+master's.
+
+| Operation | I | Z | D | C | S | P / SP |
+|---|---|---|---|---|---|---|
+| bounds | `[from,to)` | `[from,to)` by instant | `[from,to)` | `[from,to]` | `[from,from+d)` on the clock, cyclic | as their two-ended type; SP null = 00:00 / 24:00 |
+| `isValid` | `from<to` (:91) | by instant (:88) | `from<to` (:118) | `from<=to` via `asOpenRange` (:71): throws at the last date (**D7**) | not empty (:121) | none; `asValidRange()` both set and in order (SP: and not empty) |
+| `isEmpty` | - | - | - | - | yes (:118) | - (**G1**) |
+| `contains(point)` | valid and in (:130-132) | by instant (:129-132), + LocalDateTime overloads (:137-146) | `in from..<to` (:152-154), same result | `in from..to` (:92-94) | arcs; empty nothing; 24:00 = 00:00 (:170-174) | null unbounded; rev / empty nothing |
+| `contains(range)` | both valid, enclose (:143-146) | by instant (:151-154) | same (:159-162) | same (:96-99) | both non-empty (:177-183) | same + Partial overload |
+| `intersects` | positive overlap; shared boundary false (:148-155) | by instant (:156-163) | same (:164-171), + closed (:173-175) | half-open logic on closed ends (:101-108): shared day false; fixed in B (decided 3) | positive overlap; adjacent false (:186-190) | null unbounded; closed P inclusive |
+| `touches` | `to>=o.from && from<=o.to`, no validity (:162-164) | by instant (:170-172) | same (:182-184) | via open (:119-121) | closed arcs; empty as a point (:196-205) | absent (decided 1) |
+| `isAdjacentTo` | `to==o.from \|\| o.to==from`, no validity (:171-173) | by EQUALITY, zones must match (:177-182) (**D2**) | same as I (:191-193) | via open (:128-130) | false for empty and >= 24 h; not if intersecting (:210-215) | absent |
+| `mergeWith` | touches -> min/max, else sorted (:180-189) | by instant, tie keeps this (:189-199) | same as I (:200-209) | via open (:137-139) | union on the clock (:222-239) | absent |
+| `cutAway` | invalid -> `[this]`; 0-2 pieces (:199-226) | via instants, pieces re-zoned to `from`'s zone, even when nothing is cut (:219-222) (**D6**) | same as I (:219-245) | via open (:149-151) | no intersect -> `[this]` (:246-274) | absent |
+| `plus` / `minus` | Duration; unit + zone (:231-326) | Duration; unit in each end's zone (:227-294) | - | - | - | absent (decided 1) (**G2**) |
+| length | `duration = to-from`, negative when rev (:66) (**D5**) | same (:72) | `numberOfDays` 0 when invalid (C) | same, +1 | `duration` >= 0 | absent (settled) |
+| `compareTo(period)` | - | yes | yes | yes | - | - (**G3**) |
+| `hasStart`/`hasEnd`/`isOpen` | removed (C) | removed | removed | removed | never had | `from/to != null` |
+| zone conversion | `atZone` | `atZone`, `toInstantRange`, `asDateRange` | `toZonedTimeRange` | `toZonedTimeRange` | `toRange(slot, zone)` | I/Z: `atZone`, `toInstantRange`, `asDateRange`; I has `asDateRange`, two-ended I not (**G4**); SP none |
+| factories | `of`, P-returning `forever`/`beginningAt`/`endingAt` (C) | same | same | same | `of`, `completeDay`; no open factories (S2) | `empty` |
+
+Empty and reversed, the same rows read across. "Empty" behaves alike everywhere except `isAdjacentTo` (D1, decided
+4). "Reversed" exists only on ranges (on a slot, `to` before `from` is overnight: nature). There `contains` and
+`intersects` say false, while `touches`, `isAdjacentTo` and `mergeWith` answer by arithmetic (D3, D4).
+
+**Divergences not explained by the types' nature:**
+
+| # | Divergence (example) | Proposal |
+|---|---|---|
+| D1 | `isAdjacentTo` with an empty or reversed range: ranges true (`MpInstantRange(a,b).isAdjacentTo(MpInstantRange(b,b))`; closed `(d1,d5)` vs `(d6,d5)`), slot false | **C**, decided 4 |
+| D2 | Zoned `isAdjacentTo` by equality: `[10Z,12Z]` Berlin vs `[12Z,14Z]` UTC: `touches` true, `intersects` false, `isAdjacentTo` false; the same instants in one zone are adjacent | **question D2**, rec: by instant, in C |
+| D3 | `touches` ignores validity: `(10,5).touches((1,20))` true, `(10,5).touches((6,7))` false, while `contains` / `intersects` are false for any reversed range | **question D3**, rec in C: false when either is reversed; empty stays a point, as on slots |
+| D4 | `mergeWith` swallows a reversed range: `(1,5).mergeWith((4,2))` = `[(1,5)]` | **C**, follows D3 (not touching -> both returned, sorted) |
+| D5 | `duration` of a reversed I/Z range is negative (`to - from`); `numberOfDays` is 0 when invalid; a slot's duration is never negative | **question D5**, rec: `Duration.ZERO` when invalid, in C |
+| D6 | Zoned `cutAway` with nothing to cut returns a copy with `to` in `from`'s zone instead of `this` (`(10Z Berlin, 12Z New York)` cut by a far range gives `(10Z Berlin, 12Z Berlin)`, not equal to `this`; equality compares zones); every other type returns `this` | **C**: `listOf(this)` when nothing is cut; each piece keeps the zone of the end it comes from. A fix with a RED row; no question |
+| D7 | `MpClosedLocalDateRange` ending on 999999999-12-31: `isValid` and everything via `asOpenRange` (`to.plusDays(1)`, :52-54) throw [code + memory: kotlinx throws past its last date]; no other type throws in a predicate | **question D7**, rec in C: closed `isValid`, `contains`, `intersects`, `touches` and `isAdjacentTo` direct and inclusive; `mergeWith` / `cutAway` / `asOpenRange` keep it with KDoc |
+
+**Gaps** (an operation absent on some types; not a divergence of behaviour). Question G, rec: a ticket after C.
+
+- G1: `isEmpty` exists only on S.
+- G2: `plus` / `minus` exist only on I and Z.
+- G3: `compareTo(period)` is missing on I and S.
+- G4: `asDateRange(tz)` is on the I Partial but not on the two-ended I.
+- G5: `contains(MpLocalDateTime, zone)` exists only on Z.
+- G6: cross-type `intersects` open <-> closed exists only on the two-ended date ranges (decided 2 keeps it off the
+  Partials).
+
+**Found, outside the rule (each needs its own ticket, not B or C):**
+
+- O1: `asDateRange` turns a half-open instant range into a closed date range that includes the end's date.
+  `MpInstantRange.Partial(2024-01-01T00:00Z, 2024-01-03T00:00Z).asDateRange(UTC)` is `[01-01..01-03]`, three days
+  for a two-day range (`MpInstantRange.kt:53-56`; also `MpZonedDateTimeRange.kt:62-65, 102-105`).
+- O2: the `MpLocalTimeSerializer` descriptor kind (section 8).
+
+**Tests for the fixes (C):**
+
+- RED rows on master for D1 (four types), D2 (two zones), D3 / D4 (a reversed range), D5 (`(b, a).duration`), D6
+  (mixed-zone `cutAway`) and D7 (a closed range on the last date).
+- Mutants: each validity guard removed; the zoned `isAdjacentTo` back to equality; the D6 no-cut branch removed.
+
 ## History
 
 - 2026-11-14: created on the maintainer's word.
@@ -651,6 +1274,38 @@ quoted:
 10. `numberOfDays`, `numberOfNights`, `numDaysInMonth`: plain getters instead of `by lazy`. In C.
 - Also accepted (2026-11-26): `numberOfDays` on two-ended ranges becomes calendar-exact (end epoch day minus start
   epoch day, +1 for closed ranges, 0 when invalid).
+
+## Decided (maintainer, 2026-11-26, second set): slots and the cross-type check
+
+Asked one by one, with an example each. Verbatim where quoted.
+
+- **S1, a null end of `MpLocalTimeSlot.Partial`:** the edge of the day. A null `from` is 00:00, a null `to` is 24:00
+  (`EndOfDay`): `Partial()` is the whole day, `Partial(from = 22:00)` is 22:00 to 24:00 (no wrap past midnight),
+  `Partial(to = 06:00)` is 00:00 to 06:00. The slot `Partial` gets the same members as the range `Partial`s
+  (`hasStart`, `hasEnd`, `isOpen`, `isNotOpen`, the `contains` and `intersects` queries), and null defaults.
+- **S2, factories on `MpLocalTimeSlot`:** "beginningAt, endingAt and completeDay ... not forever as this makes no sense
+  when we assume that nulls for from or to mean 00:00 or 24:00". So `beginningAt` and `endingAt` return the `Partial`;
+  `completeDay` stays the whole day; no `forever` on slots.
+- **S3, what stays different because of a slot's nature:** overnight stays (`to` before `from` is the next morning).
+  "for the timeslot we should rename the predicate to isValidSlot() to make it clear that we have a different concept
+  here"; asked which member: **rename the `Partial` conversion**, `MpLocalTimeSlot.Partial.asValidRange()` becomes
+  `asValidSlot()`. The slot's `isValid` / `isNotValid` keep their names.
+- **D2:** zoned `isAdjacentTo` compares by instant, in C (reverses the choice pinned at
+  `MpZonedDateTimeRangeZoneSpec.kt:9-11`).
+- **D3:** `touches` is false when either range is reversed, in C; `mergeWith` follows. An empty range still touches
+  as a point.
+- **D5:** `duration` of an invalid (reversed) instant or zoned range is `Duration.ZERO`, in C.
+- **D6** (no question, a plain bug): zoned `cutAway` with nothing to cut returns `this`, in C, RED first.
+- **D7:** the closed date range's predicates are written directly on the inclusive ends, so none throws on the last
+  date. "Check if other ranges do similar conversion "tricks" and also apply the predicate check directly without
+  converting first. This is anyway better for performance." So in C: every predicate on every range type is computed
+  directly, without converting to another range type first (e.g. via `asOpenRange`, `toInstantRange`); list each one
+  found and changed in the ticket. `mergeWith` and `cutAway`, which build new ranges, get a KDoc note where they still
+  convert.
+- **G:** the missing operations (`isEmpty`, `plus` / `minus`, `compareTo(period)`, `asDateRange`,
+  `contains(MpLocalDateTime, zone)`, open-vs-closed `intersects`) go to a separate ticket after C.
+- **O1:** `MpInstantRange.Partial.asDateRange` counting the end's date: a separate ticket.
+- **`MpLocalTimeSerializer`** declares `PrimitiveKind.STRING` but encodes a Long: a separate ticket.
 
 ## Batch A: slots are finite (plan as built, 2026-11-14)
 
@@ -836,3 +1491,5 @@ its own against the release. It corrects the Unreleased entries of ULTRA-00341 t
 - 2026-11-15: IN PROGRESS.
 - 2026-11-26: batch B and C plan drafted; the maintainer answered its ten questions (section above). Next: the
   implications of item 9 and a cross-type equivalence check, then build B and C in a fresh worktree.
+- 2026-11-26: second set of decisions (S1-S3, D2-D7, G, O1, serializer), section above. Next: build B, then C,
+  in a fresh worktree; separate tickets for G, O1 and the serializer.
