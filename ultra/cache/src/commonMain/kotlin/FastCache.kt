@@ -2,7 +2,6 @@ package io.peekandpoke.ultra.cache
 
 import io.peekandpoke.ultra.common.RunSync
 import io.peekandpoke.ultra.common.WeakReference
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -155,9 +154,10 @@ class FastCache<K, V> internal constructor(
          * A soft bound, like [maxEntries]: an entry read or written in every maintenance pass is not
          * evicted by it, so under such load the cache holds every entry touched within one pass.
          *
-         * An entry whose own size exceeds [maxMemorySize] is evicted alone, never counted, and the other
-         * entries stay. The cost: such a value is never cached - also a really small one whose estimate
-         * is inflated (sampling errors multiply per nested level, see [ObjectSizeEstimator]).
+         * An entry whose own size exceeds [maxMemorySize] is evicted alone at the next pass, never
+         * counted, and the other entries stay; a read does not spare it, only a newer pending write,
+         * which is sized anew. The cost: such a value is never cached - also a really small one whose
+         * estimate is inflated (sampling errors multiply per nested level, see [ObjectSizeEstimator]).
          */
         fun maxMemoryUsage(maxMemorySize: Long, estimator: ObjectSizeEstimator = ObjectSizeEstimator()) =
             addBehaviour(MaxMemoryUsageBehaviour(maxMemorySize, estimator))
@@ -486,9 +486,10 @@ class FastCache<K, V> internal constructor(
      * The least recently accessed entries are evicted first. A soft bound, like
      * [MaxEntriesBehaviour]: an entry read or written in every maintenance pass is not evicted by it.
      *
-     * An entry whose own size exceeds [maxMemorySize] is evicted alone and never counted into
-     * [totalSize]; the other entries stay (as in Caffeine). Such a value is never cached - also a small
-     * one whose estimate is inflated, see [ObjectSizeEstimator].
+     * An entry whose own size exceeds [maxMemorySize] is evicted alone at the next pass and never
+     * counted into [totalSize]; the other entries stay (as in Caffeine). A read does not spare it, only
+     * a newer pending write, which is sized anew. Such a value is never cached - also a small one whose
+     * estimate is inflated, see [ObjectSizeEstimator].
      */
     @Suppress("DuplicatedCode")
     class MaxMemoryUsageBehaviour<K, V>(
@@ -529,12 +530,6 @@ class FastCache<K, V> internal constructor(
 
         private val data = ValueSortedMap<K, Entry<K>, Long> { it.accessed }
 
-        /**
-         * Entries above [maxMemorySize] whose eviction a pending action spared, with their size: not
-         * counted, evicted when that action arrives (next pass), without estimating them again.
-         */
-        private val overBudget = mutableMapOf<K, Long>()
-
         /** [fallbackSize], or the default where it is zero or below. */
         private val chargedOnFailure = if (fallbackSize > 0) fallbackSize else DEFAULT_FALLBACK_SIZE
 
@@ -555,8 +550,6 @@ class FastCache<K, V> internal constructor(
         private fun handle(cache: FastCache<K, V>, now: Long, key: K, action: Action<K, V>, lastWrite: Action<K, V>?) {
             val current = data[key]
             val currentSize = current?.size ?: 0
-            // what the entry was charged last: counted, or above the budget and not counted
-            val knownSize = current?.size ?: overBudget[key]
 
             when (action) {
                 is ReadAction, is PutAction -> {
@@ -566,7 +559,7 @@ class FastCache<K, V> internal constructor(
                     // after its put keeps the size it had then). An entry not tracked yet is estimated
                     // from what was read. The access time is stamped either way.
                     val newSize = when {
-                        knownSize != null && written == null -> knownSize
+                        current != null && written == null -> currentSize
 
                         else -> {
                             val value = written?.value ?: when (action) {
@@ -583,7 +576,7 @@ class FastCache<K, V> internal constructor(
                                 { saturatingAdd(sizeOf(cache, action.key), sizeOf(cache, value)) },
                                 { e ->
                                     cache.recordFailure("size estimate", e)
-                                    knownSize ?: chargedOnFailure
+                                    if (current != null) currentSize else chargedOnFailure
                                 },
                             )
                         }
@@ -593,9 +586,8 @@ class FastCache<K, V> internal constructor(
                         // Above the whole budget: evicting older entries could never make room for it
                         // (it emptied the cache, then went itself). It goes alone, its old bytes freed.
                         current?.let { remove(current) }
-                        evictAlone(cache, action.key, newSize)
+                        evictAlone(cache, action.key)
                     } else {
-                        overBudget.remove(key)
                         // both sizes are in 0..Long.MAX_VALUE, so the difference cannot overflow
                         totalSize = saturatingAdd(totalSize, newSize - currentSize)
 
@@ -606,21 +598,17 @@ class FastCache<K, V> internal constructor(
                 // A miss as the key's last action means it is gone - see ExpireAfterAccessBehaviour
                 is RemoveAction, is MissAction -> {
                     current?.let { remove(current) }
-                    overBudget.remove(key)
                 }
             }
         }
 
         /**
-         * Evicts an entry above the whole budget. One spared by a pending action is kept aside, not
-         * counted: that action arrives next pass, and the eviction is tried again.
+         * Evicts an entry above the whole budget. A pending read does not spare it - it never fits, in
+         * use or not - only a pending write, which arrives next pass and is sized anew; until then it
+         * is not tracked.
          */
-        private fun evictAlone(cache: FastCache<K, V>, key: K, size: Long) {
-            if (cache.removeSilently(key, SparedBy.ANY_PENDING_ACTION) == Eviction.SPARED) {
-                overBudget[key] = size
-            } else {
-                overBudget.remove(key)
-            }
+        private fun evictAlone(cache: FastCache<K, V>, key: K) {
+            cache.removeSilently(key, SparedBy.PENDING_PUT)
         }
 
         private fun remove(entry: Entry<K>) {
@@ -917,7 +905,7 @@ class FastCache<K, V> internal constructor(
                                     // The loader suspends, so a CancellationException is cancellation: of
                                     // the scope, or one the loader threw. Either way it ends this refresh
                                     // quietly; finally frees the key.
-                                    if (e is CancellationException) throw e
+                                    if (isCancellation(e)) throw e
 
                                     // Refresh failed: allow retry on next loop iteration. Every Throwable,
                                     // not only Exceptions: one that is not (an Error, or e.g.
@@ -994,7 +982,7 @@ class FastCache<K, V> internal constructor(
                         { e ->
                             // process() does not suspend, so a CancellationException from it was thrown
                             // by user code, not by this loop being cancelled: rethrow only when it is.
-                            if (e is CancellationException && !currentCoroutineContext().isActive) {
+                            if (isCancellation(e) && !currentCoroutineContext().isActive) {
                                 throw e
                             }
 

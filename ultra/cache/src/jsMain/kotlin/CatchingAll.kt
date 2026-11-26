@@ -1,5 +1,7 @@
 package io.peekandpoke.ultra.cache
 
+import kotlin.coroutines.cancellation.CancellationException
+
 /** `dynamic`, not `Throwable`: JS can throw any value, and `catch (e: Throwable)` rethrows the others. */
 internal actual inline fun <R> catchingAll(block: () -> R, onFailure: (Throwable) -> R): R = try {
     block()
@@ -26,4 +28,14 @@ internal actual fun Throwable.failureName(): String? = try {
     this::class.simpleName ?: asDynamic().name as? String
 } catch (_: dynamic) {
     "Throwable"
+}
+
+/**
+ * An `instanceof`, which runs a `Proxy`'s `getPrototypeOf` trap: one that answered `Error.prototype`
+ * before can throw now. Such a value is no cancellation.
+ */
+internal actual fun isCancellation(e: Throwable): Boolean = try {
+    e is CancellationException
+} catch (_: dynamic) {
+    false
 }

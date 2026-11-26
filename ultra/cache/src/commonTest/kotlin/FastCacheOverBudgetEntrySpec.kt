@@ -74,7 +74,7 @@ class FastCacheOverBudgetEntrySpec : StringSpec() {
             behaviour.totalSize shouldBe 20L
         }
 
-        "an entry above the budget is spared while an action is pending, not counted, and evicted next pass" {
+        "an entry above the budget is spared while a write is pending, not counted; that write is sized next pass" {
             val rig = Rig()
             val estimator = OwnNumber()
             val behaviour = FastCache.MaxMemoryUsageBehaviour<String, Int>(100L, estimator)
@@ -83,8 +83,8 @@ class FastCacheOverBudgetEntrySpec : StringSpec() {
             rig.cache.put("big", 500)
             rig.drained(2)
 
-            // a read lands before the behaviour runs: the eviction spares "big"
-            rig.cache.get("big")
+            // a write lands before the behaviour runs: the eviction spares "big"
+            rig.cache.put("big", 600)
             behaviour.process(rig.cache, FastCache.ActionUpdates(rig.tap.takeNew()))
 
             rig.cache.keys shouldBe setOf("a", "big")
@@ -92,13 +92,48 @@ class FastCacheOverBudgetEntrySpec : StringSpec() {
             // keys and values of the two puts
             estimator.calls shouldBe 4
 
-            // the read arrives next pass: "big" is evicted now, without estimating it again
+            // the write arrives next pass: sized anew, still above the budget, evicted now
             rig.drained(3)
             behaviour.process(rig.cache, FastCache.ActionUpdates(rig.tap.takeNew()))
 
             rig.cache.keys shouldBe setOf("a")
             behaviour.totalSize shouldBe 10L
-            estimator.calls shouldBe 4
+            estimator.calls shouldBe 6
+        }
+
+        "a pending read does not spare an entry above the budget" {
+            val rig = Rig()
+            val behaviour = FastCache.MaxMemoryUsageBehaviour<String, Int>(100L, OwnNumber())
+
+            rig.cache.put("a", 10)
+            rig.cache.put("big", 500)
+            rig.drained(2)
+
+            // a read lands before the behaviour runs: it keeps an entry in use, but this one never fits
+            rig.cache.get("big")
+            behaviour.process(rig.cache, FastCache.ActionUpdates(rig.tap.takeNew()))
+
+            rig.cache.keys shouldBe setOf("a")
+            behaviour.totalSize shouldBe 10L
+        }
+
+        "a spared entry above the budget, overwritten with a small value, is counted at its new size" {
+            val rig = Rig()
+            val behaviour = FastCache.MaxMemoryUsageBehaviour<String, Int>(100L, OwnNumber())
+
+            rig.cache.put("a", 10)
+            rig.cache.put("big", 500)
+            rig.drained(2)
+
+            rig.cache.put("big", 40)
+            behaviour.process(rig.cache, FastCache.ActionUpdates(rig.tap.takeNew()))
+            behaviour.totalSize shouldBe 10L
+
+            rig.drained(3)
+            behaviour.process(rig.cache, FastCache.ActionUpdates(rig.tap.takeNew()))
+
+            rig.cache.keys shouldBe setOf("a", "big")
+            behaviour.totalSize shouldBe 50L
         }
 
         "removing an entry above the budget that was never counted releases nothing" {
@@ -109,11 +144,11 @@ class FastCacheOverBudgetEntrySpec : StringSpec() {
             rig.cache.put("big", 500)
             rig.drained(2)
 
-            rig.cache.get("big")
+            rig.cache.put("big", 600)
             behaviour.process(rig.cache, FastCache.ActionUpdates(rig.tap.takeNew()))
             behaviour.totalSize shouldBe 10L
 
-            // the pending read, then the removal
+            // the pending write, then the removal
             rig.cache.remove("big")
             rig.drained(4)
             behaviour.process(rig.cache, FastCache.ActionUpdates(rig.tap.takeNew()))
@@ -122,7 +157,7 @@ class FastCacheOverBudgetEntrySpec : StringSpec() {
             behaviour.totalSize shouldBe 10L
 
             // nothing of it is left behind: a key the behaviour does not track, seen by a read only,
-            // is estimated from what was read, not charged the old size
+            // is estimated from what was read, not charged an old size
             rig.cache.put("big", 5)
             rig.drained(5)
             rig.tap.takeNew()
@@ -140,10 +175,11 @@ class FastCacheOverBudgetEntrySpec : StringSpec() {
             rig.cache.put("big", 500)
             rig.drained(2)
 
-            rig.cache.get("big")
+            rig.cache.put("big", 600)
             behaviour.process(rig.cache, FastCache.ActionUpdates(rig.tap.takeNew()))
             behaviour.totalSize shouldBe 10L
 
+            // the pending write, then a removal per entry
             rig.cache.clear()
             rig.drained(5)
             behaviour.process(rig.cache, FastCache.ActionUpdates(rig.tap.takeNew()))

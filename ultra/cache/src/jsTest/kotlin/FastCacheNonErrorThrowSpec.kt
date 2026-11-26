@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.cache
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -13,6 +14,18 @@ import kotlin.time.Duration.Companion.seconds
 /** Throws a JS value that is no `Error` - which `catch (e: Throwable)` lets through. */
 private fun throwNonError(): Nothing {
     js("(function() { throw 'not an Error'; })")()
+    error("unreachable")
+}
+
+/**
+ * Throws a `Proxy` over an `Error` whose prototype lookup answers `Error.prototype` once and throws from
+ * then on: the first `instanceof` (is it a Throwable?) passes, a later one (is it a cancellation?) throws.
+ */
+private fun throwFickleProxy(): Nothing {
+    js(
+        "(function() { var n = 0; throw new Proxy(new Error('fickle'), { getPrototypeOf: function() { " +
+            "n++; if (n === 1) return Error.prototype; throw new Error('trap'); } }); })"
+    )()
     error("unreachable")
 }
 
@@ -106,6 +119,53 @@ class FastCacheNonErrorThrowSpec : StringSpec({
         // each failed refresh completes its coroutine: an escaped throw left it active for good, so
         // the scope gathered one stuck job per pass besides the loop
         eventually(5.seconds) { scope.coroutineContext.job.children.count() shouldBe 1 }
+
+        keepReachable(cache)
+        scope.cancel()
+    }
+
+    "a behaviour throwing a value whose cancellation check throws" {
+        var escaped = 0
+        val scope = CoroutineScope(SupervisorJob() + CoroutineExceptionHandler { _, _ -> escaped++ })
+        val cache = fastCache<String, String>(scope = scope, loopDelay = 20.milliseconds) {
+            addBehaviour(object : FastCache.Behaviour<String, String> {
+                override fun process(
+                    cache: FastCache<String, String>,
+                    updates: FastCache.ActionUpdates<String, String>,
+                ) {
+                    throwFickleProxy()
+                }
+            })
+            expireAfterWrite(50.milliseconds)
+        }
+
+        cache.put("k", "v")
+
+        // the behaviour after it still runs, every pass, and nothing reached the scope's handler
+        eventually(5.seconds) { cache.size shouldBe 0 }
+        escaped shouldBe 0
+
+        keepReachable(cache)
+        scope.cancel()
+    }
+
+    "a refresh loader throwing a value whose cancellation check throws" {
+        var calls = 0
+        var escaped = 0
+        val scope = CoroutineScope(SupervisorJob() + CoroutineExceptionHandler { _, _ -> escaped++ })
+        val cache = fastCache<String, String>(scope = scope, loopDelay = 20.milliseconds) {
+            refreshAfterWrite(ttl = 20.milliseconds, hardTtl = 60.seconds) {
+                calls++
+                throwFickleProxy()
+            }
+        }
+
+        cache.put("k", "v")
+
+        // retried every pass, counted as a failure: nothing reached the scope's handler
+        eventually(5.seconds) { (calls >= 3) shouldBe true }
+        escaped shouldBe 0
+        cache.get("k") shouldBe "v"
 
         keepReachable(cache)
         scope.cancel()

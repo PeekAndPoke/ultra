@@ -11,3 +11,6 @@ internal class ThrownValue : RuntimeException("a thrown value that is no Throwab
 
 /** The class name a failure report shows for this throwable. */
 internal expect fun Throwable.failureName(): String?
+
+/** Whether [e] is a cancellation; on JS `false` when the check itself throws (a hostile `Proxy`). */
+internal expect fun isCancellation(e: Throwable): Boolean
