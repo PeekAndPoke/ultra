@@ -76,8 +76,8 @@ a(href = "https://example.com") { +"Elsewhere" }               // full page load
 </div>
 
 <p>
-  A same-origin path the SPA has no route for is still routed in-app, and lands on <code>catchAll</code> — or on
-  nothing but a console error, without one. If
+  A same-origin path the SPA has no route for is still routed in-app, and lands on <code>catchAll</code>. Without
+  one, the address changes, the previous page stays and the console logs an error. If
   <code>/api/export.csv</code> or <code>/oauth/start</code> is served by the backend, say so on the link:
 </p>
 

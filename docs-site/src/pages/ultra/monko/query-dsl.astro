@@ -19,11 +19,14 @@ import {Code} from 'astro:components';
         typed expression <code>r</code> representing your entity, with KSP-generated property accessors.</p>
 
     <Code code={`val results = repo.find { r ->
-    filter(r.age.gte(18))
-    filter(r.address.city.eq("Berlin"))
+    filter(and(r.age.gte(18), r.address.city.eq("Berlin")))
     sort(r.name.asc)
     limit(20)
 }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Repeated <code>filter()</code> calls combine with AND, so a condition can be added step by step, for example
+        inside an <code>if</code>. <code>sort</code>, <code>limit</code> and <code>skip</code> each hold one value: a
+        second call replaces the first.</p>
 
     <h2>Comparison operators</h2>
 
@@ -81,10 +84,14 @@ import {Code} from 'astro:components';
         </table>
     </div>
 
+    <p>A value of your own <code>@JvmInline value class</code> is reduced to its backing value. Only <code>String</code>,
+        <code>Number</code> and <code>Boolean</code> backings are supported; any other backing throws
+        <code>IllegalArgumentException</code> when the filter is built.</p>
+
     <h2>String operators</h2>
 
     <Code code={`// Regex matching
-filter(r.email.regex(".*@example\\.com"))
+filter(r.email.regex(".*@example\\\\.com"))
 filter(r.name.regex(Regex("^A", RegexOption.IGNORE_CASE)))`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Logical operators</h2>
@@ -93,11 +100,10 @@ filter(r.name.regex(Regex("^A", RegexOption.IGNORE_CASE)))`} lang="kotlin" theme
 import io.peekandpoke.monko.lang.dsl.or
 import io.peekandpoke.monko.lang.dsl.not
 
-// AND (implicit — multiple filter() calls are AND-ed)
-filter(r.age.gte(18))
-filter(r.status.eq("active"))
+// AND
+filter(and(r.age.gte(18), r.status.eq("active")))
 
-// Explicit AND / OR
+// OR
 filter(
     or(
         r.status.eq("active"),
@@ -132,9 +138,8 @@ filter(r.deletedAt.exists(false))`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Sorting</h2>
 
-    <Code code={`// Single field
+    <Code code={`// Single field (a second sort() call replaces the first)
 sort(r.name.asc)
-sort(r.createdAt.desc)
 
 // Multiple fields
 sort(orderBy(r.name.asc, r.age.desc))`} lang="kotlin" theme="vitesse-dark"/>
@@ -155,15 +160,14 @@ val cursor = repo.find { r ->
     skip((page - 1) * pageSize)
     limit(pageSize)
 }
-// cursor.fullCount -> total matching documents`} lang="kotlin" theme="vitesse-dark"/>
+// cursor.fullCount -> total matching documents (null when the query has no filter)`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Nested property access</h2>
 
     <p>KSP generates accessors for nested types. Access deeply nested fields with dot notation:</p>
 
     <Code code={`// r.address is generated because Person has an Address field
-filter(r.address.city.eq("Berlin"))
-filter(r.address.zip.regex("^10"))
+filter(and(r.address.city.eq("Berlin"), r.address.zip.regex("^10")))
 sort(r.address.country.asc)`} lang="kotlin" theme="vitesse-dark"/>
 
     <Aside>Every property path in a query is validated at compile time.

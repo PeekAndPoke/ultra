@@ -178,10 +178,10 @@ abstract class MonkoRepository<T : Any>(
         return driver.deleteOne(collection = name, idOrKey = idOrKey)
     }
 
-    @JvmName("removeStored")
-    suspend fun remove(stored: Stored<T>): RemoveResult {
-        val result = remove(stored._key)
-        fireOnAfterDeleteHooks(stored)
+    /** Removes the given entity and fires the OnAfterDelete hooks. */
+    override suspend fun <X : T> remove(entity: Stored<X>): RemoveResult {
+        val result = remove(entity._key)
+        fireOnAfterDeleteHooks(entity)
         return result
     }
 

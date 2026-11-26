@@ -14,6 +14,7 @@ import io.peekandpoke.ultra.html.css
 import kotlinx.browser.window
 import kotlinx.coroutines.await
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.onEach
 import kotlinx.css.Overflow
 import kotlinx.css.TextAlign
 import kotlinx.css.height
@@ -31,7 +32,12 @@ import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.asList
 
-/** Renders all pages of a PDF in a scrollable container. */
+/**
+ * Renders all pages of a PDF in a scrollable container.
+ *
+ * The viewer owns the document it loads: on unmount it destroys it, which ends its pdf.js worker. A `State.doc` handed
+ * to `onChange` cannot be used after that.
+ */
 @Suppress("FunctionName")
 fun Tag.ScrollingPdfViewer(
     src: PdfSource,
@@ -75,7 +81,10 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
 
     private val jobQueue = SimpleAsyncQueue()
 
-    private val pdfLoader = dataLoader { props.src.load() }
+    // Before the loader: it hands every document it loads to the owner, also one arriving after unmount
+    private val documents = PdfDocumentOwner()
+
+    private val pdfLoader = dataLoader { props.src.load().onEach { documents.offer(it) } }
 
     private var state: State by value(State()) { props.onChange(it) }
 
@@ -95,13 +104,21 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
 
             val doc = (it as? DataLoader.State.Loaded<PdfjsLib.PDFDocumentProxy>)?.data
 
-            if (doc != null && state.doc == null) {
+            if (doc != null && documents.claim(doc)) {
                 modifyState { copy(doc = doc) }
 
                 jobQueue.add {
                     delay(10)
                     renderAllPages()
                 }
+            }
+        }
+
+        lifecycle {
+            // The document holds a pdf.js worker until destroyed: one per visit would pile up (ULTRA-00349)
+            onUnmount {
+                jobQueue.clear()
+                documents.release()
             }
         }
     }
@@ -157,6 +174,8 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
     }
 
     private suspend fun renderAllPages() {
+        // Unmounted: no canvas comes any more, so do not wait for them
+        if (documents.isReleased) return
 
         val canvases: List<HTMLCanvasElement> = dom?.querySelectorAll(".page canvas")
             ?.asList()
@@ -186,9 +205,10 @@ class ScrollingPdfViewer(ctx: Ctx<Props>) : Component<ScrollingPdfViewer.Props>(
     }
 
     private suspend fun renderPage(canvas: HTMLCanvasElement, pageNumber: Int) {
+        if (documents.isReleased) return
 
         state.doc?.let { doc: PdfjsLib.PDFDocumentProxy ->
-            canvas.visitGuarded { canvas ->
+            canvas.visitGuarded(quiet = { documents.isReleased }) { canvas ->
                 val context = canvas.getContext("2d") as CanvasRenderingContext2D
 
                 val page = doc.getPage(pageNumber).await()

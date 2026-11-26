@@ -15,7 +15,7 @@ import io.peekandpoke.ultra.streams.StreamSource
 class Addon<T> internal constructor(
     /** Human-readable name for error messages. */
     val name: String,
-    /** Whether to defer loading until the first subscription. */
+    /** Whether to defer loading until the first read or subscription. */
     private val lazy: Boolean,
     /** Suspend function that performs the dynamic import and returns the addon facade. */
     private val loader: suspend () -> T,
@@ -36,9 +36,9 @@ class Addon<T> internal constructor(
         return source.subscribeToStream(sub)
     }
 
-    /** Triggers the load if not already started. Called by the registry for non-lazy addons. */
-    internal fun load() {
-        ensureLoading()
+    /** Starts the load of a non-lazy addon; a lazy one waits for its first read or subscriber. */
+    internal fun loadIfEager() {
+        if (!lazy) ensureLoading()
     }
 
     private fun ensureLoading() {

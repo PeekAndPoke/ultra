@@ -170,7 +170,8 @@ val pricing = cluster.storage.randomCache.getOrPut(cacheCategory.bind("EUR")) {
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <Aside>All cluster features use the same pluggable storage backends as auth &mdash;
-        Karango or Monko. Jobs, locks, files, and cache entries are all persisted to your database of choice.
+        Karango or Monko. Jobs, locks, key-value and cache entries and the depot's keys are persisted to your
+        database of choice; the files themselves go to their depot repository.
     </Aside>
 
     <div class="mt-12">

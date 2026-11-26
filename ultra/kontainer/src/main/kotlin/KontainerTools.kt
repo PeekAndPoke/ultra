@@ -55,11 +55,8 @@ class KontainerTools internal constructor(
                 kind = provider.kind,
                 overridden = provider.overridden,
                 semiDynamicBecauseOf = blueprint.semiDynamicBecauseOf(cls).map { DebugInfo.ClassInfo.of(it) },
-                instances = provider.instances.map { instance ->
-                    DebugInfo.InstanceDebugInfo(
-                        createdAt = instance.createdAt,
-                        cls = DebugInfo.ClassInfo.of(instance.instance::class),
-                    )
+                created = provider.created.let {
+                    DebugInfo.CreatedDebugInfo(count = it.count, firstAt = it.firstAt, lastAt = it.lastAt)
                 },
                 definition = provider.definition.toInfo(),
             )
@@ -82,12 +79,20 @@ class KontainerTools internal constructor(
     }
 
     /**
-     * Returns a human-readable table of all services: their type, kind and current instances.
+     * The creations as the dump shows them: the count with the first and the last time; empty when none.
+     */
+    private fun createdCell(created: ServiceProvider.Created): String = when (created.count) {
+        0L -> ""
+        else -> "${created.count}, first ${created.firstAt}, last ${created.lastAt}"
+    }
+
+    /**
+     * Returns a human-readable table of all services: their type, kind and what each provider created.
      */
     fun dumpKontainer(): String {
 
         val rows = mutableListOf(
-            listOf("Service ID", "Type", "Kind", "Instances")
+            listOf("Service ID", "Type", "Kind", "Created")
         )
 
         rows.addAll(
@@ -96,7 +101,7 @@ class KontainerTools internal constructor(
                     k.getName(),
                     v.type.toString(),
                     kindCell(k, v),
-                    v.instances.joinToString("\n") { "${it.createdAt}: ${it.instance::class.getName()}" }
+                    createdCell(v.created),
                 )
             }
         )

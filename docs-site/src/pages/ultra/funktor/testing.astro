@@ -19,15 +19,18 @@ import {Code} from 'astro:components';
     <p>Extend <code>AppSpec</code> to get a running test server with full Kontainer support.
         Uses <a href="https://kotest.io/" target="_blank" rel="noopener">Kotest</a> FreeSpec style.</p>
 
-    <Code code={`class UserApiSpec : AppSpec<MyConfig>(testBed) {
+    <Code code={`class UserApiSpec : AppSpec<MyConfig>(app) {
 
     init {
         installAllFixturesBeforeSpec()
 
         "GET /api/users" - {
             "returns user list" {
-                val response = engine.handleRequest(HttpMethod.Get, "/api/users")
-                response.status() shouldBe HttpStatusCode.OK
+                testApp(host = "localhost").anonymous {
+                    request(HttpMethod.Get, "/api/users") {
+                        status shouldBe HttpStatusCode.OK
+                    }
+                }
             }
         }
     }
@@ -37,7 +40,7 @@ import {Code} from 'astro:components';
 
     <p>Access any service from the test Kontainer using delegated properties.</p>
 
-    <Code code={`class UserServiceSpec : AppSpec<MyConfig>(testBed) {
+    <Code code={`class UserServiceSpec : AppSpec<MyConfig>(app) {
     val userService: UserService by service()
     val userRepo: UserRepo by service()
 
@@ -56,14 +59,16 @@ import {Code} from 'astro:components';
     <p>Install fixtures before each spec or before individual tests.
         Fixtures are cleared and re-installed to ensure a clean state.</p>
 
-    <Code code={`class OrderSpec : AppSpec<MyConfig>(testBed) {
+    <Code code={`class OrderSpec : AppSpec<MyConfig>(app) {
+    val orderFixtures: OrderFixtures by service()
+
     init {
-        installFixturesBeforeSpec(UserFixtures::class, OrderFixtures::class)
+        // installs OrderFixtures and the fixtures it depends on
+        installFixturesBeforeSpec(orderFixtures)
 
         "order processing" - {
             "calculates total" {
-                val fixtures = kontainer().get(OrderFixtures::class)
-                val order = fixtures.sampleOrder.get()
+                val order = orderFixtures.sampleOrder.get().value
                 order.total shouldBe 42.0
             }
         }
@@ -71,7 +76,7 @@ import {Code} from 'astro:components';
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <Aside>The test harness starts a real Ktor engine and connects to a real database.
-        No mocking, no in-memory fakes. If it passes in tests, it works in production.
+        No mocking, no in-memory fakes.
     </Aside>
 
 </DocsLayout>

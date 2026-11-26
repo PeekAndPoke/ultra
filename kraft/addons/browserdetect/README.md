@@ -12,12 +12,14 @@ in Kraft applications.
 ## Example
 
 ```kotlin
-val browser = BrowserDetect.detect()
+private val bd: BrowserDetectAddon? by subscribingTo(addons.browserDetect)
 
-println(browser.browserName)    // e.g., "Chrome"
-println(browser.browserVersion) // e.g., "120.0"
-println(browser.osName)         // e.g., "macOS"
-println(browser.platformType)   // e.g., "desktop"
+val detect = bd?.forCurrentBrowser()
+
+println(detect?.getBrowser()?.name)   // e.g., "Chrome"
+println(detect?.getBrowser()?.version) // e.g., "120.0"
+println(detect?.getOs()?.name)        // e.g., "macOS"
+println(detect?.getPlatform()?.type)  // e.g., "desktop"
 ```
 
 ## Installation

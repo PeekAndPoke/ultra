@@ -164,4 +164,16 @@ class ThreeJsMembersSpec : StringSpec({
             TextureFilter.LinearMipmapLinearFilter shouldBe raw.LinearMipmapLinearFilter
         }
     }
+
+    // ThreeJsComponent.stop() calls it (ULTRA-00348). three.js defines it inside the WebGLRenderer constructor, not on
+    // the prototype, and constructing a renderer needs WebGL, which headless Chrome may not give: so the source is read
+    "WebGLRenderer still has forceContextLoss" {
+        withThree { three ->
+            val source: String = three.raw.WebGLRenderer.toString().unsafeCast<String>()
+
+            // either form: a field set in the constructor (three.js 0.186) or a class method
+            (Regex("forceContextLoss\\s*=\\s*function").containsMatchIn(source) ||
+                Regex("forceContextLoss\\s*\\(\\s*\\)\\s*\\{").containsMatchIn(source)) shouldBe true
+        }
+    }
 })

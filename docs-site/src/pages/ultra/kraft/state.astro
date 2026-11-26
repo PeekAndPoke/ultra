@@ -63,7 +63,7 @@ onClick { state = state.copy(agreed = true) }`} lang="kotlin" theme="vitesse-dar
 
 <h2>2. Stream-backed state</h2>
 
-<p>For state that should be debounced, throttled, or transformed before triggering a redraw:</p>
+<p>For state whose changes should reach a handler debounced or otherwise transformed:</p>
 
 <Code code={`class SearchBox(ctx: NoProps) : PureComponent(ctx) {
 
@@ -83,7 +83,9 @@ onClick { state = state.copy(agreed = true) }`} lang="kotlin" theme="vitesse-dar
     }
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>The stream config lambda lets you apply operators from the Ultra streams library — <code>debounce</code>, <code>throttle</code>, <code>map</code>, <code>filter</code>, and more.</p>
+<p>The stream config lambda applies operators from the Ultra streams library that keep the value type, such as
+    <code>debounce</code>. The property itself updates and redraws at once; only the handler sees the configured
+    stream.</p>
 
 <h2>3. Subscribing to external streams</h2>
 
@@ -190,8 +192,8 @@ override fun VDom.render() {
       <td>Counter, toggles</td>
     </tr>
     <tr>
-      <td>Debounced/throttled state</td>
-      <td><code>stream("") &#123; it.debounce(300.ms) &#125;</code></td>
+      <td>Debounced state</td>
+      <td><code>stream("", &#123; debounce(300.milliseconds) &#125;) &#123; search(it) &#125;</code></td>
       <td>Search input</td>
     </tr>
     <tr>

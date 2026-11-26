@@ -1,6 +1,6 @@
 /**
- * The kontainer readers on both slice shapes, on real data. A misread here would not throw: it would show
- * a wrong table, so each shape's distinguishing fields are pinned.
+ * The kontainer readers on real data. A misread here would not throw: it would show a wrong table, so the
+ * distinguishing fields are pinned.
  */
 import { describe, expect, it } from 'vitest'
 import {
@@ -17,42 +17,40 @@ import {
 import { recorded, sliceOf } from './support.ts'
 
 describe('readKontainer', () => {
-    it('reads a SLIM record: instantiated services only, no definitions, the fingerprint kept', () => {
+    it('reads a record: services with creations only, no definitions, the fingerprint kept', () => {
         const raw = sliceOf(recorded.slim(), 'kontainer')
         const slice = readKontainer(raw)!
 
-        expect(slice.shape).toBe('slim')
         expect(slice.graphFingerprint).toBe(raw.graphFingerprint)
         expect(slice.services).toHaveLength(raw.services.length)
-        expect(slice.services.every((service) => service.definition === null && service.instances.length > 0)).toBe(true)
+        expect(slice.services.every((service) => service.definition === null && service.count > 0)).toBe(true)
 
-        const first = raw.services[0]
-        const read = slice.services.find((service) => service.cls === first.cls)!
-        expect(read.type).toBe(first.type)
-        expect(read.instances[0].cls).toBe(first.instances[0].cls)
-        expect(read.instances[0].createdAtMillis).toBe(first.instances[0].createdAt.ts)
-    })
-
-    it('reads an OLD (fat) record: every service, {fqn} and {location} unwrapped, definitions inline', () => {
-        const raw = sliceOf(recorded.fat(), 'kontainer')
-        const slice = readKontainer(raw)!
-
-        expect(slice.shape).toBe('full')
-        expect(slice.graphFingerprint).toBeNull()
-        expect(slice.services).toHaveLength(raw.info.services.length)
-
-        for (const service of raw.info.services) {
-            const read = slice.services.find((it) => it.cls === service.cls.fqn)!
-            expect(read.definition!.creates).toBe(service.definition.creates.fqn)
-            expect(read.definition!.codeLocation).toBe(service.definition.codeLocation.location)
+        // Every service, by cls: its count and both times, each from its own key
+        for (const written of raw.services) {
+            const read = slice.services.find((service) => service.cls === written.cls)!
+            expect(read.type, written.cls).toBe(written.type)
+            expect(read.count, written.cls).toBe(written.count)
+            expect(read.firstCreatedAtMillis, written.cls).toBe(written.firstCreatedAt.ts)
+            expect(read.lastCreatedAtMillis, written.cls).toBe(written.lastCreatedAt.ts)
         }
     })
 
-    it('the graphFingerprint KEY marks the slim shape, even when its value is null', () => {
+    it('a service of a record written before the counters reads as one without creations: its instance list is not read', () => {
+        const slice = readKontainer({
+            graphFingerprint: 'fp',
+            services: [{ cls: 'a.Old', type: 'Prototype', instances: [{ cls: 'a.Old', createdAt: { ts: 1792413528458 } }] }],
+        })!
+
+        expect(slice.services).toEqual([
+            { cls: 'a.Old', type: 'Prototype', definition: null, count: 0, firstCreatedAtMillis: null, lastCreatedAtMillis: null },
+        ])
+    })
+
+    it('the graphFingerprint KEY marks the slice, even when its value is null', () => {
         const raw = sliceOf(recorded.slim(), 'kontainer')
         raw.graphFingerprint = null
 
-        expect(readKontainer(raw)?.shape).toBe('slim')
+        expect(readKontainer(raw)).toMatchObject({ graphFingerprint: null, services: expect.any(Array) })
     })
 
     it('a slice with neither marker is unrecognised, not guessed', () => {
@@ -62,13 +60,8 @@ describe('readKontainer', () => {
         expect(readKontainer(raw)).toBeNull()
     })
 
-    it('only a full record has counts: a slim one has none, and a stray field is not read as one', () => {
-        const fat = sliceOf(recorded.fat(), 'kontainer')
-        expect(readKontainer(fat)).toMatchObject({ numOld: fat.numOld, numTotal: fat.numTotal })
-
-        const slim = sliceOf(recorded.slim(), 'kontainer')
-        expect(Object.keys(slim).sort()).toEqual(['graphFingerprint', 'services'])
-        expect(readKontainer({ ...slim, numOld: 3, numTotal: 7 })).toMatchObject({ numOld: null, numTotal: null })
+    it('a slice written before 2026-10-19 (`info.services`) is not read: null, so the tab shows the raw tree', () => {
+        expect(readKontainer({ numOld: 0, numTotal: 1, info: { services: [{ cls: { fqn: 'a.B' }, type: 'Singleton' }] } })).toBeNull()
     })
 })
 
@@ -100,42 +93,32 @@ describe('the kontainer graph', () => {
         }
     })
 
-    it('a DynamicOverride gets what a full record wrote for it, not the blueprint whose injects did not run', () => {
+    it('a DynamicOverride is handed in: no class named, no injects, over the blueprint whose injects did not run', () => {
         const slice = readKontainer(sliceOf(recorded.slim(), 'kontainer'))!
         const graph = readKontainerGraph(recorded.kontainerGraph().data)!
         const joined = joinKontainerGraph(slice, graph, true)
 
         const overrides = joined.filter((service) => service.type === 'DynamicOverride')
-        expect(overrides.map((service) => service.cls)).toEqual(
-            expect.arrayContaining(['io.peekandpoke.ultra.security.user.UserProvider', 'io.peekandpoke.funktor.core.model.InsightsConfig']),
-        )
+        // One since ULTRA-00301: InsightsConfig is no longer handed in per request
+        expect(overrides.map((service) => service.cls)).toEqual(['io.peekandpoke.ultra.security.user.UserProvider'])
+        expect(graph.services.find((it) => it.cls === 'io.peekandpoke.ultra.security.user.UserProvider')?.definition).not.toBeNull()
 
         for (const service of overrides) {
             const blueprint = graph.services.find((it) => it.cls === service.cls)!.definition
             expect(service.definition).toEqual({
-                creates: service.instances[0].cls,
+                creates: null,
                 injectionType: 'Dynamic',
                 injects: [],
                 codeLocation: null,
                 overwrites: blueprint,
+                handedIn: true,
             })
         }
-
-        // ...which is what the full record of the same service really says
-        const v1 = readKontainer(sliceOf(recorded.fat(), 'kontainer'))!.services
-            .find((service) => service.cls === 'io.peekandpoke.ultra.security.user.UserProvider')!.definition!
-        const v2 = overrides.find((service) => service.cls === 'io.peekandpoke.ultra.security.user.UserProvider')!.definition!
-
-        expect(v1.creates).toBe(v2.creates)
-        expect(v1.injectionType).toBe(v2.injectionType)
-        expect(v1.injects).toEqual(v2.injects)
-        expect(v1.overwrites!.creates).toBe(v2.overwrites!.creates)
-        expect(v1.overwrites!.injectionType).toBe(v2.overwrites!.injectionType)
     })
 
     it('an override shows NONE of its blueprint\'s injects, even when the blueprint has some', () => {
-        // Derived: the real graph, with UserProvider's blueprint given the injects of a real service. The two
-        // real overrides' blueprints inject nothing, so the real data alone cannot tell "[]" from "the blueprint's".
+        // Derived: the real graph, with UserProvider's blueprint given the injects of a real service. The real
+        // override's blueprint injects nothing, so the real data alone cannot tell "[]" from "the blueprint's".
         const raw: any = recorded.kontainerGraph().data
         const donor = raw.services.find((it: any) => it.cls === 'io.peekandpoke.funktor.auth.AuthRecordStorage')
         const blueprint = raw.services.find((it: any) => it.cls === 'io.peekandpoke.ultra.security.user.UserProvider')
@@ -176,14 +159,13 @@ describe('the kontainer graph', () => {
         nameless.graphFingerprint = null
         expect(graphMatch(readKontainer(nameless)!, graph)).toBe('unknown')
 
-        expect(graphMatch(readKontainer(sliceOf(recorded.fat(), 'kontainer'))!, graph)).toBe('same')
     })
 })
 
 describe('the other readers', () => {
-    it('an instant is millis from Slumber\'s object, and seconds x 1000 from a Jackson-era double', () => {
+    it('an instant is millis from Slumber\'s object; a bare number is not guessed into a unit', () => {
         expect(readInstantMillis({ ts: 1792419655680, timezone: 'UTC', human: '...' })).toBe(1792419655680)
-        expect(readInstantMillis(1785496992.7)).toBe(1785496992700)
+        expect(readInstantMillis(1785496992.7)).toBeNull()
     })
 
     it('vault entries of the current collector are not legacy, and keep their placeholder text', () => {

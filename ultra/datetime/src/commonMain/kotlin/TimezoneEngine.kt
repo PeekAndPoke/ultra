@@ -4,6 +4,7 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.IllegalTimeZoneException
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.plus
 import kotlin.math.abs
 import kotlin.time.Instant
@@ -72,26 +73,37 @@ internal object TimezoneEngine {
         return EpochMath.instant(local, offset)
     }
 
-    /** The first instant of [date] in [timezone]: midnight, or the end of the gap when midnight does not exist. */
-    fun startOfDay(timezone: MpTimezone, date: LocalDate): Instant {
-        fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(date, it) }
+    /**
+     * The instant of the wall-clock time [local] in [timezone], with the first existing time for a time that does not
+     * exist: in a gap the transition (02:30 in a 02:00 to 03:00 gap is 03:00), in an overlap the first occurrence.
+     * Unlike [toInstant], which moves a time in a gap forward by the length of the gap (02:30 becomes 03:30).
+     */
+    fun toInstantOrTransition(timezone: MpTimezone, local: LocalDateTime): Instant {
+        fixedOffsetSecondsOrNull(timezone.id)?.let { return EpochMath.instant(local, it) }
         requireRegionIdShape(timezone.id)
 
-        val wall = EpochMath.epochSeconds(date)
+        val wall = EpochMath.epochSeconds(local)
 
         val resolution = when {
             abs(wall) < EXACT_AS_DOUBLE -> resolve { platformOffsetSecondsAt(timezone.id, wall + it) }
-            else -> EpochMath.instant(date, 0).epochSeconds.let { exact -> resolve { lookup(timezone.id, exact + it) } }
+            else -> EpochMath.instant(local, 0).epochSeconds.let { exact ->
+                resolve { lookup(timezone.id, exact + it) }
+            }
         }
 
         return when (resolution) {
-            is Resolution.Unique -> EpochMath.instant(date, resolution.offset)
-            is Resolution.Overlap -> EpochMath.instant(date, resolution.earlier)
+            is Resolution.Unique -> EpochMath.instant(local, resolution.offset)
+            is Resolution.Overlap -> EpochMath.instant(local, resolution.earlier)
             is Resolution.Gap -> {
-                val midnight = EpochMath.instant(date, 0).epochSeconds
-                Instant.fromEpochSeconds(transitionAfter(timezone.id, midnight - PROBE_WINDOW_SECONDS, resolution.before))
+                val asUtc = EpochMath.instant(local, 0).epochSeconds
+                Instant.fromEpochSeconds(transitionAfter(timezone.id, asUtc - PROBE_WINDOW_SECONDS, resolution.before))
             }
         }
+    }
+
+    /** The first instant of [date] in [timezone]: midnight, or the end of the gap when midnight does not exist. */
+    fun startOfDay(timezone: MpTimezone, date: LocalDate): Instant {
+        return toInstantOrTransition(timezone, LocalDateTime(date, LocalTime(0, 0)))
     }
 
     /**
@@ -163,7 +175,8 @@ internal object TimezoneEngine {
      * The first second after [from] at which [zoneId] stops using the offset [before].
      *
      * Bisects on Long, not Double: beyond 2^53 a Double midpoint can round onto a bound and never make progress. This
-     * runs only for a start of day inside a gap, so the emulated Long on JS does not matter.
+     * runs only for a time inside a gap (a start of day, or a time slot's start or end on a date), so the emulated Long
+     * on JS does not matter.
      */
     private fun transitionAfter(zoneId: String, from: Long, before: Int): Long {
         var lo = from
@@ -281,3 +294,13 @@ internal expect fun platformOffsetSecondsAtExact(zoneId: String, epochSeconds: L
 
 /** The id of the system's time zone. */
 internal expect fun platformSystemDefaultZoneId(): String
+
+/**
+ * The epoch seconds within which this platform's zone engine works for the zone [zoneId], or null when nothing but
+ * the date types' own range limits it (JVM; fixed offsets everywhere).
+ *
+ * - JS, region zone: +/-8.64e12 s, the range of `Date` (-271821-04-20 to +275760-09-13); `Intl` refuses beyond it.
+ * - native, region zone: the second to the last date of the `LocalDate` range; kotlinx-native refuses an instant
+ *   whose date-time lies past it.
+ */
+internal expect fun platformResolvableSeconds(zoneId: String): LongRange?

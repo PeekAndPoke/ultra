@@ -76,12 +76,11 @@ kotlin {
 
 <p>Create <code>src/jsMain/kotlin/main.kt</code>:</p>
 
-    <Code code={`import io.peekandpoke.kraft.components.*
+    <Code code={`import io.peekandpoke.kraft.kraftApp
+import io.peekandpoke.kraft.routing.RouterComponent
 import io.peekandpoke.kraft.routing.Static
-import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.kraft.semanticui.semanticUI
 import io.peekandpoke.kraft.vdom.preact.PreactVDomEngine
-import io.peekandpoke.ultra.semanticui.ui
-import kotlinx.html.*
 
 // Define the app and its routes
 val app = kraftApp {
@@ -102,10 +101,14 @@ fun main() {
 
 <p>Create <code>src/jsMain/kotlin/HomePage.kt</code>:</p>
 
-    <Code code={`import io.peekandpoke.kraft.components.*
+    <Code code={`import io.peekandpoke.kraft.components.NoProps
+import io.peekandpoke.kraft.components.PureComponent
+import io.peekandpoke.kraft.components.comp
 import io.peekandpoke.kraft.vdom.VDom
+import io.peekandpoke.ultra.html.onClick
 import io.peekandpoke.ultra.semanticui.ui
-import kotlinx.html.*
+import kotlinx.html.Tag
+import kotlinx.html.p
 
 // Factory function — this is how other components use yours
 @Suppress("FunctionName")
@@ -137,7 +140,7 @@ class HomePage(ctx: NoProps) : PureComponent(ctx) {
 
 <h2>5. Run it</h2>
 
-<Code code={`./gradlew -t --parallel jsRun`} lang="bash" theme="vitesse-dark" />
+<Code code={`./gradlew -t --parallel jsBrowserDevelopmentRun`} lang="bash" theme="vitesse-dark" />
 
 <p>The <code>-t</code> flag enables continuous build — save a file and the browser refreshes.</p>
 
@@ -185,7 +188,7 @@ fun Tag.HomePage() = comp {
         complete setup:</p>
 
     <Code code={`val app = kraftApp {
-    // Registers modals, toasts, popups with SemanticUI styling
+    // Renders popups and toasts with SemanticUI
     semanticUI {
         // Optional: customize toast defaults
         defaultDuration = 5.seconds
@@ -194,7 +197,7 @@ fun Tag.HomePage() = comp {
     // Set up routing
     routing {
         usePathStrategy()  // clean URLs: /users/123
-        // or useHashStrategy() for: /#/users/123
+        // or useHashStrategy(), the default: /#/users/123
 
         mount(Nav.home) { HomePage() }
         mount(Nav.users) { route -> UsersPage(route["id"]) }
@@ -204,14 +207,13 @@ fun Tag.HomePage() = comp {
 }
 
 fun main() {
-    app.mount("#spa", PreactVDomEngine()) {
+    app.mount("#app", PreactVDomEngine()) {
         App()  // your root component
     }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>The <code>semanticUI()</code> call registers modals, toasts, and popups with FomanticUI styling. If you want the
-        core overlay systems without SemanticUI, register them individually with <code>modals()</code>,
-        <code>toasts()</code>, and <code>popups()</code>.</p>
+    <p>Every <code>kraftApp</code> registers the core modals, toasts and popups. The <code>semanticUI()</code> call
+        switches popups and toasts to FomanticUI rendering; its block configures the toasts.</p>
 
     <Aside>Named time zones (<code>MpTimezone.of("Europe/Berlin")</code>) work out of the box, with no bundled
         timezone data. Only raw kotlinx <code>TimeZone.of(...)</code> needs a dataset — see

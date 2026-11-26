@@ -28,7 +28,7 @@ class PrototypesCharacterizationSpec : StringSpec({
         assertSoftly {
             subject.get(Proto::class) shouldNotBeSameInstanceAs subject.get(Proto::class)
             Births.of(Proto::class) shouldBe 2
-            subject.getProvider(Proto::class).instances.size shouldBe 2
+            subject.getProvider(Proto::class).created.count shouldBe 2L
             subject.reportedOf(Proto::class) shouldBe Reported.StaticPrototype
         }
     }
@@ -182,7 +182,7 @@ class PrototypesCharacterizationSpec : StringSpec({
         }
     }
 
-    "Each kontainer has its own prototype provider: the recorded instances are per kontainer" {
+    "Each kontainer has its own prototype provider: the creations are counted per kontainer" {
 
         class Proto
 
@@ -198,12 +198,12 @@ class PrototypesCharacterizationSpec : StringSpec({
 
         assertSoftly {
             one.getProvider(Proto::class) shouldNotBeSameInstanceAs two.getProvider(Proto::class)
-            one.getProvider(Proto::class).instances.size shouldBe 3
-            two.getProvider(Proto::class).instances.size shouldBe 1
+            one.getProvider(Proto::class).created.count shouldBe 3L
+            two.getProvider(Proto::class).created.count shouldBe 1L
         }
     }
 
-    "A global singleton's provider is shared: instances it records show up in every kontainer" {
+    "A global singleton's provider is shared: the creation it counts shows up in every kontainer" {
 
         class Single
 
@@ -216,7 +216,8 @@ class PrototypesCharacterizationSpec : StringSpec({
         val two = blueprint.create()
 
         withClue("kontainer two reports the instance that kontainer one created") {
-            two.getProvider(Single::class).instances.size shouldBe 1
+            two.getProvider(Single::class).created shouldBe one.getProvider(Single::class).created
+            two.getProvider(Single::class).created.count shouldBe 1L
             two.getProvider(Single::class) shouldBeSameInstanceAs one.getProvider(Single::class)
         }
     }
@@ -237,7 +238,7 @@ class PrototypesCharacterizationSpec : StringSpec({
 
         assertSoftly {
             two.getProvider(Promoted::class) shouldNotBeSameInstanceAs one.getProvider(Promoted::class)
-            two.getProvider(Promoted::class).instances.size shouldBe 0
+            two.getProvider(Promoted::class).created.count shouldBe 0L
         }
     }
 })

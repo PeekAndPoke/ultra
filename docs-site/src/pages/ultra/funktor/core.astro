@@ -36,10 +36,12 @@ import {Code} from 'astro:components';
 
     <Code code={`data class UserParams(val id: String)
 
-val getUserRoute = route<UserParams>("/users/{id}")
+object UserRoutes : Routes() {
+    val getUser = route<UserParams>("/users/{id}")
+}
 
 // In routing setup:
-get(getUserRoute) { params ->
+get(UserRoutes.getUser) { params ->
     val user = userService.get(params.id)
     call.respond(user)
 }`} lang="kotlin" theme="vitesse-dark"/>
@@ -68,23 +70,23 @@ val MyModule = module {
     <p>Load test data with dependency ordering. Fixtures declare what they depend on,
         and the installer resolves the correct execution order.</p>
 
-    <Code code={`class UserFixtures(
-    repo: UserRepo,
-    private val authRecords: AuthRecordStorage,
-) : RepoFixtureLoader<User>(repo = repo) {
+    <Code code={`class SpeakerFixtures(
+    repo: SpeakersRepo,
+    private val events: EventFixtures,
+) : RepoFixtureLoader<Speaker>(repo = repo) {
 
-    val admin = singleFix {
-        repo.insert("admin", User(name = "Admin", email = "admin@example.com"))
-            .also { user -> authRecords.createPassword(user, "password123") }
-    }
+    // installed after the events
+    override val dependsOn: List<FixtureLoader> = listOf(events)
 
-    override val dependsOn = listOf<FixtureLoader>()
+    // key to entity; batch-inserted where the repository supports it
+    val ada = fix { "ada" to Speaker(name = "Ada") }
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Configuration</h2>
 
-    <p>Type-safe configuration via Typesafe Config. Environment-specific files
-        (<code>application.dev.conf</code>, <code>application.prod.conf</code>) are merged automatically.</p>
+    <p>Type-safe configuration via Typesafe Config (HOCON). Funktor reads the file Ktor loads
+        (<code>application.conf</code>, or the one given with <code>-config=</code>) into your <code>AppConfig</code>
+        class. Environment files share settings through HOCON <code>include</code>; nothing is merged by name.</p>
 
     <h2>Repair system</h2>
 
@@ -92,7 +94,7 @@ val MyModule = module {
         Failures are logged but don't prevent the app from starting.</p>
 
     <Aside>Fixtures are for dev/test. Repairs are for production.
-        Both run automatically &mdash; fixtures via CLI, repairs on every startup.
+        Fixtures install on demand (CLI or a test spec), and never in production; repairs run on every startup.
     </Aside>
 
     <div class="mt-12">

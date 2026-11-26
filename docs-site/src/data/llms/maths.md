@@ -10,10 +10,10 @@ Easing functions, smoothing laws and bucketed probability distributions for Kotl
 
 ## Easing
 
-`Ease.Fn` is a functional interface taking progress `0.0..1.0` and returning the eased value.
-Curves are grouped as `Ease.In`, `Ease.Out`, `Ease.InOut` (sine, quad, cubic, quart, quint, expo,
-circ, back, elastic, bounce), plus `Ease.linear`, `Ease.stuck` (always 0.0) and `Ease.immediate`
-(always 1.0).
+`Ease.Fn` is an interface (`invoke(progress)`) taking progress `0.0..1.0` and returning the eased value.
+Curves are grouped as `Ease.In`, `Ease.Out`, `Ease.InOut` (sine, quad, cubic, quart, quint, elastic,
+bounce, and a `pow(power)` factory; `circ` in `In` and `Out` only), plus `Ease.linear`, `Ease.stuck`
+(always 0.0) and `Ease.immediate` (always 1.0). Custom curves: `Ease.easeFn { x -> ... }`.
 
 ```kotlin
 import io.peekandpoke.ultra.maths.Ease
@@ -21,11 +21,11 @@ import io.peekandpoke.ultra.maths.Ease.bindFromTo   // member extension — impo
 import io.peekandpoke.ultra.maths.Ease.timed        // member extension — import required
 import kotlin.time.Duration.Companion.milliseconds
 
-Ease.Out.cubic(0.5)
+Ease.Out.cubic(0.5)                    // 0.875
 
 // bind to a numeric range
 val bound = Ease.InOut.sine.bindFromTo(0, 100)
-bound(0.5)
+bound(0.5)                             // 49.99999999999999 (floating-point error)
 
 // time-based, driven by Kronos (so it is testable)
 val timed = Ease.Out.quad.timed(from = 0, to = 255, duration = 500.milliseconds)
@@ -63,8 +63,9 @@ or a non-finite size, offset or value, returns the value as it is.
 
 ## Distributions
 
-`Distribution.sample(random): Double` returns a value in `0.0..1.0`. `BucketedDistribution`
-implements it via inverse-CDF interpolation over buckets.
+`Distribution.sample(random): Double` returns a value in the distribution's x-range: `0.0..1.0` for every
+factory except `createTriangular(min, mode, max)`, which uses `min..max`. `BucketedDistribution` computes the
+CDF with the trapezoid rule and samples by inverse-CDF interpolation over buckets.
 
 ```kotlin
 import io.peekandpoke.ultra.maths.stochastic.BucketedDistribution
@@ -77,16 +78,18 @@ normal.sample(Random)                              // 0.0..1.0
 normal.sample(Random, from = 10.0, to = 50.0)      // mapped to a range (extension)
 ```
 
-Factories: `createUniform(count)`, `createTruncatedNormal(mean, std)`, `createExponential(lambda)`,
-`createTriangular(...)`.
+Factories (`count` defaults to 100 buckets): `createUniform(count)`, `createTruncatedNormal(mean = 0.5,
+std = 0.15, count)`, `createExponential(lambda = ln(1000), count)`, `createTriangular(min, mode, max, count)`.
+`createExponential` has density proportional to `exp(-lambda * x)` on `0..1`: `lambda` is the rate on that
+interval (finite, > 0; default about 6.91, where the density at 1 is 1/1000 of that at 0), larger is steeper.
 
 Combinators, all returning a new `BucketedDistribution`:
 
 | Method | Effect |
 |---|---|
-| `inverse()` | mirrors the CDF |
-| `reversed()` | reverses the bucket order |
-| `blend(other, ratio = 0.5)` | weighted mix of two distributions |
+| `inverse()` | flips the PDF: `pMax + pMin - pdf[i]`, so dense regions become sparse |
+| `reversed()` | reverses the PDF values over the same xs, mirroring the shape |
+| `blend(other, ratio = 0.5)` | linear mix of xs and PDF values; needs the same bucket count, else throws |
 
 ## Not serializable
 

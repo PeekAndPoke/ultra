@@ -25,7 +25,7 @@ class UserService(val ctx: RequestContext) {
 }
 
 val blueprint = kontainer {
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
     singleton(UserService::class)
 }
 
@@ -36,6 +36,14 @@ val kontainer = blueprint.create {
 
 println(kontainer.get(UserService::class).currentUser())
 // "User: user-42"`} lang="kotlin" theme="vitesse-dark" />
+
+<ul>
+  <li>The default factory, here <code>RequestContext("anonymous")</code>, is needed: the blueprint is validated without overrides, so every dynamic must be creatable without one.</li>
+  <li>Only <code>dynamic</code> services can be overridden. An override of anything else, a <code>dynamicPrototype</code> included, makes <code>create</code> throw <code>KontainerInconsistent</code> before any override lambda runs.</li>
+  <li>The lambda runs at <code>create</code>, once per container. A caller who needs laziness builds it into the value it hands in, as <code>UserProvider.lazy {'{'} {'}'}</code> of the <code>ultra:security</code> module does.</li>
+  <li><code>with(X::class)</code> replaces <code>X</code> when <code>X</code> is itself a registered dynamic service, otherwise the one dynamic service <code>X</code> is a subtype of; with several it throws <code>ServiceAmbiguous</code>. Getting or injecting a type that several dynamic services implement stays ambiguous.</li>
+  <li>Two overrides for the same service under different classes, <code>with(Base::class)</code> and <code>with(Derived::class)</code>, both run, and the later one wins.</li>
+</ul>
 
 <h2>Semi-dynamic services</h2>
 
@@ -48,7 +56,7 @@ println(kontainer.get(UserService::class).currentUser())
 class UserService(val ctx: RequestContext)
 
 val blueprint = kontainer {
-    dynamic(RequestContext::class)
+    dynamic(RequestContext::class) { RequestContext("anonymous") }
     singleton(UserService::class)  // automatically becomes semi-dynamic
 }`} lang="kotlin" theme="vitesse-dark" />
 
@@ -67,9 +75,11 @@ val extended = base.extend {
 // 'extended' has both Counter and MyService
 // 'base' still only has Counter`} lang="kotlin" theme="vitesse-dark" />
 
+<p>A service defined again in the extension follows the same <a href="/ultra/kontainer/modules">redefinition rule</a> as within one blueprint.</p>
+
 <h2>Cloning containers</h2>
 
-<p>Clone a container to get a fresh instance with reset dynamic services. Optionally apply new overrides:</p>
+<p>Clone a container to get a fresh instance with reset dynamic services. The overrides given at <code>create</code> are kept and their lambdas run again; new overrides take precedence. <code>clone</code> runs the same checks as <code>create</code>:</p>
 
 <Code code={`val kontainer = blueprint.create {
     with(RequestContext::class) { RequestContext("user-1") }
@@ -84,7 +94,8 @@ val cloned = kontainer.clone {
 
 <p>The <code>Kontainer</code> itself and the <code>KontainerBlueprint</code> are automatically available as services. Any service can inject them:</p>
 
-<Code code={`class ServiceLocator(val kontainer: Kontainer) {
+<Code code={`// Injects the Kontainer, which is dynamic: one ServiceLocator per container
+class ServiceLocator(val kontainer: Kontainer) {
     fun <T : Any> resolve(cls: KClass<T>): T = kontainer.get(cls)
 }
 
@@ -96,6 +107,8 @@ val blueprint = kontainer {
     singleton(ServiceLocator::class)
     singleton(BlueprintAware::class)
 }`} lang="kotlin" theme="vitesse-dark" />
+
+<p><code>Kontainer</code>, <code>KontainerBlueprint</code> and <code>InjectionContext</code> are managed by the container itself. Registering one of them, in any form, or overriding one at <code>create</code> throws <code>KontainerInconsistent</code>.</p>
 
 <h2>Injection context</h2>
 
@@ -125,7 +138,7 @@ kontainer.use(MyService::class) {
     println(this.doSomething())
 }
 
-// GetAll — all implementations of a type
+// GetAll — all implementations of a type, each as itself
 val allRepos: List<Repository> = kontainer.getAll(Repository::class)
 
 // GetLookup — lazy lookup of implementations

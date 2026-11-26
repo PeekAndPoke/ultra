@@ -6,12 +6,12 @@ import {Code} from 'astro:components';
 ---
 
 <DocsLayout title="Easing Functions" sidebar={mathsSidebar}
-            description="28 easing functions for animations and transitions">
+            description="26 easing functions for animations and transitions">
 
     <h1>Easing Functions</h1>
 
     <p class="text-xl text-gray-400 !mt-2 !mb-8">
-        28 easing functions in four categories: basic, In, Out, and InOut.
+        26 easing functions in four categories: basic, In, Out, and InOut.
     </p>
 
     <h2>The Ease.Fn interface</h2>
@@ -137,7 +137,9 @@ val opacity = Ease.calc(
     <p><code>bindFromTo</code> locks an easing function to a specific numeric range. The result is itself an
         <code>Ease.Fn</code>, so it composes with everything else:</p>
 
-    <Code code={`val scroll = Ease.InOut.quad.bindFromTo(from = 0, to = 1000)
+    <Code code={`import io.peekandpoke.ultra.maths.Ease.bindFromTo  // member extension of Ease: import required
+
+val scroll = Ease.InOut.quad.bindFromTo(from = 0, to = 1000)
 
 // At various progress points:
 scroll(0.0)   // 0.0
@@ -151,7 +153,8 @@ scroll(1.0)   // 1000.0`} lang="kotlin" theme="vitesse-dark"/>
     <p><code>timed()</code> creates an easing that uses wall-clock time via the
         <a href="/ultra/datetime/kronos">Kronos</a> clock. Call it repeatedly to get the current eased value:</p>
 
-    <Code code={`import kotlin.time.Duration.Companion.milliseconds
+    <Code code={`import io.peekandpoke.ultra.maths.Ease.timed  // member extension of Ease: import required
+import kotlin.time.Duration.Companion.milliseconds
 
 val anim = Ease.Out.elastic.timed(
     from = 0,

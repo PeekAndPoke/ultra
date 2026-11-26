@@ -121,7 +121,8 @@ responsive.windowSize     // Vector2D with the viewport's width and height`} lan
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>All three stylesheet types (<code>StyleSheet</code>, <code>RawStyleSheet</code>, <code>StyleSheetTag</code>)
-        auto-mount by default — they inject their CSS into the page as soon as the object is initialized. No manual
+        auto-mount by default: <code>RawStyleSheet</code> and <code>StyleSheetTag</code> inject their CSS as soon as
+        they are created, a <code>StyleSheet</code> on the next animation frame, after its rules are defined. No manual
         <code>StyleSheets.mount()</code> call needed.</p>
 
     <p>To opt out, pass <code>autoMount = false</code> and mount manually when needed:</p>
@@ -168,7 +169,8 @@ StyleSheets.unmount(LazyStyles)`} lang="kotlin" theme="vitesse-dark"/>
 
     <h3>Scoped rules</h3>
 
-    <p>Create rules scoped to a parent rule using the <code>rule(contextRule)</code> overload:</p>
+    <p>Create a rule that applies only together with another rule's class, on the same element, using the
+        <code>rule(contextRule)</code> overload:</p>
 
     <Code code={`val card by rule {
     padding = Padding(12.px)
@@ -236,10 +238,11 @@ release()`} lang="kotlin" theme="vitesse-dark"/>
     <h3>Responsive images</h3>
 
     <p>The <code>SrcSetImage</code> component generates <code>srcset</code> and <code>sizes</code> attributes
-        automatically from a single image URL:</p>
+        automatically from a single Cloudinary image URL; for an image hosted elsewhere it renders a plain
+        <code>img</code>:</p>
 
     <Code code={`SrcSetImage(
-    src = "https://cdn.example.com/photo.jpg",
+    src = "https://res.cloudinary.com/demo/image/upload/photo.jpg",
     sizes = ImageSizes.default,
     alt = "A photo",
 )`} lang="kotlin" theme="vitesse-dark"/>

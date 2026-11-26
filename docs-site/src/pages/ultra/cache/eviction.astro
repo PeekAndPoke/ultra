@@ -34,15 +34,16 @@ cache.get("session")  // resets the 5-minute timer
 
 // After 5 minutes of no access, the entry is evicted`} lang="kotlin" theme="vitesse-dark"/>
 
-    <Aside>Eviction is processed in the background loop, not on the calling thread. An expired entry might survive
-        briefly
-        past its TTL until the next loop iteration (default: 50ms).
+    <Aside>Eviction is processed in the background loop, not on the calling thread. The TTL counts from the loop pass
+        that sees the access, so an entry can be served up to its TTL plus two loop periods (default: 50ms each).
+        TTLs run on a monotonic clock: a change of the system time neither expires an entry early nor keeps it longer.
     </Aside>
 
     <h2>Expire after write</h2>
 
     <p>Evicts entries that haven't been <em>written</em> within a TTL window. Unlike <code>expireAfterAccess</code>,
-        reading an entry does NOT reset the timer — only <code>put()</code> does:</p>
+        reading an entry does NOT reset the timer — only a write does (<code>put()</code>, <code>getOrPut()</code>
+        on a miss, or a stored refresh result):</p>
 
     <Code code={`val cache = fastCache<String, String> {
     expireAfterWrite(5.minutes)
@@ -73,8 +74,12 @@ cache.put("token", "xyz789")  // timer resets now`} lang="kotlin" theme="vitesse
     maxEntries(100)
 }
 
-// After 100 entries, the oldest-accessed entry is evicted
-// when a new one is added`} lang="kotlin" theme="vitesse-dark"/>
+// Over 100 entries, the next loop pass evicts
+// the least recently accessed ones`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p><code>maxEntries</code> and <code>maxMemoryUsage</code> are soft bounds: an entry read or written in every loop
+        pass is not evicted by them, so under such load the cache holds up to the number of distinct keys touched
+        within one pass.</p>
 
     <h2>Max memory usage</h2>
 
@@ -87,7 +92,7 @@ val estimator = ObjectSizeEstimator()
 
 val cache = fastCache<String, MyData> {
     maxMemoryUsage(
-        maxMemorySize = 50 * 1024 * 1024,  // 50 MB
+        maxMemorySize = 50L * 1024 * 1024,  // 50 MB
         estimator = estimator,
     )
 }`} lang="kotlin" theme="vitesse-dark"/>
@@ -102,8 +107,13 @@ val cache = fastCache<String, MyData> {
         <li>Nested objects (recursive traversal with cycle detection)</li>
     </ul>
 
-    <Aside>Memory estimation is exactly that — an estimate. It's close enough for cache budgeting but don't treat it as
-        a precise memory profiler.
+    <p>On native there is no reflection: any other object than a string, array, collection or map is charged a flat
+        32 bytes, whatever it holds.</p>
+
+    <Aside>Memory estimation is exactly that, an estimate, and how far off it is depends on the platform. JS charges
+        every number 1 byte; the JVM under-counts maps several-fold and charges a type whose fields JPMS keeps closed
+        (<code>Instant</code>, <code>UUID</code>, <code>BigDecimal</code>) 16 bytes. Treat the budget as a pressure
+        signal, not a bound, or pass your own <code>ObjectSizeEstimator</code>.
     </Aside>
 
     <h2>Combining behaviors</h2>
@@ -113,9 +123,9 @@ val cache = fastCache<String, MyData> {
 
     <Code code={`val cache = fastCache<String, ExpensiveResult> {
     expireAfterAccess(10.minutes)     // remove stale entries
-    maxEntries(5000)                   // hard cap on count
-    maxMemoryUsage(                    // hard cap on memory
-        maxMemorySize = 100 * 1024 * 1024,
+    maxEntries(5000)                   // cap on count (soft)
+    maxMemoryUsage(                    // budget in estimated bytes
+        maxMemorySize = 100L * 1024 * 1024,
         estimator = ObjectSizeEstimator(),
     )
 }`} lang="kotlin" theme="vitesse-dark"/>
@@ -139,7 +149,8 @@ val relaxed = fastCache<String, String>(loopDelay = 1.seconds) {
 
     <h2>Custom coroutine scope</h2>
 
-    <p>By default the eviction loop runs in a global scope. Pass a custom scope if you need lifecycle control:</p>
+    <p>By default the eviction loop runs in <code>Cache.defaultCoroutineScope</code>, one scope on
+        <code>Dispatchers.Default</code> shared by all caches. Pass a custom scope if you need lifecycle control:</p>
 
     <Code code={`import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -151,6 +162,8 @@ val cache = fastCache<String, String>(scope = scope) {
 }
 
 // When the scope is cancelled, the eviction loop stops`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The loop holds its cache weakly: once nothing else references the cache, the loop ends.</p>
 
     <h2>All behaviours at a glance</h2>
 
@@ -199,7 +212,7 @@ val cache = fastCache<String, String>(scope = scope) {
             <tr>
                 <td class="py-2"><a href="/ultra/cache/observability" class="text-brand-400 hover:text-brand-300"><code>statistics</code></a>
                 </td>
-                <td class="py-2">Every cache operation</td>
+                <td class="py-2">Every lookup, put and eviction</td>
                 <td class="py-2">Observer — counts hits, misses, puts, evictions</td>
             </tr>
             </tbody>

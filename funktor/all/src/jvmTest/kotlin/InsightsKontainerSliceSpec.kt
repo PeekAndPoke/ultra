@@ -173,13 +173,12 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
             val share = rendered - withoutSlice.prettyBytes()
             val slice = root.kontainerSlice()
             val services = slice["services"].shouldNotBeNull().jsonArray
-            val instances = services.sumOf { it.jsonObject["instances"]!!.jsonArray.size }
             val sliceCompact = slice.toString().toByteArray().size
 
             println(
                 "[insights-size] record=${file.length()} rendered=$rendered kontainerSliceShare=$share " +
                         "(${"%.1f".format(100.0 * share / rendered)}%) " +
-                        "sliceCompact=$sliceCompact services=${services.size} instances=$instances"
+                        "sliceCompact=$sliceCompact services=${services.size}"
             )
 
             withClue("the file is the writer's pretty JSON, so re-rendering it measures the same bytes") {
@@ -187,14 +186,15 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
             }
 
             // Measured on this very record (2026-10-19): the fat slice was 115 737 compact bytes for 77 instances,
-            // ~1 500 per instance, because it carried all 178 definitions; the slim one is 19 461 for 78, ~250
-            // per instance. Per instance, so the guard grows with the app and ignores the other slices.
-            withClue("the definitions are back in the record: $sliceCompact compact bytes for $instances instances") {
-                (sliceCompact < 600 * instances) shouldBe true
+            // ~1 500 per instance, because it carried all 178 definitions; the slim one was 19 461 for 78, ~250
+            // per instance. Since the counters (ULTRA-00329) a service is one entry whatever it created. Per
+            // service, so the guard grows with the app and ignores the other slices.
+            withClue("the definitions are back in the record: $sliceCompact compact bytes for ${services.size} services") {
+                (sliceCompact < 600 * services.size) shouldBe true
             }
         }
 
-        "the slim slice on the wire: {graphFingerprint, services}" {
+        "the slim slice on the wire: {graphFingerprint, services}, a service with a count and two times" {
             val slice = served(recordedRef()).kontainerSlice()
 
             withClue("no numOld/numTotal since 2026-10-19 (maintainer): tracking is never enabled, they were always 0") {
@@ -208,25 +208,31 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
 
             services.forEach { raw ->
                 withClue(raw.toString().take(200)) {
-                    raw.keys() shouldContainExactlyInAnyOrder listOf("cls", "type", "instances")
+                    raw.keys() shouldContainExactlyInAnyOrder
+                            listOf("cls", "type", "count", "firstCreatedAt", "lastCreatedAt")
                     // a flat string: the fat shape wrapped every class name as {"fqn": ...}
                     (raw.jsonObject["cls"] as? JsonPrimitive)?.isString shouldBe true
                     (raw.jsonObject["type"] as? JsonPrimitive)?.isString shouldBe true
 
-                    val instances = raw.jsonObject["instances"].shouldNotBeNull().jsonArray
-                    instances.shouldNotBeEmpty()
+                    // only services with creations are written
+                    val count = raw.jsonObject["count"].shouldNotBeNull().jsonPrimitive
+                    count.isString shouldBe false
+                    (count.long > 0) shouldBe true
 
-                    instances.forEach { instance ->
-                        instance.keys() shouldContainExactlyInAnyOrder listOf("cls", "createdAt")
-                        (instance.jsonObject["cls"] as? JsonPrimitive)?.isString shouldBe true
-
+                    val times = listOf("firstCreatedAt", "lastCreatedAt").map { key ->
                         // an object, never a bare number: a reader took bare numbers for epoch SECONDS (D2)
-                        val createdAt = instance.jsonObject["createdAt"].shouldNotBeNull()
+                        val createdAt = raw.jsonObject[key].shouldNotBeNull()
                         (createdAt as? JsonObject)?.keys shouldBe setOf("ts", "timezone", "human")
 
                         // epoch MILLIS: a seconds value would be ~1000x too small to land in this window
                         val ts = createdAt.jsonObject["ts"].shouldNotBeNull().jsonPrimitive.long
                         (ts > now - 2.hours.inWholeMilliseconds && ts < now + 1.minutes.inWholeMilliseconds) shouldBe true
+
+                        ts
+                    }
+
+                    withClue("the first creation is not after the last one") {
+                        (times[0] <= times[1]) shouldBe true
                     }
                 }
             }
@@ -277,11 +283,11 @@ class InsightsKontainerSliceSpec : FunktorApiSpec() {
 
                 val slice = record.kontainerSlice()
 
-                withClue("nothing reshapes an old slice on the way out: the frontend reads both shapes itself") {
+                withClue("nothing reshapes an old slice on the way out") {
                     slice shouldBe stored.kontainerSlice()
                 }
 
-                withClue("and it is unmistakably the fat shape, which a reader tells apart by `info`") {
+                withClue("and it is unmistakably the v1 shape (`info`), which both GUIs show as the raw tree") {
                     slice.keys shouldBe setOf("numOld", "numTotal", "info")
                     slice["info"]!!.jsonObject["services"]!!.jsonArray.size shouldBe 3
                 }

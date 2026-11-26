@@ -93,4 +93,20 @@ class KontainerWireNamesSpec : StringSpec({
             sliceType(WireOverridden::class.java) shouldBe "DynamicOverride"
         }
     }
+
+    "An override that was never requested has its instance, so it is in the record slice (ULTRA-00344)" {
+
+        val blueprint = kontainer {
+            dynamic(WireOverridden::class)
+        }
+
+        val request = blueprint.create { with { WireOverride() } }
+
+        val slice = KontainerCollector.Data.of(
+            graphFingerprint = null,
+            providers = request.tools.factory.getAllProviders(),
+        )
+
+        slice.services.single { it.cls == WireOverridden::class.java.name }.type shouldBe "DynamicOverride"
+    }
 })

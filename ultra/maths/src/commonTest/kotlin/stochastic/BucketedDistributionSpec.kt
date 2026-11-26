@@ -8,6 +8,8 @@ import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.doubles.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.doubles.shouldBeLessThanOrEqual
 import io.kotest.matchers.shouldBe
+import kotlin.math.exp
+import kotlin.math.pow
 import kotlin.random.Random
 
 class BucketedDistributionSpec : StringSpec() {
@@ -178,17 +180,56 @@ class BucketedDistributionSpec : StringSpec() {
             }
         }
 
-        "createExponential - higher lambda concentrates samples closer to 0" {
+        "createExponential - pdf is exp(-lambda * x) on [0, 1]" {
+            listOf(0.5, 3.0, 12.0).forEach { lambda ->
+                val dist = BucketedDistribution.createExponential(lambda = lambda, count = 50)
+
+                dist.xs.first() shouldBe 0.0
+                dist.xs.last() shouldBe 1.0
+
+                dist.xs.forEachIndexed { i, x ->
+                    withClue("lambda=$lambda: pdf[$i] at x=$x") {
+                        dist.pdf[i] shouldBe (exp(-lambda * x) plusOrMinus 1e-12)
+                    }
+                }
+            }
+        }
+
+        "createExponential - default lambda is ln(1000), the former default curve" {
+            val dist = BucketedDistribution.createExponential()
+
+            dist.numBuckets shouldBe BucketedDistribution.DEFAULT_SIZE
+
+            dist.xs.forEachIndexed { i, x ->
+                withClue("pdf[$i] at x=$x") {
+                    dist.pdf[i] shouldBe (1e-3.pow(x) plusOrMinus 1e-12)
+                }
+            }
+        }
+
+        "createExponential - larger lambda gives a steeper pdf and a smaller mean" {
+            // Mean of exp(-k x) truncated to [0, 1]
+            fun expectedMean(k: Double) = 1.0 / k - exp(-k) / (1.0 - exp(-k))
+
             val n = 50_000
+            val rng = Random(42)
 
-            val lowLambda = BucketedDistribution.createExponential(lambda = 1.0)
-            val highLambda = BucketedDistribution.createExponential(lambda = 5.0)
+            val low = BucketedDistribution.createExponential(lambda = 1.0)
+            val high = BucketedDistribution.createExponential(lambda = 5.0)
 
-            val meanLow = (1..n).map { lowLambda.sample(Random(42)) }.average()
-            val meanHigh = (1..n).map { highLambda.sample(Random(42)) }.average()
+            for (i in 1 until low.pdf.size) {
+                withClue("pdf[$i]: high=${high.pdf[i]} should be below low=${low.pdf[i]}") {
+                    (high.pdf[i] < low.pdf[i]) shouldBe true
+                }
+            }
 
-            withClue("Higher lambda should produce lower mean (meanLow=$meanLow, meanHigh=$meanHigh)") {
-                meanHigh shouldBeLessThanOrEqual meanLow
+            val meanLow = (1..n).map { low.sample(rng) }.average()
+            val meanHigh = (1..n).map { high.sample(rng) }.average()
+
+            withClue("meanLow=$meanLow, meanHigh=$meanHigh") {
+                meanLow shouldBe (expectedMean(1.0) plusOrMinus 0.01)
+                meanHigh shouldBe (expectedMean(5.0) plusOrMinus 0.01)
+                (meanHigh < meanLow - 0.1) shouldBe true
             }
         }
 

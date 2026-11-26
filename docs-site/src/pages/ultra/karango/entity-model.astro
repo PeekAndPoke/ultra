@@ -35,7 +35,7 @@ val stored: Stored<Person> = repo.insert(Person("Alice", 30))
 stored()      // Person(name="Alice", age=30) — your data
 stored._id    // "persons/abc123" — database ID
 stored._key   // "abc123" — document key
-stored._rev   // "_abc123def" — revision for optimistic locking`} lang="kotlin" theme="vitesse-dark"/>
+stored._rev   // "_abc123def" — document revision`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>The Storable hierarchy</h2>
 

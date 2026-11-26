@@ -216,21 +216,24 @@ red-team follow-up, task-file record).
     |---|---|---|
   | 1 | `opus`, high | `subagent_type: reviewer-opus-high` |
   | 2 | `fable`, medium | `subagent_type: reviewer-fable-medium` |
-  | 3 | `fable`, high | `subagent_type: reviewer-fable-high` |
-  | 4 | `fable`, xhigh | `subagent_type: reviewer-fable-xhigh` |
+  | 3 | `fable`, high (the top rung) | `subagent_type: reviewer-fable-high` |
+
+  **There is no xhigh rung** (maintainer, 2026-11-19: "the current setup eats too many tokens"; measured since
+  2026-11-13, reviewers wrote 54% of ultra's output tokens, `reviewer-fable-xhigh` alone 44%, in 42 runs). From
+  2026-11-13 to 2026-11-19 a rung 4 existed, `fable` xhigh (`reviewer-fable-xhigh`); its definition is deleted.
 
   The names say model and effort and are the same in every project (maintainer, 2026-11-13, through Mission
   Control: "make sure that everyone is using the same agent names"). `model: fable` follows the newest Fable; Fable
   replaces Opus on its rungs and does not run beside it. The "no Fable at any rung" rule of 2026-10-25 is ended.
 
-  **A gate has three levels, and its tier says which rungs they are** (maintainer, 2026-11-13: "rungs 1, 2, 4
-  standard, 2, 3, 4 strict"):
+  **A gate has three levels, and its tier says which rungs they are** (maintainer, 2026-11-19: standard 1, 2, 3;
+  strict 2, 3, 3, so a strict gate's levels 2 and 3 are the same rung):
 
   | level | standard | strict |
     |---|---|---|
   | 1 (the floor) | rung 1, `reviewer-opus-high` | rung 2, `reviewer-fable-medium` |
   | 2 | rung 2, `reviewer-fable-medium` | rung 3, `reviewer-fable-high` |
-  | 3 | rung 4, `reviewer-fable-xhigh` | rung 4, `reviewer-fable-xhigh` |
+  | 3 | rung 3, `reviewer-fable-high` | rung 3, `reviewer-fable-high` |
 
   A gate is strict when its ticket says `**Security-critical:** yes`, or when the maintainer says so; every other
   gate is standard. The ledger names the tier with the level.
@@ -243,9 +246,12 @@ red-team follow-up, task-file record).
     level DOWN, never below the floor.
   - **The level belongs to the loop, not to a charter**: a MAJOR from any of the three charters raises
     all three, since the fix delta is shared.
-  - **The ledger records each round's level** (step 3). The next step of the same task starts one level
-    below where the last loop ended if it ended clean, at that level if it stopped without a clean round
-    (valve, wall, maintainer decision), and at the floor if it touches none of the previous step's modules.
+  - **The ledger records each round's level** (step 3). The next step of the same task (new work arriving
+    between rounds included, such as a refactor the maintainer asks for: it is a new step, not the next round)
+    starts at the floor (maintainer, 2026-11-19; before, one level below where the last loop ended, which kept a
+    task that had once reached the top running there). The one exception: it starts at the last loop's level if
+    that loop stopped without a clean round (valve, wall, maintainer decision) and the step touches one of its
+    modules.
   - Round 1 stays blind whatever its level.
 
   Why a ladder and not the top rung from the start: a round that is not clean means the previous level missed
@@ -431,6 +437,14 @@ in this file:
   `reviewer-fable-medium`, `reviewer-fable-high`, `reviewer-fable-xhigh`; `reviewer-high`, `-xhigh` and `-top` are
   gone, old ledgers keep those names). Fable is back on rungs 2 to 4. Ultra's gates: standard uses rungs 1, 2, 4,
   strict 2, 3, 4.
+
+- **2026-11-19** — Mission Control's blueprint update (missioncontrol fc29a57; the maintainer's OK in ultra's
+  session the same day: "I confirm this update! Please update the skills and remove the xhigh reviewer"): the ladder
+  costs less. The xhigh rung is gone and `reviewer-fable-xhigh` is deleted (old ledgers keep the name); the top rung
+  is `fable` high. Ultra's gates: standard uses rungs 1, 2, 3, strict 2, 3, 3. A new step starts at the floor, at
+  the last loop's level only when that loop stopped without a clean round and the step touches one of its modules.
+  Rung 1 stays `opus` high. This ends the practice of 2026-11-14 in ultra of running every gate at xhigh from
+  round 1 (maintainer then: "ideally always with the sharpest models").
 
 - **2026-09-28 — round 2 of this document reviewing itself. Safety valve FIRED; the maintainer decided.**
   7 MAJOR, 6 MINOR, 0 CRITICAL, plus a duty-(b) audit of round 1's twelve fixes. Eight held completely;

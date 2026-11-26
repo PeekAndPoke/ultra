@@ -44,10 +44,10 @@ class LazyInjectionExample : SimpleExample() {
         val myService = kontainer.get(MyService::class)
 
         println("We got MyService from the kontainer")
-        println("# instances of the LazilyInjected:   ${kontainer.getProvider(LazilyInjected::class).instances.size}")
+        println("# instances of the LazilyInjected:   ${kontainer.getProvider(LazilyInjected::class).created.count}")
 
         println("We used the lazily injected service: ${myService.sayHello()}")
-        println("# instances of the LazilyInjected:   ${kontainer.getProvider(LazilyInjected::class).instances.size}")
+        println("# instances of the LazilyInjected:   ${kontainer.getProvider(LazilyInjected::class).created.count}")
 
         // !END! //
     }

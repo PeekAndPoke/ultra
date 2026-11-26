@@ -4,10 +4,12 @@ package io.peekandpoke.ultra.datetime
 
 import kotlinx.datetime.IllegalTimeZoneException
 import kotlinx.datetime.TimeZone
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.Month
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -93,7 +95,14 @@ val LocalDate.mp: MpLocalDate
  */
 val MpZonedDateTime.jvm: ZonedDateTime
     get() {
-        return ZonedDateTime.of(datetime.jvm, ZoneId.of(timezone.id))
+        // By epoch second and nanos, not millis: exact over the whole range. The nanos are cut to whole milliseconds,
+        // MpZonedDateTime's precision on the wire (maintainer, 2026-11-14).
+        val instant = toInstant().kotlinx
+
+        return ZonedDateTime.ofInstant(
+            Instant.ofEpochSecond(instant.epochSeconds, instant.nanosecondsOfSecond / 1_000_000 * 1_000_000L),
+            timezone.jvm,
+        )
     }
 
 /**
@@ -101,10 +110,11 @@ val MpZonedDateTime.jvm: ZonedDateTime
  */
 val ZonedDateTime.mp: MpZonedDateTime
     get() {
-        return MpZonedDateTime.of(
-            datetime = toLocalDateTime().mp,
-            timezone = zone.mp,
-        )
+        // By epoch second and nanos, not millis: exact over the whole range. The nanos (0..999_999_999 after a floored
+        // second) are cut to whole milliseconds, a floor like toEpochMilli() (maintainer, 2026-11-14).
+        val instant = toInstant()
+
+        return MpInstant.fromEpochSeconds(instant.epochSecond, instant.nano / 1_000_000 * 1_000_000).atZone(zone.mp)
     }
 
 /**
@@ -115,9 +125,15 @@ val LocalTime.mp: MpLocalTime
         MpLocalTime.ofMilliSeconds(milliSecondsOfDay = 1000 * (hour * 60 * 60 + minute * 60 + second))
 
 /**
- * Converts an [MpLocalTime] into a [java.time.LocalTime]
+ * Converts an [MpLocalTime] into a [java.time.LocalTime]. [MpLocalTime.EndOfDay], which it cannot hold, gives
+ * [LocalTime.MAX].
  */
-val MpLocalTime.jvm get(): LocalTime = LocalTime.ofSecondOfDay((inWholeMilliSeconds() / 1000).toLong())
+val MpLocalTime.jvm: LocalTime
+    get() = when (this) {
+        // java.time cannot hold 24:00: the last instant of the day keeps the order
+        MpLocalTime.EndOfDay -> LocalTime.MAX
+        else -> LocalTime.ofSecondOfDay((inWholeMilliSeconds() / 1000).toLong())
+    }
 
 /**
  * Converts a [java.time.ZoneId] to a [TimeZone].
@@ -149,3 +165,23 @@ val MpTimezone.jvm: ZoneId
 
         return ZoneId.of(id)
     }
+
+/**
+ * Converts an [MpMonth] into a [java.time.Month].
+ */
+val MpMonth.jvm: Month get() = Month.of(number)
+
+/**
+ * Converts a [java.time.Month] into an [MpMonth].
+ */
+val Month.mp: MpMonth get() = MpMonth.of(value)
+
+/**
+ * Converts an [MpDayOfWeek] into a [java.time.DayOfWeek].
+ */
+val MpDayOfWeek.jvm: DayOfWeek get() = DayOfWeek.of(isoDayNumber)
+
+/**
+ * Converts a [java.time.DayOfWeek] into an [MpDayOfWeek].
+ */
+val DayOfWeek.mp: MpDayOfWeek get() = MpDayOfWeek.of(value)

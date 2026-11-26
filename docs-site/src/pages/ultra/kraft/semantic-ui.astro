@@ -33,10 +33,10 @@ ui.inverted.blue.segment {
 // Generates this HTML:
 // <div class="ui inverted blue segment">
 //   <h2 class="ui header">Welcome</h2>
-//   <button class="ui basic button">Click me</button>
+//   <div class="ui basic button">Click me</div>
 // </div>`} lang="kotlin" theme="vitesse-dark" />
 
-<p>Every modifier is a Kotlin property that adds a CSS class. The final call (<code>segment &#123;&#125;</code>, <code>button &#123;&#125;</code>, <code>header H2 &#123;&#125;</code>) creates the HTML element and opens a block for its children.</p>
+<p>Every modifier is a Kotlin property that adds a CSS class. The final call creates the HTML element and opens a block for its children: a block alone (<code>segment &#123;&#125;</code>, <code>button &#123;&#125;</code>) creates a <code>div</code>, an infix tag (<code>header H2 &#123;&#125;</code>, <code>button Button &#123;&#125;</code>) creates that element.</p>
 
 <h2>Core elements</h2>
 
@@ -75,7 +75,7 @@ ui.segments {
 ui.header H2 { +"Section header" }
 ui.sub.header { +"Sub-header" }
 ui.icon.header {
-    icon.settings()
+    icon.cog()
     noui.content { +"Settings" }
 }`} lang="kotlin" theme="vitesse-dark" />
 
@@ -176,7 +176,7 @@ ui.button.given(isLoading) { loading }.then {
 
 <h2>Colors</h2>
 
-<p>16 named colors plus brand colors:</p>
+<p>14 named colors plus brand colors:</p>
 
 <Code code={`ui.red.label { +"Red" }
 ui.orange.label { +"Orange" }
@@ -219,7 +219,7 @@ icon.grip_vertical()
 icon.eraser()
 icon.dollar_sign()
 icon.heart()
-icon.settings()
+icon.cog()
 icon.download()`} lang="kotlin" theme="vitesse-dark" />
 
 <h2>Modals</h2>
@@ -248,7 +248,7 @@ icon.download()`} lang="kotlin" theme="vitesse-dark" />
     +"Delete"
 }`} lang="kotlin" theme="vitesse-dark" />
 
-<p>Modal sizes: <code>mini()</code>, <code>tiny()</code>, <code>small()</code>, <code>large()</code>, and full-size.</p>
+<p>Size shorthands: <code>mini()</code>, <code>tiny()</code>, <code>small()</code>. Any other size goes through <code>OkCancelModal(handle, view = OkCancelModal.View(appearance = &#123; large &#125;, ...))</code>.</p>
 
 <h2>Toast notifications</h2>
 

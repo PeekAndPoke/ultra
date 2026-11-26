@@ -4,6 +4,101 @@
 
 ### Breaking changes
 
+- `ultra/kontainer`: `ServiceProviderFactory.newKontainer` is internal; a new kontainer comes from `create` or
+  `Kontainer.clone`. Since 0.119.0 nothing outside the module could build the overrides it takes (ULTRA-00346).
+- `ultra/kontainer`: no reference to a created instance is kept any more; each provider counts its creations instead.
+  `ServiceProvider.instances`, `ServiceProvider.CreatedInstance`, `DebugInfo.InstanceDebugInfo` and
+  `DebugInfo.ServiceDebugInfo.instances` are removed. Use `provider.created` (`count`, `firstAt`, `lastAt`) and
+  `ServiceDebugInfo.created` (`CreatedDebugInfo`). The dump's fourth column is "Created" (`n, first <t>, last <t>`)
+  (ULTRA-00329).
+- `ultra/kontainer`, behaviour change (no compile signal):
+  - A global (static) singleton is created, with all its parameters, in an internal blueprint-wide kontainer without
+    overrides, not in the kontainer of the request that first needed it. It no longer keeps that request's kontainer,
+    override values and every prototype its `Lookup`, `Lazy` or `List` created alive for the life of the process.
+    Prototypes a global singleton creates show in no request's dump or insights record (ULTRA-00329).
+  - Concurrent creations of one prototype are no longer serialized per provider; `ServiceProviderFactory` creates its
+    providers lock-free. A prototype factory that is not thread-safe was only protected by accident, and only within
+    one kontainer (ULTRA-00329).
+- `funktor/insights`: the `kontainer` slice of a record (wire v3) writes each service as
+  `{cls, type, count, firstCreatedAt, lastCreatedAt}` instead of an `instances` list, and only services created at
+  least once. `KontainerCollector.Data.Instance` is removed. Records already stored are served as written. Both GUIs
+  (Kraft inspect and the generated Vue SDK) read v3 only: a record of 0.119.0 shows its services without creations, a
+  record written before 2026-10-19 (v1) is shown as the raw tree. The tab's "Instances" column is "Created" (the
+  count, the first and the last creation), and a `DynamicOverride` names no created class: "handed in at create"
+  (ULTRA-00329).
+- `ultra/kontainer`: value types cannot be services. Registering `Boolean`, `Byte`, `Short`, `Int`, `Long`, `Float`,
+  `Double`, `Char` (both JVM forms), `UByte`, `UShort`, `UInt`, `ULong`, `String` or `Unit` in any form (`singleton`,
+  `prototype`, `dynamic`, `dynamicPrototype`, `instance`, either side of a two-type form, in a module or `extend`)
+  throws `KontainerInconsistent` at the call. Overriding one with `with` throws at `create` or `clone`, so per request,
+  with a hint to name the service class (`with(Number::class) { 5 }`). `Number`, `CharSequence` and arrays stay
+  allowed; `get(Int::class)` and friends answer as before (not found, null, empty). This also ends the aliased
+  `Int::class` / `java.lang.Integer` lookups (ULTRA-00354).
+- `monko/core`: `MonkoRepository.remove(stored: Stored<T>)` (JVM name `removeStored`) is replaced by an override of
+  `Repository.remove(entity)`. Kotlin sources compile unchanged; classes compiled against 0.119.0 that call it directly
+  must be recompiled (ULTRA-00359).
+- `ultra/maths`: `BucketedDistribution.createExponential(lambda, count)`: the density is `exp(-lambda * x)` on
+  [0, 1] and `tailCut` is removed. `lambda` had no effect before (it cancelled out); the default `ln(1000)` keeps the
+  default curve, but a caller that passed `lambda` now gets a different curve. NaN or infinite `lambda` throws
+  `IllegalArgumentException` (ULTRA-00358).
+- `monko/core`: repeated `filter()` calls in `find { }` combine with AND (one flat `$and`, in call order). Before, a
+  second call replaced the first, so code that relied on that now gets fewer results. A single call is sent unchanged;
+  `sort`, `limit` and `skip` still keep the last value (ULTRA-00361).
+
+### Performance
+
+- `ultra/kontainer`: faster kontainer creation and service provision, no behaviour change (ULTRA-00351). Measured with
+  the new JMH harness (`:ultra:kontainer-benchmarks:jmh`) on a 254-service blueprint: `create` without overrides from
+  3.4 us and 12.7 KB to 15 ns and 264 B; a typical request mix (create, then ten typical gets) from 8.4 us and 20 KB to
+  3.9 us and 5.5 KB; a hot `get` from 29 ns to 14 ns with no allocation. A kontainer shares the blueprint's provider map
+  and keeps its overrides in a map of its own; the blueprint caches each type's single candidate.
+- `ultra/kontainer`: an override at `create` or `clone` no longer captures a stack trace. Its code location in the debug
+  info names the class where the override lambda was written (without the per-run `$$Lambda...` suffix) instead of the
+  useless `ServiceProviderFactory.<init>`. `create` with one override from 1.3 us and 1.7 KB to 0.12 us and 1.0 KB
+  (ULTRA-00353).
+
+### Fixes
+
+- `ultra/kontainer`, behaviour change (no compile signal): `getAll`, `List<T>` and `Lazy<List<T>>` injections and
+  `Lookup<T>.get` hand out each candidate's own service, in candidate order. A candidate that is a super type of another
+  registered candidate made them throw `ServiceAmbiguous`. `get` and `getOrNull` are unchanged. Blueprints that inject a `List` or `Lookup` of the super type are unaffected. `getAll` of five from
+  104 ns to 65 ns (ULTRA-00352).
+- `ultra/kontainer`: `DynamicOverrides.Builder` hands out a copy of its overrides; a builder kept after `create` and
+  used again no longer changes what later clones of that kontainer get (ULTRA-00353).
+- `ultra/kontainer`, behaviour change (no compile signal): the override given last wins. A class given again with
+  `with` moves to the end, and a clone's overrides take precedence over the parent's. Before, with two overrides for
+  one service under different classes, `create { with(Base){A}; with(Derived){B} }.clone { with(Base){C} }` kept B.
+  Override lambdas also run in the order given: at `clone` the parent's remaining lambdas first, then the clone's
+  (ULTRA-00355).
+- `kraft/core`: an addon registered with `lazy = true` loads on its first read or subscribe, as documented; it was
+  loaded at app start like every other addon. A lazy addon read once in an event handler is `null` on that first read
+  (ULTRA-00357).
+- `funktor/rest`: the error for an empty `authorize {}` no longer advises `public()` inside it, which always fails in
+  an `ApiRoutes` group; it points to a separate group with `authFloor = { public() }`. The `public()`/`forbidden()` and
+  `validateChain` KDocs say the same (ULTRA-00360).
+- `monko/core`, behaviour change (no compile signal): `remove(entity)` called through a `Repository<T>` reference
+  (`Database.getRepository`, generic code) now runs `OnAfterDelete`, as Karango does; it deleted without the hook
+  (ULTRA-00359).
+- `ultra/maths`: `Ease.In.elastic` returns the standard curve (it was NaN for most inputs), and `Ease.In.bounce` runs
+  from 0 to 1 (it ran from 1 to 0) (ULTRA-00358).
+- `funktor-demo`: the sdkgen-app dev server moves from 36591 (b2b-app's port) to 36593 with `strictPort` (ULTRA-00360).
+
+### Docs
+
+- Every library's docs pages, LLM files and READMEs checked against the code, except datetime (after ULTRA-00343):
+  dozens of examples that did not compile or threw, wrong behaviour claims and dead links fixed. The streams artifact
+  is `io.peekandpoke.ultra:stream`; the docs named `streams` (ULTRA-00338, ULTRA-00356).
+
+### Build
+
+- `karango/core`, `monko/core`: `ultra:vault` is an `api` dependency; a consumer with only `karango:core` or
+  `monko:core` can name Vault types, Kontainer, Kronos and the logging module (ULTRA-00359).
+- `ultra/kontainer`: the JMH harness lives in the unpublished module `ultra/kontainer-benchmarks` (`console/wt-gradle.sh
+  :ultra:kontainer-benchmarks:jmh`); the published `ultra/kontainer` applies no JMH plugin (ULTRA-00353).
+
+## 0.119.0
+
+### Breaking changes
+
 - `ultra/datetime`, behaviour change: a zone id not shaped like an IANA region id is refused with
   `IllegalTimeZoneException("Invalid zone id: '…'")` before any platform lookup: longer than 64 characters, a character
   outside `A-Z a-z 0-9 _ + - /`, or an empty path part (leading, trailing or doubled `/`). Native: `Europe/./Berlin`,
@@ -19,11 +114,57 @@
 - `ultra/datetime`, behaviour change: `splitWithGaps` no longer takes durations and gaps modulo 24 h. `08:00-20:00`
   by 25 h or by `Duration.INFINITE` now yields no slots (was twelve 1-hour slots, resp. one). A gap of 24 h was
   treated as a gap of 0 h, a gap of 20 h looped or wrapped to slots outside the slot; both now leave room for one slot
-  only. An invalid slot (`to <= from`, e.g. 22:00-02:00) now yields no slots (was split across midnight) (ULTRA-00215).
-- `ultra/datetime`, behaviour change: `MpLocalTimeSlot.splitWithGaps` takes `maxSlots` (default 100 000, which admits
-  every whole-second split of a day) and throws `IllegalArgumentException` before building a split with more slots,
-  e.g. a whole day in 1 ms steps; pass a higher `maxSlots` if you need more. The added parameter changes the JVM
-  signature: recompile callers (ULTRA-00215).
+  only. (ULTRA-00215).
+- `ultra/datetime`: `MpLocalTimeSlot` is a start and a duration. Create it with `MpLocalTimeSlot.of(from, duration)`
+  or `of(from, to)`; the constructor `MpLocalTimeSlot(from, to)` is gone (private), and `copy` with it.
+  - `to` is derived: the clock time of the end (24:00 for an end at midnight); `endDayOffset` / `crossesMidnight` say
+    whether it is a later day. Overnight slots (22:00 to 02:00) and slots longer than a day exist now.
+  - New: `isEmpty`, `MAX_DURATION_MILLIS` (2^53 - 1 ms, about 285,000 years). A slot is always finite:
+    `of(from, duration)` cuts every longer length to it, `Duration.INFINITE` included (ULTRA-00343).
+  - The start wraps into the day: `of(EndOfDay, d)` starts at 00:00 (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal):
+  - `of(from, to)` and `ofSecondsOfDay(from, to)` with `to` before `from` are an overnight slot; they were an invalid
+    one (`isValid` false, negative `duration`). Equal times are an empty slot, as before (also 24:00 to 24:00).
+  - `of(from, duration)` keeps the whole duration: `of(10:00, 25.hours)` was the 1-hour slot 10:00 to 11:00 (the end
+    wrapped), now it is 25 hours; `of(23:00, 2.hours)` was invalid, now it is overnight; a negative duration is an
+    empty slot at `from`.
+  - `Partial.asValidRange()` with `to` before `from` returned null (a form's "end before start" check) and now returns
+    an overnight slot; only equal times give null.
+  - A decoded slot is no longer bounded by one day: code that relied on `isValid` now accepts slots of up to about
+    285,000 years.
+  - `val (from, to) = slot`: `component2()` is the `duration` now.
+  - Without a date a slot is a daily pattern on the 24-hour clock: `contains`, `intersects`, `touches`,
+    `isAdjacentTo`, `mergeWith` and `cutAway` work across midnight; `contains(EndOfDay)` counts 24:00 as 00:00 (it was
+    false); a slot of 24 hours or more covers the whole clock.
+  - `MpLocalDate.toRange(slot, zone)` ends by the clock on the day `endDayOffset` later: a night slot lasts 7 or 9 real
+    hours on DST nights. A start or end in a skipped hour moves to the first existing time (02:30 becomes 03:00; it
+    moved by the gap length, to 03:30), a repeated hour takes its first occurrence, and a slot that starts and ends
+    on a skipped date is empty at the next day's start (one that runs into the next day keeps that part); such cases
+    gave inverted ranges before (ULTRA-00341).
+  - `MpLocalDate.toRange(slot, zone)` always returns a two-ended range. An end the platform cannot represent stops at
+    its last representable time (in the browser, in a region zone: +275760-09-11T00:00 local; at the far end of the
+    date range: the last instant of 999 999 999-12-31; on native in a region zone 999 999 999-12-29T00:00 local). A
+    start it cannot represent throws `IllegalArgumentException` naming the date, the zone and the accepted interval;
+    an invalid zone id is an `IllegalTimeZoneException`, whatever the date (ULTRA-00343).
+  - `isAdjacentTo` with an empty slot is always false; it was true when the empty slot's point sat on the other's
+    end (`10:00-11:00` and `11:00-11:00`).
+- `ultra/datetime` and `ultra/slumber`, stored format: a slot is stored as `{from, duration, to}` in milliseconds
+  (`to` derived, ignored on read; a duration is at most 9007199254740991, a larger stored number reads back as
+  that). Both decoders still read the old `{from, to}` (`to` before `from` as overnight; a stored `{0, 86399999}`
+  reads as 23:59:59.999 long). A reader of an older version reads `{from, to}`: slumber ignores `duration`, a
+  kotlinx `Json` without `ignoreUnknownKeys` fails on it. There an overnight slot comes out invalid, and a slot of
+  24 hours or more as its clock times only. Update readers before writers (ULTRA-00341).
+- `ultra/datetime`, breaking: `splitWithGaps` loses `maxSlots` and never throws; it returns a lazy view
+  (`ComputedList`; read-only, not a `MutableList`) of at most `Int.MAX_VALUE` parts, and walks overnight and
+  multi-day slots. With user input, check `size` before `map` / `toList()`: nothing else bounds the count
+  (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal): `MpLocalDateRange.asListOfDates()` and
+  `MpClosedLocalDateRange.asListOfDates()` return a lazy view (`ComputedList`) instead of a built list. Same type
+  (`List<MpLocalDate>`), same elements; any length is cheap to create and to read (`forever.asListOfDates()` included).
+  - Each read computes the date again: equal, not the same instance.
+  - `toList()`, `map`, `filter`, `sorted` build a real list of every date: for an open range that is millions.
+  - It is not a `MutableList`: a cast to `MutableList` or `ArrayList` that used to work now fails.
+  - `toString()` no longer lists every date: `ComputedList(size=N, [d0, d1, d2, ...])` (ULTRA-00341).
 - `mutator`, behaviour change (no compile signal): a write through a held element mutator of a `ListMutator` is
   dropped silently when its row is gone (removed, cleared, the whole list replaced or reset) or holds another instance
   than the mutator last saw (another element mutator, `set`, a reorder such as `sort`, `reverse` or `shuffle`, or a
@@ -62,6 +203,78 @@
   - `DebugInfo.ServiceDebugInfo.type` is a `ServiceType`, with new `kind`, `overridden` and `semiDynamicBecauseOf`;
     `DebugInfo.ServiceDefinitionInfo.injectionType` -> `type` and `kind`
   - `KontainerTools.dumpKontainer()` has a new `Kind` column; a semi dynamic service names what made it so
+- `ultra/kontainer`, behaviour change (no compile signal): the redefinition rule. The first definition fixes whether
+  a service is a singleton or a prototype; a plain static singleton can still be replaced by anything. If either
+  definition is dynamic, the service is dynamic. `prototype(X)` then `dynamic(X)` or `dynamicPrototype(X)` now gives
+  a dynamic prototype (was a static prototype), so singletons injecting `X` become one per kontainer. An override of
+  `X` at create is still refused; the message now names it as a dynamic prototype (ULTRA-00331).
+- `ultra/kontainer`, behaviour change (no compile signal): `KontainerBlueprint.extend` applies the redefinition rule
+  against the base blueprint. Silent. Eight of the 16 pairs change, base then extension (all 16 are pinned in
+  `ExtendRedefinitionCharacterizationSpec`):
+  - `dynamic` then `singleton`: stays a dynamic singleton, and its users stay one per kontainer (it became a global
+    singleton and its users global).
+  - `dynamic` then `prototype` or `dynamicPrototype`: one instance per kontainer (was one per injection), and an
+    override at create is now accepted where it was refused. For `dynamic` then `prototype`, a singleton injecting it
+    goes from global to one per kontainer.
+  - `prototype` then `singleton`: stays a prototype, one instance per injection (it became a global singleton).
+  - `prototype` then `dynamic`: a dynamic prototype (was a dynamic singleton). One instance per injection, and
+    `extended.create { with { X() } }` throws `KontainerInconsistent` where it was accepted.
+  - `dynamicPrototype` then `singleton`: stays a dynamic prototype, its users stay one per kontainer (it became a
+    global singleton).
+  - `dynamicPrototype` then `prototype`: stays a dynamic prototype, its users stay one per kontainer (it became a
+    static prototype and its users global).
+  - `dynamicPrototype` then `dynamic`: a dynamic prototype (was a dynamic singleton). One instance per injection, and
+    an override at create throws `KontainerInconsistent` where it was accepted (ULTRA-00330).
+- `ultra/kontainer`: `Kontainer`, `InjectionContext` and `KontainerBlueprint` cannot be registered. Every form of
+  `singleton`, `prototype`, `dynamic`, `dynamicPrototype` and `instance` is refused, in `kontainer { }`, a module and
+  `extend`: `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be registered")`, thrown at
+  the defining call. Before, the registration was accepted silently and the built-in still provided its value, though
+  the declared form could change its reported type and kind: `prototype(Kontainer::class)` made a singleton injecting
+  only `Kontainer` a global singleton that held the first request's kontainer (ULTRA-00336).
+- `ultra/kontainer`: the built-ins cannot be overridden at `create` or `clone`:
+  `KontainerInconsistent("<class> is managed by the kontainer itself and cannot be overridden")`. Before, overrides
+  of `Kontainer` and `InjectionContext` were accepted, and services injecting `Kontainer` got the foreign one
+  (ULTRA-00336).
+- `ultra/kontainer`: `Kontainer.clone { with { ... } }` runs the same checks as `create`. An override for a
+  non-dynamic throws `KontainerInconsistent("Unexpected dynamics were provided: ...")` (was `ServiceNotFound`); an
+  override of a built-in is refused as at `create`. No override lambda runs before a refusal, at `create` or at
+  `clone`: in 0.118.0 a refused clone ran the parent's override lambdas first, and an override matching two dynamics
+  was refused only after the lambdas listed before it had run (ULTRA-00332, ULTRA-00336, ULTRA-00344).
+- `ultra/kontainer`, behaviour change (no compile signal): a blueprint remembers its validation result. Every
+  `create` of an invalid blueprint throws `KontainerInconsistent` with the same message, before the override block
+  runs. Before, only the first did: later creates succeeded, and `get` failed with `InvocationTargetException` or
+  worse. A `create` arriving while another one validates now waits for the result; before, it skipped validation
+  (ULTRA-00327).
+- `ultra/kontainer`, behaviour change (no compile signal, can stop an app at boot): the cycle check and the
+  dependency graph read what each parameter provider announces, so every injection form takes part.
+  - A dependency cycle through `List<T>` is now a validation error at the first `create` ("Kontainer has circular
+    dependencies!", with the hint to use `Lazy<T>`). Before, validation passed and `get` ended in
+    `StackOverflowError`.
+  - The likeliest hit is a service that injects a `List` of its own super type, which puts it in its own list:
+    `CompositeHandler(all: List<Handler>) : Handler`. Before, it booted and `get` overflowed; now the first `create`
+    fails. `Lazy<List<Handler>>` only defers this, because the list still contains the composite. The fix is to
+    register the composite under a type outside the list.
+  - The `Lazy<T>` hint helps only when `.value` is first read after construction.
+  - `Lazy<T>`, `Lazy<List<T>>` and `Lookup<T>` still break cycles; promotion to SemiDynamic is unchanged
+    (ULTRA-00328).
+- `ultra/kontainer`, behaviour change (message): every single-service injection (`T`, `T?`, `Lazy<T>`) whose type has
+  several candidates is reported as ambiguous ("Parameter 'i' is ambiguous. The following services collide: ..."),
+  also when a dependency cycle went through it. A decorator, `CachingRepo(inner: Repo) : Repo`, was "Circular
+  dependency detected: CachingRepo -> CachingRepo"; `A(i: I)`, `B(a: A) : I`, `C : I` was "Circular dependency
+  detected: A -> B -> A". Other parameter errors that the cycle error used to hide now show as well. Both versions
+  refuse the blueprint; only the message changes. A decorator names the concrete class (ULTRA-00334).
+- `ultra/kontainer`, behaviour change (no compile signal, can stop an app at boot): a nullable injection, `T?` or
+  `Lazy<T?>`, whose type has two or more candidate services is a validation error ("Parameter '...' is ambiguous. The
+  following services collide: ..."). Before, it injected null silently, and still made the service SemiDynamic when a
+  candidate was dynamic. With no candidate it is still null; with one it is injected (ULTRA-00335).
+- `ultra/kontainer`: the `ServiceProviderFactory` constructor and `ServiceProviderFactory.dynamics` are internal;
+  kontainers are made by `create` and `clone` only. The public constructor ran the override lambdas without the
+  checks of `create` (ULTRA-00346).
+- `ultra/kontainer`, behaviour change: an override whose class is itself a registered dynamic replaces exactly that
+  service. Before, with `dynamic(UserProvider::class)` and `dynamic(AdminUserProvider::class)` both registered,
+  `with { AdminUserProvider() }` failed with `ServiceAmbiguous`. Otherwise as before: the one registered dynamic the
+  class fits is replaced, several is `ServiceAmbiguous`. Reads through the base type are unchanged: with both
+  registered, `get(UserProvider::class)` stays `ServiceAmbiguous`. Injection is unchanged (ULTRA-00345).
 - `funktor/insights`: `KontainerCollector.Data.Service.type` is a `String` (was `ServiceProvider.Type`). The wire is
   unchanged: records and the graph API keep the names `Singleton`, `SemiDynamic`, `Dynamic`, `Prototype`,
   `DynamicOverride`; every prototype is `Prototype`, whatever its kind (ULTRA-00319).
@@ -90,17 +303,131 @@
   start it, and a value computed while the caller was cancelled is discarded; clear() is no longer
   undone by a running provider; a cancelled caller waiting on another caller's provider no longer
   spins (ULTRA-00159).
+- `ultra/datetime`, breaking: new `MpMonth` and `MpDayOfWeek` enums (`number` / `isoDayNumber`; `of(n)`, which throws
+  for a bad number, `ofOrNull(n)`, `ofOrDefault(n, default)`; converters `kotlinx` / `mp`, on the JVM `jvm` / `mp`).
+  `month` and `dayOfWeek` on `MpLocalDate`, `MpLocalDateTime` and `MpZonedDateTime` return them instead of
+  kotlinx's `Month` / `DayOfWeek`. Every function that takes a month or a day of week accepts both (ULTRA-00210).
+- `ultra/datetime`, behaviour change (no compile signal): a comparison of `month` / `dayOfWeek` with a kotlinx entry
+  through an untyped API compiles and is now false: `date.month.equals(Month.APRIL)`, kotest's
+  `date.month shouldBe Month.APRIL`, `assertEquals(Month.APRIL, date.month)`, a lookup in a `Set<Any>` or `Map<Any, …>`.
+  `==` and `when` against kotlinx entries do not compile. `name`, `ordinal` and `toString()` are unchanged, so values
+  stored by name keep their meaning (ULTRA-00210).
+- **Before you update** (removed API): `MpTimezone.offsetAt(MpInstant)` and `TimeZone.offsetAt(MpInstant)`, which
+  returned kotlinx's `UtcOffset`: use `offsetSecondsAt` / `offsetMillisAt`. Changed return types: `month` → `MpMonth`,
+  `dayOfWeek` → `MpDayOfWeek` (use `.kotlinx` where a kotlinx value is needed) (ULTRA-00210).
+- `ultra/datetime`, behaviour change: `MpZonedDateTime` keeps its instant (ULTRA-00211). Both sides of a DST overlap
+  are now distinct values: `MpInstant.atZone`, the kotlinx serializer, the slumber codec, `ZonedDateTime.mp` and
+  `MpZonedDateTime.jvm` used to move the second half one hour back (e.g. Berlin 2022-10-30T02:30+01:00 became +02:00),
+  and a load + save wrote the wrong `ts`. The stored and wire format are unchanged.
+- `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime` equality compares instant and zone, no
+  longer local time and zone, so the two sides of a DST overlap are no longer equal. To compare by point in time,
+  whatever the zone, use `isSameInstant` (ULTRA-00211).
+- `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime.compareTo` orders by instant, then by local
+  date-time, then by zone id (like java.time), so it is `0` exactly when `equals`. For two values at the same instant
+  in different zones, `a <= b && a >= b` and `isEqualTo` no longer mean "same instant" (use `isSameInstant`), a
+  `sortedSetOf` keeps both, and `minOf` / `maxOf` / sorting order them by local time and zone.
+  `MpZonedDateTimeRange` compares its endpoints by instant in every ordering predicate, unchanged; `isAdjacentTo` and
+  `equals` go by equality, as before. kraft's generic comparable form rules
+  (`inRange`, `greaterThanOrEqual`, …) on `MpZonedDateTime` bounds in another zone now decide the exact boundary instant
+  by local time and zone (ULTRA-00211).
+- `ultra/datetime`, behaviour change (no compile signal): a time in a DST gap now reads back as the resolved time:
+  `MpZonedDateTime.of(2022-03-27T02:30, Berlin).hour` is 3, not 2 (its instant was already 03:30). So a value built
+  from a gap time now equals the value at its resolved instant (ULTRA-00211).
+- `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime.toString()` shows the offset, e.g.
+  `MpZonedDateTime(2022-10-30T02:30:00.000+01:00[Europe/Berlin])`, so the two sides of an overlap print differently.
+  `toIsoString()`, the stored `human` field and the wire format are unchanged (ULTRA-00211).
+- `ultra/datetime` (JVM), behaviour change (no compile signal): `MpZonedDateTime.jvm` and `ZonedDateTime.mp` are exact
+  over the whole range: beyond about ±292 million years `.jvm` clamped and `.mp` threw `ArithmeticException`. Both stay
+  at millisecond precision (ULTRA-00211).
+- `ultra/datetime`, behaviour change (no compile signal): `MpZonedDateTime.atStartOfDay()`, `atStartOfMonth()` and
+  `atStartOfYear()` follow `MpLocalDate.atStartOfDay(zone)` (java.time): when midnight falls into a gap the day starts at
+  the end of the gap (Toronto 1919-03-31: 00:30, was 01:00). `atStartOfHour/Minute/Second()` and `atTime()` keep the
+  current offset in an overlap (ULTRA-00211).
+- **Before you update** (removed API): the public constructor `MpZonedDateTime(datetime, timezone)` - use
+  `MpZonedDateTime.of(datetime, timezone)` or `instant.atZone(timezone)`; `MpZonedDateTime.copy(...)` - e.g.
+  `x.copy(timezone = tz)` becomes `MpZonedDateTime.of(x.datetime, tz)`; destructuring (`component1/2`)
+  (ULTRA-00211).
+- `ultra/datetime`: `MpLocalTimeSlot.completeDay` now ends at `MpLocalTime.EndOfDay` (24:00) instead of `Max`
+  (23:59:59.999). An app that uses `completeDay` writes `86400000` after the upgrade without any code change.
+  - A reader of an older version, including a browser tab left open across a deploy, reads the slot
+    `{"from":0,"duration":86400000,"to":86400000}` by its `from` and `to`, as `[00:00, 00:00)`: an invalid slot, so
+    "open all day" becomes "never open". Saving it there persists `{"from":0,"to":0}`. Update readers before writers.
+  - Slots stored from the old `completeDay` hold `to = 86399999`: `MpLocalTimeSlot.of(Min, Max) == completeDay` is now
+    false, and `completeDay.cutAway(MpLocalTimeSlot.of(Min, Max))` is `[MpLocalTimeSlot.of(Max, EndOfDay)]`, a 1 ms slot
+    (it was empty).
+  - `completeDay.splitWithGaps(1.hours)` gives 24 slots (23 before).
+  - A kraft time field bound to `completeDay.to` renders empty (it showed 23:59:59): the browser's time input does
+    not accept 24:00 (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal):
+  - `hour` can be 24.
+  - `MpLocalTime.of(t.hour, t.minute, …)` and `ofMilliSeconds(t.inWholeMilliSeconds())` turn `EndOfDay` into 00:00;
+    `parse(toIsoString())`, the decoders and the unchecked constructor `MpLocalTime(t.inWholeMilliSeconds())`
+    round-trip it.
+  - A JSON client sending `86400000` used to be normalised to 00:00 and is now stored as 24:00.
+  - `.kotlinx` and `.jvm` give the last instant of the day for it, which is lossy (`EndOfDay.kotlinx.mp == Max`);
+    they threw before.
+  - The value `MpLocalTime(86_400_000)` of the unchecked constructor now is `EndOfDay` (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal): `MpLocalTime.parse` refuses an hour of 24 with a non-zero
+  rest ("24:00:01", "24:30"), which it used to wrap to 00:00:01 / 00:30; `tryParse` returns null for them.
+  `of(24, 0)`, `ofMilliSeconds(86_400_000)` and `ofSecondOfDay(86_400)` still wrap to 00:00 (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal): `MpLocalTimeSlot.of(from, duration)` and
+  `ofSecondsOfDay(from, to)` end a slot of exactly 24:00 at `EndOfDay`: `of(23:00, 1.hours)` is `[23:00, 24:00)`, it
+  was the invalid `[23:00, 00:00)`. An end beyond 24:00 makes an overnight slot (see the
+  slot redesign above). `splitWithGaps` ends a slot reaching 24:00 at
+  `EndOfDay` instead of building an invalid last slot ending at 00:00 (ULTRA-00341).
+- `ultra/datetime`, behaviour change (no compile signal): `DateTimeRangeConverter.fromHourToHour(_, 24)` (e.g.
+  `toZonedTimeRange(zone).fromHourToHour(8, 24)`) ends at the start of the day after the last day; it ended at 00:00
+  of the last day. A `fromHour` of 24 still wraps to 00:00 (ULTRA-00341).
+- `ultra/datetime` and `ultra/slumber`, stored format: `EndOfDay` is stored as `86400000` milliseconds of day; exactly
+  that number reads back as `EndOfDay` (slumber: only a number equal to one day, so `86400000.5` still wraps), and
+  every other number wraps into the day as before. A reader of an older version reads `86400000` as 00:00 without an
+  error, so update readers before writers (ULTRA-00341).
 
 ### New
 
+- `ultra/common`, new: `ComputedList<T>(size) { index -> … }`, a read-only list view that computes each element on
+  demand and stores nothing; `RandomAccess`; its `toString()` shows the size and the first three elements
+  (ULTRA-00341).
+- `ultra/datetime`: `MpLocalTimeSlotRawData`, `MpLocalTimeSlotSerializer`, `MpLocalTimeSlot.toRawData()`,
+  `MpLocalTimeSlotRawData.toSlotOrNull()`; `@Slumber.As` on the slot, so karango and monko query paths are `from`,
+  `duration`, `to` (ULTRA-00341).
+- `ultra/codegen`: the TypeScript runtime has `MpLocalTimeSlot` (`{from, duration, to}`) (ULTRA-00341).
 - `ultra/kontainer`: `dynamicPrototype()`, next to `singleton()`, `prototype()` and `dynamic()`, with the same
   overloads. A new instance on every injection like a prototype, bound to the kontainer like a dynamic: a singleton
   injecting one becomes `SemiDynamic`. It cannot be overridden at `create { with { } }`; such an override is refused
   with `KontainerInconsistent` like any other non-dynamic; the message adds that only dynamic singletons can be
   overridden (ULTRA-00319).
+- `ultra/datetime`, new API: `MpAbsoluteDateTime.isSameInstant(other: MpAbsoluteDateTime)`, true when both are the
+  same point in time, for `MpInstant` and `MpZonedDateTime` and across the two (ULTRA-00211).
+- `ultra/datetime`, new: `MpLocalTime.EndOfDay`, the time 24:00, one millisecond after `Max`, for the end of a
+  half-open time slot.
+  - Its `hour` is 24 and it prints `24:00:00.000`; it counts as 00:00 of the next day in arithmetic, and adding less
+    than a millisecond keeps it.
+  - `MpLocalDate.atTime(EndOfDay)` is 00:00 of the next day; `atTime(EndOfDay, zone)` and
+    `MpZonedDateTime.atTime(EndOfDay)` give the start of the next day.
+  - It is produced by this constant, `parse("24:00")` (`"24:00:00"`, `"24:00:00.000"`), the decoders, `completeDay`,
+    slot ends of exactly 24:00 (`MpLocalTimeSlot.of`, `ofSecondsOfDay`, `splitWithGaps`) and
+    `DateTimeRangeConverter.fromHourToHour(_, 24)` (ULTRA-00341).
 
 ### Fixes
 
+- `kraft/addons/pdfjs`: `PagedPdfViewer` and `ScrollingPdfViewer` destroy their document when they unmount, which
+  ends its pdf.js worker, also when the document arrives after the viewer unmounted. Before, every visit to a page
+  with a viewer left a worker running for the life of the tab. A load that fails destroys its loading task, whose
+  worker pdf.js kept otherwise. A `State.doc` handed to `onChange` cannot be used after unmount.
+  `PDFDocumentProxy.destroy()` is declared (ULTRA-00349).
+- `kraft/addons/signaturepad` and `kraft/semanticui`: `SignaturePad` removes its window `resize` and `endStroke`
+  listeners on unmount, and the old `SelectFieldComponent` its document `mousedown` listener. Each removal passed a new
+  `::x` reference and so removed nothing: after unmount a resize still called the pad's `onChange` (ULTRA-00350).
+- `kraft/addons/threejs`: `ThreeJsComponent` gives up its WebGL context when it unmounts (`renderer.dispose()`, then
+  `renderer.forceContextLoss()`). Before, every visit to a page with a `ThreeJs` left a live context behind until the
+  canvas was collected; after a handful, the browser dropped the oldest ("Too many active WebGL contexts"), or the
+  current page's. `WebGLRenderer.forceContextLoss()` is declared. Requested by Klang (ULTRA-00348).
+- `ultra/datetime`: `MpLocalDate.numDaysInMonth` and `getDatesInMonth` come from the calendar. They went through a
+  date range clamped to Genesis / Doomsday and returned wrong counts (and lost dates) for months before -10000-01 and
+  from 10000-01 on (ULTRA-00341).
+- `ultra/kontainer`: the dynamics check no longer keeps the first request's override lambdas, and what they capture,
+  alive for the life of the blueprint (ULTRA-00337).
 - `ultra/datetime`: `MpLocalTimeSlot.splitWithGaps` no longer loops forever or returns wrapped slots when a step or a
   step plus gap crosses midnight. A duration of 24 h, a slot ending at 23:59:59.999 or a duration under one millisecond
   looped; `08:00-20:00` by 17 h returned four slots, three of them invalid (08:00-01:00, 18:00-11:00, 11:00-04:00),
@@ -166,6 +493,21 @@
 - `ultra/cache`: JVM ObjectSizeEstimator: field lookup memoized per class; an inner class is no longer charged its
   outer instance. KDoc: the estimator's cost is quadratic in the objects of a value (measured) (ULTRA-00159).
 - `ultra/cache`: KDoc: Cache.getOrPut is not atomic; Cache.get returns null for a key cached as null (ULTRA-00159).
+- `ultra/datetime`, fix: `MpZonedDateTime.atStartOfPrevious` no longer loops forever when the previous day does not
+  exist in the zone (Pacific/Apia and Pacific/Fakaofo skipped 2011-12-30). `atStartOfNext` and `atStartOfPrevious` step
+  on the date; on a skipped date they return the start of the day after it, like `atStartOfDay` (from Apia 2011-12-29,
+  the next FRIDAY is 2011-12-31T00:00+14:00, a Saturday; it was 2012-01-06; Pacific/Kiritimati skipped 1994-12-31 the
+  same way). Second fixed case: where a DST gap ends at or crosses midnight the old loop skipped a whole week
+  (America/Nuuk 2024-03-29T23:30, next SATURDAY: was 2024-04-06, now 2024-03-30T00:00-02:00). Ordinary results are
+  unchanged (ULTRA-00211).
+- `ultra/datetime`, fix: `DateTimeRangeConverter.fromMorningToEvening` ends at the start of the next day. Before:
+  - where the last day's own midnight is in a DST gap it ended an hour late (America/Havana 2024-03-10,
+    America/Santiago 2024-09-08);
+  - on a last day the zone skipped it ended a day late (Pacific/Apia 2011-12-30: 2012-01-01T00:00+14:00, now
+    2011-12-31T00:00+14:00);
+  - where the next midnight is inside a gap that starts before midnight it ended at the wrong time
+    (America/Toronto 1919-03-30: 01:00 EDT, now 00:30 EDT).
+  - Ordinary days are unchanged (ULTRA-00341).
 
 ## 0.118.0
 

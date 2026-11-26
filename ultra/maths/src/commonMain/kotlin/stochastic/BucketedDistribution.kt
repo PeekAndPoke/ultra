@@ -2,6 +2,7 @@ package io.peekandpoke.ultra.maths.stochastic
 
 import kotlinx.serialization.SerialName
 import kotlin.math.exp
+import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.random.Random
 
@@ -67,33 +68,26 @@ data class BucketedDistribution(val xs: List<Double>, val pdf: List<Double>) : D
         }
 
         /**
-         * Exponential distribution on [0, ∞), truncated at Xmax so the tail is negligible.
+         * Exponential distribution truncated to [0, 1], density proportional to exp(-lambda * x).
          *
-         * @param lambda  rate parameter (λ > 0)
-         * @param count   number of intervals (≥1)
-         * @param tailCut tail probability beyond Xmax (e.g. 1e-3)
+         * @param lambda rate on [0, 1] (finite, > 0); larger is steeper. Default ln(1000), about 6.91: the density
+         *               at 1 is 1/1000 of the density at 0.
+         * @param count  number of intervals (≥1)
          */
         fun createExponential(
-            lambda: Double = 1.0,
+            lambda: Double = ln(1000.0),
             count: Int = DEFAULT_SIZE,
-            tailCut: Double = 1e-3,
         ): BucketedDistribution {
-            require(lambda > 0.0) { "lambda must be >0" }
+            require(lambda > 0.0 && lambda.isFinite()) { "lambda must be finite and > 0" }
             require(count >= 1) { "count must be ≥1" }
-            require(tailCut in 1e-12..1e-1) { "tailCut should be small" }
 
-            // pick Xmax so P(X>Xmax)=tailCut
-            val xMax = -kotlin.math.ln(tailCut) / lambda
-
-            // build xs evenly on [0,1]
             val xs = List(count + 1) { i ->
                 i.toDouble() / count
             }
 
-            // use unnormalized exp(−λ⋅(x⋅Xmax)), which ∈ (tailCut,1]
+            // unnormalized, normalized by the CDF in the constructor
             val pdf = List(count + 1) { i ->
-                val x = xs[i] * xMax
-                exp(-lambda * x)
+                exp(-lambda * xs[i])
             }
 
             return BucketedDistribution(xs = xs, pdf = pdf)

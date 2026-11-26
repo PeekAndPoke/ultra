@@ -17,8 +17,8 @@ afterEach(() => {
 
 describe('when the graph library itself fails', () => {
     it('the kontainer tab shows why, and keeps its table', async () => {
-        const slice = sliceOf(recorded.fat(), 'kontainer')
-        mounted = await mount(KontainerTab, { data: slice })
+        const slice = sliceOf(recorded.slim(), 'kontainer')
+        mounted = await mount(KontainerTab, { data: slice }, recordedGraphs().graphs)
 
         await click(mounted.host, 'Show Full Graph')
         // The real library is a 650 KB dynamic import: with other test files loading in parallel it can outlast settle()
@@ -26,7 +26,7 @@ describe('when the graph library itself fails', () => {
             () => expect(mounted!.host.querySelector('.fk-graph .fk-notice--error')?.textContent).toContain('could not be drawn'),
             { timeout: 10_000 },
         )
-        expect(mounted.host.querySelectorAll('.fk-services tbody tr')).toHaveLength(slice.info.services.length)
+        expect(mounted.host.querySelectorAll('.fk-services tbody tr')).toHaveLength(slice.services.length)
     })
 
     it('the vault tab shows why, and keeps its query cards', async () => {

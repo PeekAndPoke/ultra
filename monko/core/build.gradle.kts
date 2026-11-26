@@ -40,7 +40,9 @@ kotlin {
         implementation(project(":ultra:kontainer"))
         implementation(project(":ultra:log"))
         implementation(project(":ultra:slumber"))
-        implementation(project(":ultra:vault"))
+        // `api`: Repository, Stored and Cursor are in this module's public API, so a consumer must see Vault
+        // without declaring it. Vault exposes kontainer, reflection, datetime, log, slumber and common as api.
+        api(project(":ultra:vault"))
 
         // //  tests  ////////////////////////////////////////////////////////////////////////////////////////////////
 

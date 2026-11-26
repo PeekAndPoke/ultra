@@ -108,6 +108,18 @@ class FloorAuthRuleBuilderSpec : StringSpec({
         }.message shouldContain "SOLE rule"
     }
 
+    "a route's own authorize { public() } in a public-floored group fails at build (ULTRA-00360)" {
+        // The chain becomes [PublicRule (floor), PublicRule (route)]: a constant that is not the
+        // sole rule. Why the empty-authorize error advises authFloor = { public() } instead.
+        shouldThrow<IllegalStateException> {
+            object : ApiRoutes("g", authFloor = { public() }) {
+                val route = endpoint.mount {
+                    authorize { public() }.handle { ApiResponse.ok(Unit) }
+                }
+            }
+        }.message shouldContain "SOLE rule"
+    }
+
     "a healthy floored group passes the boot validator" {
         val group = object : ApiRoutes("g", authFloor = { isSuperUser() }) {
             val route = endpoint.mount { handle { ApiResponse.ok(Unit) } }

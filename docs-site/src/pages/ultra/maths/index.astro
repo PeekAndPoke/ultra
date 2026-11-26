@@ -15,7 +15,7 @@ import {Code} from 'astro:components';
         Easing functions and probability distributions for Kotlin Multiplatform.
     </p>
 
-    <h2>Animations and randomness, done right</h2>
+    <h2>Animations and randomness</h2>
 
     <p>Two things come up constantly when building interactive UIs, simulations, or generative content:
         smooth transitions and controlled randomness. Most projects end up copy-pasting easing formulas from
@@ -28,9 +28,9 @@ import {Code} from 'astro:components';
 
     <h2>Easing functions</h2>
 
-    <p>28 easing functions organized into <code>Ease.In</code>, <code>Ease.Out</code>, and <code>Ease.InOut</code>,
+    <p>23 easing functions organized into <code>Ease.In</code>, <code>Ease.Out</code>, and <code>Ease.InOut</code>,
         plus basic ones like <code>linear</code>, <code>stuck</code>, and <code>immediate</code>.
-        All implement <code>Ease.Fn</code> &mdash; a functional interface that takes progress (0.0&ndash;1.0)
+        All implement <code>Ease.Fn</code> &mdash; an interface that takes progress (0.0&ndash;1.0)
         and returns the eased value.</p>
 
     <Code code={`import io.peekandpoke.ultra.maths.Ease
@@ -44,7 +44,7 @@ val eased = Ease.Out.cubic(progress)  // 0.875
 
 // Bind to a range: ease from 0 to 100
 val bound = Ease.InOut.sine.bindFromTo(0, 100)
-println(bound(0.5))  // 50.0 (midpoint of sine InOut)
+println(bound(0.5))  // 49.99999999999999 (midpoint of sine InOut, with floating-point error)
 
 // Time-based: animate from 0 to 255 over 500ms
 val timed = Ease.Out.quad.timed(from = 0, to = 255, duration = 500.milliseconds)
@@ -58,6 +58,7 @@ while (!timed.isDone) {
         sampled via inverse-CDF interpolation. Distributions can be inverted, reversed, and blended.</p>
 
     <Code code={`import io.peekandpoke.ultra.maths.stochastic.BucketedDistribution
+import io.peekandpoke.ultra.maths.stochastic.sample
 import kotlin.random.Random
 
 val normal = BucketedDistribution.createTruncatedNormal(mean = 0.5, std = 0.15)
@@ -76,9 +77,9 @@ val skewed = normal.blend(
 
     <div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8">
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
-            <h3 class="text-white font-semibold mb-1">28 Easing Functions</h3>
+            <h3 class="text-white font-semibold mb-1">26 Easing Functions</h3>
             <p class="text-sm text-gray-400">Sine, quad, cubic, quart, quint, elastic, bounce, circ &mdash;
-                in In, Out, and InOut variants.</p>
+                in In, Out, and InOut variants (circ in In and Out only), plus linear, stuck and immediate.</p>
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">4 Distribution Types</h3>

@@ -59,6 +59,15 @@ data class MpLocalDate(
         )
 
         /**
+         * Creates an [MpLocalDate] from [year], [month] and [day].
+         */
+        fun of(year: Int, month: MpMonth, day: Int): MpLocalDate = of(
+            year = year,
+            month = month.number,
+            day = day,
+        )
+
+        /**
          * Parses an [MpLocalDate] from the given [isoString].
          *
          * Throws an [IllegalArgumentException] if parsing fails.
@@ -101,20 +110,20 @@ data class MpLocalDate(
     val monthNumber: Int get() = value.month.number
 
     /** The month */
-    val month: Month get() = value.month
+    val month: MpMonth get() = value.month.mp
 
     /** The day of the month */
     val day: Int get() = value.day
 
     /** The day of the week */
-    val dayOfWeek: DayOfWeek get() = value.dayOfWeek
+    val dayOfWeek: MpDayOfWeek get() = value.dayOfWeek.mp
 
     /** The day of the year */
     val dayOfYear: Int get() = value.dayOfYear
 
-    /** The number of days of the current month */
+    /** The number of days of the current month, from the calendar (no range, so no Genesis / Doomsday clamp). */
     val numDaysInMonth: Int by lazy {
-        atFirstOfMonth().toClosedRange(atLastOfMonth()).numberOfDays
+        atLastOfMonth().day
     }
 
     /**
@@ -211,7 +220,12 @@ data class MpLocalDate(
     /**
      * Gets the upcoming day that is of the given [dayOfWeek].
      */
-    fun atStartOfNext(dayOfWeek: DayOfWeek): MpLocalDate {
+    fun atStartOfNext(dayOfWeek: DayOfWeek): MpLocalDate = atStartOfNext(dayOfWeek.mp)
+
+    /**
+     * Gets the upcoming day that is of the given [dayOfWeek].
+     */
+    fun atStartOfNext(dayOfWeek: MpDayOfWeek): MpLocalDate {
 
         var result = plus(1, DateTimeUnit.DAY)
 
@@ -225,7 +239,12 @@ data class MpLocalDate(
     /**
      * Gets the previous day that is of the given [dayOfWeek].
      */
-    fun atStartOfPrevious(dayOfWeek: DayOfWeek): MpLocalDate {
+    fun atStartOfPrevious(dayOfWeek: DayOfWeek): MpLocalDate = atStartOfPrevious(dayOfWeek.mp)
+
+    /**
+     * Gets the previous day that is of the given [dayOfWeek].
+     */
+    fun atStartOfPrevious(dayOfWeek: MpDayOfWeek): MpLocalDate {
 
         var result = this
 
@@ -268,6 +287,9 @@ data class MpLocalDate(
      * Converts into an [MpZonedDateTime] in the given [timezone] by setting the given [time].
      */
     fun atTime(time: MpLocalTime, timezone: MpTimezone): MpZonedDateTime {
+        // EndOfDay (24:00) is the start of the next day, also when this date itself does not exist in the zone
+        if (time.isEndOfDay) return plusDays(1).atStartOfDay(timezone)
+
         return atStartOfDay(timezone).atTime(time)
     }
 
@@ -326,13 +348,21 @@ data class MpLocalDate(
     }
 
     /**
-     * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone].
+     * Converts into an [MpZonedDateTimeRange] for the given [timeslot] and [timezone], by the clock: it ends at the
+     * slot's `to` on the day [MpLocalTimeSlot.endDayOffset] later, which respects DST.
+     *
+     * - A start or end in a skipped hour moves to the first existing time, the transition (02:30 in a 02:00 to 03:00
+     *   gap is 03:00; [atTime] would give 03:30). A time in a repeated hour takes its first occurrence.
+     * - Always a two-ended range; an empty slot gives an empty range at its start. A slot starting at 24:00 starts at
+     *   00:00 of this date (the slot wraps its start).
+     * - An END beyond what the platform can represent stops at its last representable time; a START beyond it throws
+     *   [IllegalArgumentException] naming the date, the zone and the accepted interval. In a region zone the interval
+     *   is -271821-04-22T00:00 to +275760-09-11T00:00 local on JS and -999999999-01-04T00:00 to
+     *   +999999999-12-29T00:00 local on native; on the JVM and for fixed offsets an end past 999 999 999-12-31 stops
+     *   at that date's last instant. An invalid zone id is an `IllegalTimeZoneException`, whatever the date.
      */
     fun toRange(timeslot: MpLocalTimeSlot, timezone: MpTimezone): MpZonedDateTimeRange {
-        return MpZonedDateTimeRange(
-            from = atTime(timeslot.from, timezone),
-            to = atTime(timeslot.to, timezone)
-        )
+        return timeslot.onDate(date = this, timezone = timezone)
     }
 
     /**
@@ -509,7 +539,13 @@ data class MpLocalDate(
      * @return A list of MpLocalDate objects for the specified weekdays in the current month.
      */
     @JvmName("getDatesInMonth_by_weekdays")
-    fun getDatesInMonth(weekdays: Iterable<DayOfWeek>): List<MpLocalDate> {
+    fun getDatesInMonth(weekdays: Iterable<DayOfWeek>): List<MpLocalDate> = getDatesInMonth(weekdays.map { it.mp })
+
+    /**
+     * Retrieves a list of dates in the current month that match the specified [weekdays], without duplicates.
+     */
+    @JvmName("getDatesInMonth_by_mp_weekdays")
+    fun getDatesInMonth(weekdays: Iterable<MpDayOfWeek>): List<MpLocalDate> {
         val days = weekdays.toSet()
 
         return (1..numDaysInMonth)

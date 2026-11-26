@@ -1,10 +1,13 @@
 package io.peekandpoke.ultra.kontainer.e2e
 
+import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import io.peekandpoke.ultra.kontainer.KontainerBuilder
 import io.peekandpoke.ultra.kontainer.kontainer
@@ -20,6 +23,12 @@ class ServiceDefinitionsSpec : StringSpec() {
     private fun overrideService(builder: KontainerBuilder) {
         with(builder) {
             singleton(CounterService::class, CounterServiceEx01::class)
+        }
+    }
+
+    private fun setupDynamicService(builder: KontainerBuilder) {
+        with(builder) {
+            dynamic(CounterService::class)
         }
     }
 
@@ -99,6 +108,51 @@ class ServiceDefinitionsSpec : StringSpec() {
                     def.overwrites.overwrites.shouldBeNull()
                 }
             }
+        }
+
+        // ULTRA-00353: an override's location is its lambda's class without the hidden-class suffix
+        "Code location of an override names the class of the override lambda, and nothing else" {
+
+            val override: () -> CounterService = { CounterServiceEx01() }
+
+            val subject = kontainer {
+                setupDynamicService(this)
+            }.create {
+                with(CounterService::class, override)
+            }
+
+            val definition = subject.getProvider(CounterService::class).definition
+            val info = subject.tools.getDebugInfo().services.first { it.cls.fqn == CounterService::class.java.name }
+
+            withClue("Precondition: the lambda is a hidden class, so there is a suffix to drop") {
+                override.javaClass.name shouldContain "\$\$Lambda"
+            }
+
+            val expected = override.javaClass.name.substringBefore("\$\$Lambda")
+
+            assertSoftly {
+                definition.codeLocation.stack.map { it.className } shouldBe listOf(expected)
+                definition.codeLocation.first()?.className shouldBe expected
+                info.definition.codeLocation.location shouldBe "$expected.invoke(Unknown Source)"
+                info.definition.codeLocation.location shouldNotContain "Lambda"
+
+                withClue("The overwritten definition keeps the location where the blueprint defined it") {
+                    definition.overwrites?.codeLocation?.first()?.methodName shouldBe ::setupDynamicService.name
+                }
+            }
+        }
+
+        "Code location of an override written in place points at the class where with { } was written" {
+
+            val subject = kontainer {
+                setupDynamicService(this)
+            }.create {
+                with(CounterService::class) { CounterServiceEx02() }
+            }
+
+            val info = subject.tools.getDebugInfo().services.first { it.cls.fqn == CounterService::class.java.name }
+
+            info.definition.codeLocation.location shouldStartWith ServiceDefinitionsSpec::class.qualifiedName!!
         }
     }
 }

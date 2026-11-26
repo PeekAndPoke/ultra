@@ -11,7 +11,7 @@ import {Code} from 'astro:components';
     <h1>Repositories</h1>
 
     <p class="text-xl text-gray-400 !mt-2 !mb-8">
-        MonkoRepository provides typed CRUD, queries, cursors, and atomic operations.
+        MonkoRepository provides typed CRUD, queries, and cursors.
     </p>
 
     <h2>Defining a repository</h2>
@@ -22,8 +22,9 @@ import {Code} from 'astro:components';
     driver = driver,
 )`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>The repository is a singleton registered in <a href="/ultra/kontainer/">Kontainer</a>.
-        The <code>MonkoDriver</code> is injected as a dynamic (per-request) dependency.</p>
+    <p>The repository is registered as a singleton in <a href="/ultra/kontainer/">Kontainer</a>. The
+        <code>MonkoDriver</code> it takes is dynamic (per request), so Kontainer makes the repository
+        <a href="/ultra/kontainer/advanced">semi-dynamic</a>: one instance per kontainer.</p>
 
     <h2>CRUD operations</h2>
 
@@ -31,7 +32,7 @@ import {Code} from 'astro:components';
 val stored = repo.insert("alice-1", Person(name = "Alice", age = 30, email = "alice@example.com"))
 
 // Insert with auto-generated ObjectId
-val stored = repo.insert(New(Person(name = "Bob", age = 25, email = "bob@example.com")))
+val bob = repo.insert(New(Person(name = "Bob", age = 25, email = "bob@example.com")))
 
 // Find by ID
 val person = repo.findById("persons/alice-1")  // returns Stored<Person>?
@@ -43,11 +44,14 @@ val everyone = repo.findAll()  // returns MonkoCursor<Stored<Person>>
 val modified = person!!.modify { it.copy(age = 31) }
 repo.save(modified)
 
-// Atomic read-modify-write
-repo.modifyById("persons/alice-1") { copy(age = it.age + 1) }
+// Read-modify-write: findById, then save (not atomic)
+repo.modifyById("persons/alice-1") { it.copy(age = it.age + 1) }
 
-// Delete
+// Delete by id (runs no hooks)
 repo.remove("persons/alice-1")
+
+// Delete a Stored entity (runs the OnAfterDelete hooks)
+repo.remove(bob)
 
 // Delete all
 repo.removeAll()`} lang="kotlin" theme="vitesse-dark"/>
@@ -56,8 +60,7 @@ repo.removeAll()`} lang="kotlin" theme="vitesse-dark"/>
 
     <Code code={`// Type-safe query with builder
 val berliners = repo.find { r ->
-    filter(r.address.city.eq("Berlin"))
-    filter(r.age.gte(18))
+    filter(and(r.address.city.eq("Berlin"), r.age.gte(18)))
     sort(r.name.asc)
     limit(50)
 }
@@ -65,7 +68,7 @@ val berliners = repo.find { r ->
 // Access results
 berliners.toList()       // List<Stored<Person>>
 berliners.count           // number of results returned
-berliners.fullCount       // total matching (for pagination)
+berliners.fullCount       // total matching (for pagination), null without a filter
 berliners.forEach { ... } // iterate`} lang="kotlin" theme="vitesse-dark"/>
 
     <h2>Cursors</h2>
@@ -73,8 +76,8 @@ berliners.forEach { ... } // iterate`} lang="kotlin" theme="vitesse-dark"/>
     <p><code>MonkoCursor&lt;T&gt;</code> wraps query results with metadata:</p>
 
     <Code code={`val cursor = repo.find { r ->
-    filter(r.status.eq("active"))
-    sort(r.createdAt.desc)
+    filter(r.address.city.eq("Berlin"))
+    sort(r.name.asc)
     skip(20)
     limit(10)
 }

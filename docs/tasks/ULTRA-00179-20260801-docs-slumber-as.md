@@ -49,3 +49,5 @@ this code" and belong in a skill or the task record, not on a docs page.
 ## History
 
 - 2026-10-21: numbered ULTRA-00179 (was `docs/tasks/20260801-docs-slumber-as.md`).
+- 2026-11-25: the ULTRA-00356 truth audit (merged 9636ac3a) fixed the false spots this ticket lists where the code is
+  settled; the new documentation it asks for is still open.

@@ -1,5 +1,6 @@
 package io.peekandpoke.funktor
 
+import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -183,12 +184,17 @@ class InsightsGraphsApiSpec : FunktorApiSpec() {
 
             "it is the BLUEPRINT's graph, not the asking request's" {
                 // The request asking for it had a UserProvider handed in, which its own kontainer reports as
-                // `DynamicOverride` with an empty definition. The graph must not depend on who asked.
+                // `DynamicOverride`, with a definition that overwrites the blueprint's. The graph must not depend
+                // on who asked.
                 val graph = strictJson.decodeFromJsonElement(InsightsKontainerGraph.serializer(), fetch().data())
                 val userProvider = graph.services.single { it.cls == UserProvider::class.java.name }
 
-                userProvider.type shouldBe "Dynamic"
-                userProvider.definition.codeLocation shouldNotContain "ServiceProviderFactory"
+                assertSoftly {
+                    withClue("the blueprint's own definition, not an override's, which always overwrites it") {
+                        userProvider.definition.overwrites shouldBe null
+                    }
+                    userProvider.type shouldBe "Dynamic"
+                }
             }
 
             "InsightsGraphs is a true singleton, so the graph is built once per blueprint" {

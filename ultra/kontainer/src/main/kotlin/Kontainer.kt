@@ -132,13 +132,21 @@ class Kontainer internal constructor(
     }
 
     /**
-     * Internally gets all super type services of [cls] as a [List]
+     * Internally gets all super type services of [cls] as a [List], in candidate order
      */
     internal fun <T : Any> getAll(cls: KClass<T>, context: InjectionContext): List<T> {
         @Suppress("UNCHECKED_CAST")
         return blueprint.superTypeLookup
-            .getAllCandidatesFor(cls).map { get(it, context) as T }
+            .getAllCandidatesFor(cls).map { getCandidate(it, context) as T }
     }
+
+    /**
+     * Internally gets the service of a registered [candidate] itself, without resolving it again
+     *
+     * A candidate may be a super type of another candidate, so resolving it again could be ambiguous.
+     */
+    internal fun getCandidate(candidate: KClass<*>, context: InjectionContext): Any =
+        factory.getProvider(candidate).provide(this, context)
 
     /**
      * Internally gets all super type services of [cls] as a [Lookup]

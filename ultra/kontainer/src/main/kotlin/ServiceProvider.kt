@@ -1,6 +1,7 @@
 package io.peekandpoke.ultra.kontainer
 
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Service providers create instances of services
@@ -65,15 +66,23 @@ interface ServiceProvider {
     }
 
     /**
-     * Tracks created service instances
+     * What a provider created: how many instances, and when the first and the last one were made.
      *
-     * [instance] is the service instance that was created.
-     * [createdAt] is the timestamp, when the instantiation occurred.
+     * Both times are null exactly when [count] is 0. No reference to an instance is kept.
      */
-    data class CreatedInstance(
-        val instance: Any,
-        val createdAt: Instant,
-    )
+    data class Created(
+        val count: Long,
+        val firstAt: Instant?,
+        val lastAt: Instant?,
+    ) {
+        companion object {
+            /** Nothing created yet */
+            val none = Created(count = 0, firstAt = null, lastAt = null)
+
+            /** One instance, created [at] */
+            fun once(at: Instant) = Created(count = 1, firstAt = at, lastAt = at)
+        }
+    }
 
     /**
      * What the service is: singleton or prototype.
@@ -91,9 +100,9 @@ interface ServiceProvider {
     val overridden: Boolean
 
     /**
-     * A list of all instances created by the provider.
+     * What the provider created so far.
      */
-    val instances: List<CreatedInstance>
+    val created: Created
 
     /**
      * The definition of the service.
@@ -131,11 +140,9 @@ interface ServiceProvider {
         override val overridden: Boolean = true
 
         /**
-         * The list of created instance always holds the [instance]
+         * Always one instance, made when the provider was, i.e. when the kontainer was created
          */
-        override val instances = listOf(
-            CreatedInstance(instance, Instant.now())
-        )
+        override val created: Created = Created.once(Instant.now())
 
         /**
          * Simply returns the [instance]
@@ -149,7 +156,10 @@ interface ServiceProvider {
     }
 
     /**
-     * Provides a global singleton service
+     * Provides a singleton: a global one for [ServiceKind.Static], otherwise one per kontainer
+     *
+     * The instance is created under this provider's lock. A constructor that forces a `Lazy` injection back into a
+     * singleton still being created can deadlock across two threads, or on one thread re-enter the lock and recurse.
      */
     data class ForSingleton(
         override val kind: ServiceKind,
@@ -162,22 +172,27 @@ interface ServiceProvider {
         /** Never handed in at create */
         override val overridden: Boolean = false
 
-        /**
-         * True when the service instance was created
-         */
-        override val instances = mutableListOf<CreatedInstance>()
+        /** When the instance was created; written before [instance], so it is set whenever [instance] is */
+        @Volatile
+        private var createdAt: Instant? = null
 
         @Volatile
         private var instance: Any? = null
+
+        /**
+         * One instance once it was created, none before
+         */
+        override val created: Created
+            get() = createdAt?.let { Created.once(it) } ?: Created.none
 
         /**
          * Get or create the instance of the service
          */
         override fun provide(kontainer: Kontainer, context: InjectionContext): Any {
             return instance ?: synchronized(this) {
-                instance ?: create(kontainer, context).apply {
+                instance ?: create(creatingKontainer(kontainer), context).apply {
+                    createdAt = Instant.now()
                     instance = this
-                    instances.add(CreatedInstance(this, Instant.now()))
                 }
             }
         }
@@ -190,20 +205,25 @@ interface ServiceProvider {
         }
 
         /**
+         * The kontainer the instance is created in: the blueprint-wide one for a global singleton, so its parameters
+         * do not bind to the kontainer that asked first; the asking one otherwise.
+         */
+        private fun creatingKontainer(kontainer: Kontainer): Kontainer = when (kind) {
+            ServiceKind.Static -> kontainer.blueprint.globalKontainer
+            ServiceKind.SemiDynamic, ServiceKind.Dynamic -> kontainer
+        }
+
+        /**
          * Creates a new instance
          */
         private fun create(kontainer: Kontainer, context: InjectionContext): Any {
 
             val nextCtx = context.next(definition.serviceCls)
+            val params = definition.producer.params
 
             return definition.producer.creator(
                 kontainer,
-                definition.producer.params.map {
-                    it.provide(
-                        kontainer = kontainer,
-                        context = nextCtx
-                    )
-                }.toTypedArray()
+                Array(params.size) { idx -> params[idx].provide(kontainer = kontainer, context = nextCtx) },
             )
         }
     }
@@ -235,22 +255,31 @@ interface ServiceProvider {
         /** Never handed in at create */
         override val overridden: Boolean = false
 
-        /**
-         * True when the service instance was created
-         */
-        override val instances = mutableListOf<CreatedInstance>()
+        /** Updated without a lock: concurrent creations run in parallel and are all counted */
+        private val counter = AtomicReference(Created.none)
 
         /**
-         * Get or create the instance of the service
+         * How many instances this provider created, the earliest and the latest creation time
+         */
+        override val created: Created get() = counter.get()
+
+        /**
+         * Creates a new instance of the service
          */
         override fun provide(kontainer: Kontainer, context: InjectionContext): Any {
-            return synchronized(this) {
-                val instance = create(kontainer, context)
 
-                instances.add(CreatedInstance(instance, Instant.now()))
+            val instance = create(kontainer, context)
+            val now = Instant.now()
 
-                instance
+            counter.updateAndGet { current ->
+                Created(
+                    count = current.count + 1,
+                    firstAt = current.firstAt?.let { minOf(it, now) } ?: now,
+                    lastAt = current.lastAt?.let { maxOf(it, now) } ?: now,
+                )
             }
+
+            return instance
         }
 
         /**
@@ -266,15 +295,11 @@ interface ServiceProvider {
         private fun create(kontainer: Kontainer, context: InjectionContext): Any {
 
             val nextContext = context.next(definition.serviceCls)
+            val params = definition.producer.params
 
             return definition.producer.creator(
                 kontainer,
-                definition.producer.params.map {
-                    it.provide(
-                        kontainer = kontainer,
-                        context = nextContext,
-                    )
-                }.toTypedArray()
+                Array(params.size) { idx -> params[idx].provide(kontainer = kontainer, context = nextContext) },
             )
         }
     }

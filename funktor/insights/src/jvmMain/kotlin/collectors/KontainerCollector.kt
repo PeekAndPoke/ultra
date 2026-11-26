@@ -13,14 +13,14 @@ import java.time.Instant
 import kotlin.reflect.KClass
 
 /**
- * The services this request's kontainer held instances of when the request finished.
+ * The services this request's kontainer had created instances of when the request finished: a count and the
+ * first and last creation time per service, no instances.
  *
  * Not all of it is request-specific: a `Singleton` entry is process state, shared by every request and
  * created by the boot or by whichever request first needed it; every other type is this kontainer's own.
- * `createdAt` only says whether this request was the one that created it. The definitions are static
+ * Its creation time only says whether this request was the one that created it. The definitions are static
  * per blueprint, so `InsightsApiClient.GetKontainerGraph` serves them once instead of every record repeating
  * them; a reader joins on [Data.Service.cls].
- *
  */
 class KontainerCollector(
     private val kontainer: Kontainer,
@@ -61,8 +61,9 @@ class KontainerCollector(
     }
 
     /**
-     * The slice. **A wire break**: records written before 2026-10-19 carry every definition under
-     * `info.services` instead, and are still served as written.
+     * The slice. **Two wire breaks**: records written before 2026-10-19 carry every definition under
+     * `info.services`, and records written before the counters (ULTRA-00329) carry an `instances` list per
+     * service instead of [Service.count]. Both are still served as written.
      *
      * No `numOld`/`numTotal`, which those records still have (maintainer, 2026-10-19): they counted tracked
      * kontainers, and tracking (`KontainerBlueprint.Config.trackKontainers`) cannot be switched on from
@@ -71,11 +72,16 @@ class KontainerCollector(
     data class Data(
         /** [InsightsKontainerGraph.fingerprint] of the graph [services] join against; null when it could not be built. */
         val graphFingerprint: String?,
-        /** Only the services with at least one instance. */
+        /** Only the services with at least one creation. */
         val services: List<Service>,
     ) : InsightsCollectorData {
 
-        /** A service with its instances. */
+        /**
+         * A service with what its provider created.
+         *
+         * Slumber writes both times as `{ts, timezone, human}`, `ts` in epoch millis. The counters default to no
+         * creations, so a service from a record written before them reads as one without creations.
+         */
         data class Service(
             /** The FQN the service is registered under: the join key into [InsightsKontainerGraph.services]. */
             val cls: String,
@@ -84,18 +90,15 @@ class KontainerCollector(
              * One of the five wire names of [wireProviderType], unchanged since before the type and kind split.
              */
             val type: String,
-            val instances: List<Instance>,
-        )
-
-        /** One instance; Slumber writes [createdAt] as `{ts, timezone, human}`, `ts` in epoch millis. */
-        data class Instance(
-            val cls: String,
-            val createdAt: Instant,
+            /** How many instances the provider created; for a `Singleton` that count is process-wide */
+            val count: Long = 0,
+            val firstCreatedAt: Instant? = null,
+            val lastCreatedAt: Instant? = null,
         )
 
         companion object {
             /**
-             * Keeps only the [providers] that have instances.
+             * Keeps only the [providers] that created at least one instance.
              *
              * Reads the providers rather than `getDebugInfo()`, which would build every definition only for
              * them to be dropped. Names go through [DebugInfo.ClassInfo] so the join key is exactly the graph's.
@@ -105,17 +108,18 @@ class KontainerCollector(
                 providers: Map<KClass<*>, ServiceProvider>,
             ) = Data(
                 graphFingerprint = graphFingerprint,
-                services = providers
-                    .filterValues { it.instances.isNotEmpty() }
-                    .map { (cls, provider) ->
-                        Service(
-                            cls = DebugInfo.ClassInfo.of(cls).fqn,
-                            type = wireProviderType(provider.type, provider.kind, provider.overridden),
-                            instances = provider.instances.map {
-                                Instance(cls = DebugInfo.ClassInfo.of(it.instance::class).fqn, createdAt = it.createdAt)
-                            },
-                        )
-                    },
+                services = providers.mapNotNull { (cls, provider) ->
+                    // One snapshot per provider, so the count and both times belong together
+                    val created = provider.created.takeIf { it.count > 0 } ?: return@mapNotNull null
+
+                    Service(
+                        cls = DebugInfo.ClassInfo.of(cls).fqn,
+                        type = wireProviderType(provider.type, provider.kind, provider.overridden),
+                        count = created.count,
+                        firstCreatedAt = created.firstAt,
+                        lastCreatedAt = created.lastAt,
+                    )
+                },
             )
         }
     }

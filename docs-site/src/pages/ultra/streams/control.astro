@@ -19,6 +19,7 @@ import { Code } from 'astro:components';
 
 <Code code={`val search = StreamSource("")
 val debounced = search.debounce(300)  // 300ms delay
+debounced.subscribeToStream { println(it) }  // values are debounced only while someone listens
 
 // Typing rapidly: "h", "he", "hel", "hell", "hello"
 // Only "hello" is published — 300ms after the last keystroke`} lang="kotlin" theme="vitesse-dark" />
@@ -36,6 +37,7 @@ val debounced = search.debounce(300)  // 300ms delay
 val paused = StreamSource(false)
 
 val stream = source.cutoffWhen(paused)
+stream.subscribeToStream { println(it) }  // prints 1
 
 // stream publishes values while paused() is false
 source(2)  // published
@@ -74,6 +76,8 @@ unsub()  // stops the ticker`} lang="kotlin" theme="vitesse-dark" />
     passes its own clock and drives it frame by frame:</p>
 
     <Code code={`import io.peekandpoke.ultra.streams.ops.FrameClock
+
+var pending: ((Double) -> Unit)? = null
 
 val handClock = FrameClock { onFrame ->
     pending = onFrame        // run it when the test says so

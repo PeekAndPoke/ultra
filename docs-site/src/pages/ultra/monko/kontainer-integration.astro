@@ -18,10 +18,21 @@ import {Code} from 'astro:components';
 
     <Code code={`import io.peekandpoke.monko.MongoDbConfig
 import io.peekandpoke.monko.monko
+import io.peekandpoke.ultra.common.model.Redacted
+import io.peekandpoke.ultra.datetime.Kronos
+import io.peekandpoke.ultra.kontainer.kontainer
+import io.peekandpoke.ultra.log.ultraLogging
+import io.peekandpoke.ultra.vault.VaultConfig
+import io.peekandpoke.ultra.vault.ultraVault
 
 val blueprint = kontainer {
+    // Monko builds on these: logging, Vault, and a Kronos for the Vault timestamp hooks
+    singleton(Kronos::class) { Kronos.systemUtc }
+    ultraLogging()
+    ultraVault(VaultConfig())
+
     monko(MongoDbConfig(
-        connectionString = "mongodb://root:root@localhost:27017",
+        connectionString = Redacted("mongodb://root:root@localhost:27017"),
         database = "my_app",
     ))
 
@@ -29,6 +40,8 @@ val blueprint = kontainer {
     singleton(PersonsRepo::class)
     singleton(ArticlesRepo::class)
 }`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Funktor registers the first three for you (see below).</p>
 
     <p>The <code>monko(config)</code> call registers:</p>
 

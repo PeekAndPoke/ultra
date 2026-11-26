@@ -689,7 +689,7 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
         value.atZone(timezone),
         { onChange(it.toInstant()) },
         ::zonedDateTimeToYmdHms,
-        { stringToZonedDateTime(it).copy(timezone = timezone) },
+        { MpZonedDateTime.of(stringToZonedDateTime(it).datetime, timezone) },
     ) {
         asDateTimeInput()
         builder()
@@ -716,7 +716,7 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
         value?.atZone(timezone),
         { onChange(it?.toInstant()) },
         ::zonedDateTimeToYmdHms,
-        { stringToZonedDateTimeOrNull(it)?.copy(timezone = timezone) },
+        { stringToZonedDateTimeOrNull(it)?.let { MpZonedDateTime.of(it.datetime, timezone) } },
     ) {
         asDateTimeInput()
         builder()
@@ -762,7 +762,7 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
         value,
         onChange,
         ::zonedDateTimeToYmdHms,
-        { stringToZonedDateTime(it).copy(timezone = timezone) },
+        { MpZonedDateTime.of(stringToZonedDateTime(it).datetime, timezone) },
     ) {
         asDateTimeInput()
         builder()
@@ -789,7 +789,7 @@ class UiDateTimeFieldRenderer(private val tag: Tag) {
         value,
         onChange,
         ::zonedDateTimeToYmdHms,
-        { stringToZonedDateTimeOrNull(it)?.copy(timezone = timezone) },
+        { stringToZonedDateTimeOrNull(it)?.let { MpZonedDateTime.of(it.datetime, timezone) } },
     ) {
         asDateTimeInput()
         builder()

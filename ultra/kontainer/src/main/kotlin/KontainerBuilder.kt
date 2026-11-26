@@ -6,6 +6,39 @@ import io.peekandpoke.ultra.reflection.kType
 import kotlin.reflect.KClass
 
 /**
+ * The services every kontainer provides itself; they can neither be registered nor overridden.
+ */
+internal val builtInServices: Set<KClass<*>> = setOf(
+    Kontainer::class,
+    InjectionContext::class,
+    KontainerBlueprint::class,
+)
+
+/**
+ * The value types that cannot be services, by Java class.
+ *
+ * `Int::class` is Java `int`, while a boxed value's class is `java.lang.Integer`: equal as [KClass], different as Java
+ * classes. So each primitive is listed in both forms.
+ */
+internal val valueTypes: Set<Class<*>> = listOf(
+    Boolean::class, Byte::class, Short::class, Int::class, Long::class, Float::class, Double::class, Char::class,
+).flatMap { listOfNotNull(it.javaPrimitiveType, it.javaObjectType) }.toSet() + setOf(
+    UByte::class.java, UShort::class.java, UInt::class.java, ULong::class.java, String::class.java, Unit::class.java,
+)
+
+/** Whether [cls] is one of the [valueTypes]. */
+internal fun isValueType(cls: KClass<*>): Boolean = cls.java in valueTypes
+
+/**
+ * Refuses a registration of one of the [valueTypes], at the defining call.
+ */
+private fun refuseValueType(cls: KClass<*>) {
+    if (isValueType(cls)) {
+        throw KontainerInconsistent("${cls.getName()} is a value type and cannot be registered")
+    }
+}
+
+/**
  * Builder for defining services and modules in a [Kontainer].
  *
  * Used internally by [kontainer] and [KontainerModule] to collect service definitions
@@ -21,8 +54,9 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     /**
      * Decides the type and kind of a service that is defined again.
      *
-     * A later definition keeps the [ServiceType] and [ServiceKind] of the one it replaces, unless that one is a
-     * static singleton: then the later definition is taken as it is. The producer is always the later one.
+     * The first definition fixes the [ServiceType], unless it is a static singleton: then the later definition is
+     * taken as it is. Request binding is never lost: if either definition is [ServiceKind.Dynamic], the service is.
+     * The producer is always the later one.
      */
     class RedefinitionUpgrade {
 
@@ -31,7 +65,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
             return adjust(newDef = def, existingDef = def.overwrites)
         }
 
-        /** Adjusts [newDef] to the type and kind of the [existingDef] it replaces, see [RedefinitionUpgrade]. */
+        /** Adjusts [newDef] against the [existingDef] it replaces, see [RedefinitionUpgrade]. */
         fun adjust(newDef: ServiceDefinition, existingDef: ServiceDefinition?): ServiceDefinition {
             return when {
                 // Nothing replaced: the new definition as is
@@ -40,8 +74,15 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
                 // A static singleton replaced: the new definition as is
                 existingDef.type == ServiceType.Singleton && existingDef.kind == ServiceKind.Static -> newDef
 
-                // A prototype or anything dynamic replaced: it keeps what it was
-                else -> newDef.withScope(type = existingDef.type, kind = existingDef.kind)
+                // A prototype or anything dynamic replaced: its type stays, a dynamic kind on either side wins
+                else -> newDef.withScope(
+                    type = existingDef.type,
+                    kind = if (existingDef.kind == ServiceKind.Dynamic || newDef.kind == ServiceKind.Dynamic) {
+                        ServiceKind.Dynamic
+                    } else {
+                        ServiceKind.Static
+                    },
+                )
             }
         }
     }
@@ -57,6 +98,7 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     ) {
         @PublishedApi
         internal fun add(cls: KClass<out Any>, producer: ServiceProducer<out Any>) {
+            refuseValueType(cls)
             fn(cls, producer)
         }
 
@@ -68,7 +110,9 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         operator fun <SRV : Any> invoke(
             srv: KClass<SRV>,
         ) {
-            add(srv, ServiceProducer.forClass(srv))
+            // Before the producer: a value type is named as such, not as a class without a primary constructor
+            refuseValueType(srv)
+            fn(srv, ServiceProducer.forClass(srv))
         }
 
         /**
@@ -80,7 +124,9 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
             srv: KClass<SRV>,
             impl: KClass<IMPL>,
         ) {
-            return fn(srv, ServiceProducer.forClass(impl))
+            refuseValueType(srv)
+            refuseValueType(impl)
+            fn(srv, ServiceProducer.forClass(impl))
         }
 
         /**
@@ -475,6 +521,8 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * DSL entry point for registering singleton services.
      */
     val singleton = ServiceBuilder { cls, producer ->
+        refuseBuiltIn(cls)
+
         @Suppress("UNCHECKED_CAST")
         addSingleton(cls as KClass<Any>, producer as ServiceProducer<Any>)
     }
@@ -489,6 +537,8 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * Prototype services create a new instance on every injection.
      */
     val prototype = ServiceBuilder { cls, producer ->
+        refuseBuiltIn(cls)
+
         @Suppress("UNCHECKED_CAST")
         addPrototype(cls as KClass<Any>, producer as ServiceProducer<Any>)
     }
@@ -503,6 +553,8 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * Dynamic services are re-created each time a new [Kontainer] is cloned from the blueprint.
      */
     val dynamic = ServiceBuilder { cls, producer ->
+        refuseBuiltIn(cls)
+
         @Suppress("UNCHECKED_CAST")
         addDynamic(cls as KClass<Any>, producer as ServiceProducer<Any>)
     }
@@ -520,6 +572,8 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
      * a dynamic prototype does so also when its producer reaches nothing dynamic, and is named as the cause.
      */
     val dynamicPrototype = ServiceBuilder { cls, producer ->
+        refuseBuiltIn(cls)
+
         @Suppress("UNCHECKED_CAST")
         addDynamicPrototype(cls as KClass<Any>, producer as ServiceProducer<Any>)
     }
@@ -690,6 +744,9 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
     fun <SRV : Any> instance(
         instance: SRV,
     ): KontainerBuilder {
+        refuseBuiltIn(instance::class)
+        refuseValueType(instance::class)
+
         @Suppress("UNCHECKED_CAST")
         return addSingleton(
             serviceCls = instance::class as KClass<SRV>,
@@ -707,6 +764,18 @@ class KontainerBuilder internal constructor(builder: KontainerBuilder.() -> Unit
         srv: KClass<SRV>,
         instance: IMPL,
     ): KontainerBuilder {
+        refuseBuiltIn(srv)
+        refuseValueType(srv)
+
         return addSingleton(srv, ServiceProducer.forInstance(instance))
+    }
+
+    /**
+     * Refuses a registration of one of the [builtInServices], at the defining call.
+     */
+    private fun refuseBuiltIn(cls: KClass<*>) {
+        if (cls in builtInServices) {
+            throw KontainerInconsistent("${cls.getName()} is managed by the kontainer itself and cannot be registered")
+        }
     }
 }

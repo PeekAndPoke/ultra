@@ -17,13 +17,6 @@ val UtcOffset.totalMillis: Long
 val TimeZone.mp: MpTimezone get() = MpTimezone.of(id)
 
 /**
- * Get the offset at the given [instant].
- */
-fun TimeZone.offsetAt(instant: MpInstant): UtcOffset {
-    return mp.offsetAt(instant)
-}
-
-/**
  * Get the offset in total seconds at the given [instant].
  */
 fun TimeZone.offsetSecondsAt(instant: MpInstant): Int {
@@ -35,15 +28,6 @@ fun TimeZone.offsetSecondsAt(instant: MpInstant): Int {
  */
 fun TimeZone.offsetMillisAt(instant: MpInstant): Long {
     return mp.offsetMillisAt(instant)
-}
-
-/**
- * Get the offset at the given [instant].
- */
-fun MpTimezone.offsetAt(instant: MpInstant): UtcOffset {
-    val total = offsetSecondsAt(instant)
-
-    return UtcOffset(hours = total / 3600, minutes = (total % 3600) / 60, seconds = total % 60)
 }
 
 /**

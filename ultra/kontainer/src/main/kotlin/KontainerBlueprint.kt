@@ -1,6 +1,5 @@
 package io.peekandpoke.ultra.kontainer
 
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
 /**
@@ -26,9 +25,18 @@ class KontainerBlueprint internal constructor(
     }
 
     /**
-     * Tracks whether the blueprint has been validated
+     * The validation result, computed once on first use: the error message, or null when the blueprint is valid.
+     *
+     * A caller arriving while another one validates waits for that result.
      */
-    private val validated = AtomicBoolean(false)
+    private val validationError: Lazy<String?> = lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        try {
+            validate()
+            null
+        } catch (e: KontainerInconsistent) {
+            e.message ?: "Kontainer is inconsistent!"
+        }
+    }
 
     /**
      * Services declared dynamic, singletons and prototypes alike.
@@ -40,16 +48,19 @@ class KontainerBlueprint internal constructor(
         .keys
 
     /**
-     * Dynamic singletons: the only services that can be overridden at [create]
+     * Dynamic singletons, the built-in services excepted: the only services that can be overridden at [create]
+     *
+     * `Kontainer` and `InjectionContext` stay dynamic sources of promotion, see [dynamicClasses].
      */
     private val overridableClasses: Set<KClass<*>> = definitions
         .filterValues { it.type == ServiceType.Singleton && it.kind == ServiceKind.Dynamic }
         .keys
+        .minus(builtInServices)
 
     /**
      * A lookup for finding the overridable service from the class of an override
      */
-    internal val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(overridableClasses)
+    private val dynamicsBaseTypeLookUp = TypeLookup.ForBaseTypes(overridableClasses)
 
     /**
      * Used to check whether unexpected instances are passed to [create]
@@ -63,9 +74,11 @@ class KontainerBlueprint internal constructor(
     internal val superTypeLookup = TypeLookup.ForSuperTypes(definitions.keys)
 
     /**
-     * Dependency lookup for figuring out which service depends on which other services
+     * Dependency lookup for figuring out which service depends on which other services.
+     *
+     * Reads the parameters' announcements, which use only [superTypeLookup], initialized above.
      */
-    private val dependencyLookUp = DependencyLookup(superTypeLookup, definitions)
+    private val dependencyLookUp = DependencyLookup(blueprint = this, definitions = definitions)
 
     /**
      * Services declared static that reach a dynamic service, directly or through any chain; in discovery order.
@@ -109,6 +122,21 @@ class KontainerBlueprint internal constructor(
     }
 
     /**
+     * The blueprint-wide kontainer, without overrides and untracked, created on first use.
+     *
+     * Every global singleton is created in it, with all its parameters, so nothing it holds is bound to the kontainer
+     * of whichever request needed it first. A global singleton reaches only static services, so this kontainer
+     * resolves the same services for it as any other would. Internal: the prototypes created in it show in no
+     * request's dump; the global singletons do, as their providers are shared.
+     */
+    internal val globalKontainerLazy: Lazy<Kontainer> = lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        instantiate(dynamics = DynamicOverrides(emptyMap()), track = false)
+    }
+
+    /** See [globalKontainerLazy] */
+    internal val globalKontainer: Kontainer get() = globalKontainerLazy.value
+
+    /**
      * The declared dynamic services each semi dynamic service reaches, in definition order.
      */
     private val semiDynamicSources: Map<KClass<*>, List<KClass<*>>> by lazy {
@@ -149,9 +177,16 @@ class KontainerBlueprint internal constructor(
 
         val result = KontainerBuilder(builder).build()
 
+        // The same redefinition rule as within one builder; it is associative, so the order of application is free
+        val upgrade = KontainerBuilder.RedefinitionUpgrade()
+
         return KontainerBlueprint(
             config = config,
-            definitions = definitions.plus(result.definitions),
+            definitions = definitions.plus(
+                result.definitions.mapValues { (cls, def) ->
+                    upgrade.adjust(newDef = def, existingDef = definitions[cls])
+                }
+            ),
         )
     }
 
@@ -164,14 +199,45 @@ class KontainerBlueprint internal constructor(
      */
     fun create(dynamics: DynamicOverrides.Builder.() -> Unit = {}): Kontainer {
 
-        // On the first usage we validate the consistency of the container
-        if (validated.compareAndSet(false, true)) {
-            validate()
+        // Validation comes before the caller's override block runs, as it always did
+        validateOnFirstUse()
+
+        return createChecked(DynamicOverrides.Builder().apply(dynamics).build())
+    }
+
+    /**
+     * Validates the blueprint on its first use and fails every use of an invalid one with the same message.
+     */
+    private fun validateOnFirstUse() {
+        validationError.value?.let { throw KontainerInconsistent(it) }
+    }
+
+    /**
+     * The one entry point of [create] and [Kontainer.clone]: validates on first use, checks the [dynamics] and
+     * creates the kontainer.
+     *
+     * @throws KontainerInconsistent when there is a problem with the kontainer configuration or the overrides
+     */
+    internal fun createChecked(dynamics: DynamicOverrides): Kontainer {
+
+        validateOnFirstUse()
+
+        val overridden = dynamics.overrides.keys
+
+        overridden.firstOrNull { it in builtInServices }?.let { builtIn ->
+            throw KontainerInconsistent(
+                "${builtIn.getName()} is managed by the kontainer itself and cannot be overridden"
+            )
         }
 
-        val dynamicServices = DynamicOverrides.Builder().apply(dynamics).build()
+        overridden.firstOrNull { isValueType(it) }?.let { valueType ->
+            throw KontainerInconsistent(
+                "${valueType.getName()} is a value type and cannot be overridden; " +
+                        "name the service class instead: with(Service::class) { ... }"
+            )
+        }
 
-        val unexpectedDynamics = dynamicsChecker.getUnexpected(dynamicServices.overrides.keys)
+        val unexpectedDynamics = dynamicsChecker.getUnexpected(overridden)
 
         if (unexpectedDynamics.isNotEmpty()) {
             throw KontainerInconsistent(
@@ -180,7 +246,23 @@ class KontainerBlueprint internal constructor(
             )
         }
 
-        return instantiate(dynamicServices)
+        // Every override resolves to one service now, so an ambiguous one is refused before any override lambda runs
+        overridden.forEach { overriddenServiceOf(it) }
+
+        return instantiate(dynamics)
+    }
+
+    /**
+     * The service an override given as [cls] replaces: [cls] itself when it is an overridable dynamic, otherwise the
+     * one overridable dynamic it is assignable to.
+     *
+     * Exact membership uses class equality, as the definitions do; only the fallback asks Java assignability.
+     *
+     * @throws ServiceAmbiguous when [cls] is not overridable itself and fits several
+     */
+    internal fun overriddenServiceOf(cls: KClass<*>): KClass<*> = when (cls) {
+        in overridableClasses -> cls
+        else -> dynamicsBaseTypeLookUp.getDistinctFor(cls)
     }
 
     /**
@@ -201,9 +283,9 @@ class KontainerBlueprint internal constructor(
     }
 
     /**
-     * Creates a new kontainer
+     * Creates a new kontainer; [track] hands it to the [tracker]
      */
-    internal fun instantiate(dynamics: DynamicOverrides): Kontainer {
+    internal fun instantiate(dynamics: DynamicOverrides, track: Boolean = true): Kontainer {
 
         val factory = ServiceProviderFactory(
             blueprint = this,
@@ -212,8 +294,7 @@ class KontainerBlueprint internal constructor(
         )
 
         return Kontainer(factory).apply {
-            // Track the Kontainer
-            tracker.track(this)
+            if (track) tracker.track(this)
         }
     }
 

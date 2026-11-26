@@ -53,6 +53,9 @@ class ThreeJsFrame(
  * once by hand after resizing a paused scene. The frames come from [clock], by default the browser's animation frames,
  * shared with every other user of [FrameClock.animationFrames]. A new clock restarts the loop: keep a clock of your own
  * in a field, as one created inside `render` is a new one on every redraw.
+ *
+ * On unmount the renderer is disposed and gives up its WebGL context, so a page that is entered again and again does
+ * not pile up contexts. Free your own geometries, materials and textures in your `onUnmount`.
  */
 @Suppress("FunctionName")
 fun Tag.ThreeJs(
@@ -163,13 +166,14 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
             this.antialias = props.antialias
             this.alpha = props.alpha
         })
+        // Owned at once, so a throw below still leaves it to stop(), and no second renderer is built on this canvas
+        renderer = newRenderer
         newRenderer.setPixelRatio(window.devicePixelRatio)
         newRenderer.setSize(resolvedWidth, resolvedHeight, updateStyle = false)
         props.clearColor?.let { newRenderer.setClearColor(it, alpha = if (props.alpha) 0.0 else 1.0) }
 
         scene = newScene
         camera = newCamera
-        renderer = newRenderer
 
         props.onReady(ThreeJsContext(newScene, newCamera, newRenderer))
 
@@ -206,9 +210,21 @@ class ThreeJsComponent(ctx: Ctx<Props>) : Component<ThreeJsComponent.Props>(ctx)
         unsubscribePaused = null
         loop?.stop()
         loop = null
-        renderer?.dispose()
+        // dispose() keeps the WebGL context alive until the canvas is collected, and a browser allows only a few live
+        // ones: a page mounted again and again would lose its oldest, or its current, context (ULTRA-00348). After
+        // dispose() three.js listens no more, so the loss fires no handler. A throwing dispose() still gives up the
+        // context and clears the fields; its error then goes on to the caller.
+        val disposed = renderer
         renderer = null
         scene = null
         camera = null
+
+        disposed?.let {
+            try {
+                it.dispose()
+            } finally {
+                it.forceContextLoss()
+            }
+        }
     }
 }

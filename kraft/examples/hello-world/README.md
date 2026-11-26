@@ -6,13 +6,11 @@ Basic starter example for the Kraft SPA framework.
 
 - Counter component with state management
 - Ticker (periodic updates)
-- localStorage persistence
-- Data loading
 
 ## How to run
 
 ```bash
-./gradlew -t --parallel :examples:hello-world:run
+./gradlew -t :kraft:examples:hello-world:jsBrowserDevelopmentRun
 ```
 
 The development server will start and the app will be available in your browser.

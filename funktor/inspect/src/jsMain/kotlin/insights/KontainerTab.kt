@@ -30,20 +30,25 @@ internal fun Tag.KontainerTab(data: JsonElement, ui: InsightsUi) =
  * The `kontainer` slice: which services this request's kontainer instantiated, and the service graph (ULTRA-00198,
  * as the Vue `KontainerTab`).
  *
- * A `full` record (before 2026-10-19) carries every definition; a `slim` one only the instantiated services and
- * the fingerprint of the graph it was written against. Its definitions come from the kontainer graph endpoint,
- * joined on `cls`, fetched on the first graph click and cached by fingerprint. A mismatch is said, not hidden.
+ * A record carries only the services with creations, each with a count and the first and last creation time, and
+ * the fingerprint of the graph it was written against. The definitions come from the kontainer graph endpoint,
+ * joined on `cls`, fetched on the first graph click and cached by fingerprint. A mismatch is said, not hidden. A
+ * record written before 2026-10-19 is not read and shows as the raw tree.
  *
  * A click on a column header sorts by it, again reverses. Without the graph the tab still renders.
  */
 internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx) {
+
+    private companion object {
+        const val HANDED_IN = "handed in at create"
+    }
 
     data class Props(val data: JsonElement, val ui: InsightsUi)
 
     private enum class Column(val label: String) {
         Service("Service"),
         Type("Type"),
-        Instances("Instances"),
+        Created("Created"),
         Injects("Injects"),
         Definition("Definition & overwrites"),
     }
@@ -65,7 +70,7 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
     private fun toggle(slice: KontainerSlice, which: NetworkKind) {
         shown = if (shown == which) null else which
 
-        if (shown == null || slice.shape == KontainerShape.Full || graph != null || loading) return
+        if (shown == null || graph != null || loading) return
 
         loading = true
         graphProblem = null
@@ -93,65 +98,40 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
         factList(summary(slice))
         note(
             "A Singleton is process state, shared by every request: created at boot or by whichever request first " +
-                "needed it. Every other type belongs to this request's kontainer. The creation time only says " +
-                "whether this request was the one that created the instance."
+                "needed it. Every other type belongs to this request's kontainer. The creation times only say " +
+                "whether this request was the one that created the instances. Prototypes a Singleton creates are " +
+                "counted outside every request and show in no record."
         )
         ui.hidden.divider()
 
         graphs(slice)
         ui.hidden.divider()
 
-        if (slice.shape == KontainerShape.Slim && graph == null) {
+        if (graph == null) {
             note("Injects and definitions are not part of this record. Show a graph to load them from the server; the table fills in too.")
         }
 
         table(sorted(services(slice)))
 
-        rawSliceText(
-            rawText,
-            if (slice.shape == KontainerShape.Full) "Raw slice -- large, every definition inline" else "Raw slice",
-        )
+        rawSliceText(rawText, "Raw slice")
     }
 
     private fun summary(slice: KontainerSlice): List<Fact> {
-        val instantiated = slice.services.filter { it.instances.isNotEmpty() }
+        val instantiated = slice.services.filter { it.hasCreations }
         val shared = instantiated.count { it.isProcessWide }
         val own = "${instantiated.size} instantiated: ${instantiated.size - shared} this request's own, " +
             "$shared process-wide singletons"
 
-        return listOfNotNull(
-            Fact(
-                "Record shape",
-                when (slice.shape) {
-                    KontainerShape.Full -> "full -- every definition inline (written before 2026-10-19)"
-                    KontainerShape.Slim -> "slim -- instantiated services only; definitions come from the kontainer graph"
-                },
-            ),
-            // The old bar's young / old / total; never measured, funktor never switches kontainer tracking on
-            if (slice.shape == KontainerShape.Full) {
-                Fact("Kontainers (young / old / total)", "${counts(slice)} -- not measured, tracking is never enabled")
-            } else {
-                null
-            },
-            Fact("Services", if (slice.shape == KontainerShape.Full) "${slice.services.size} defined, $own" else own),
-            if (slice.shape == KontainerShape.Slim) {
-                Fact("Graph fingerprint", slice.graphFingerprint ?: "none -- the server could not build the graph")
-            } else {
-                null
-            },
+        return listOf(
+            Fact("Services", own),
+            Fact("Graph fingerprint", slice.graphFingerprint ?: "none -- the server could not build the graph"),
         )
     }
 
-    private fun counts(slice: KontainerSlice): String {
-        val young = if (slice.numTotal == null || slice.numOld == null) "?" else (slice.numTotal - slice.numOld).formatNumber()
-
-        return "$young / ${slice.numOld?.formatNumber() ?: "?"} / ${slice.numTotal?.formatNumber() ?: "?"}"
-    }
-
-    /** A `slim` record's services joined with their definitions once the graph is in. */
+    /** The record's services, joined with their definitions once the graph is in. */
     private fun services(slice: KontainerSlice): List<KontainerService> {
         val loaded = graph
-        return if (slice.shape == KontainerShape.Full || loaded == null) slice.services else slice.joinGraph(loaded, false)
+        return if (loaded == null) slice.services else slice.joinGraph(loaded, false)
     }
 
     private fun FlowContent.graphs(slice: KontainerSlice) {
@@ -197,15 +177,7 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
     private fun network(slice: KontainerSlice, which: NetworkKind, loaded: KontainerGraphData?): NetworkGraph? {
         drawn?.let { if (it.kind == which && it.graph === loaded) return it.network }
 
-        val network = when {
-            slice.shape == KontainerShape.Full -> kontainerNetwork(
-                if (which == NetworkKind.Instances) slice.services.filter { it.instances.isNotEmpty() } else slice.services,
-                which,
-            )
-
-            loaded != null -> kontainerNetwork(slice.joinGraph(loaded, which == NetworkKind.Full), which)
-            else -> null
-        }
+        val network = loaded?.let { kontainerNetwork(slice.joinGraph(it, which == NetworkKind.Full), which) }
 
         drawn = network?.let { Drawn(which, loaded, it) }
 
@@ -215,11 +187,11 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
     private fun comparator(column: Column): Comparator<KontainerService> = when (column) {
         Column.Service -> compareBy(localeOrder) { it.cls ?: "" }
         Column.Type -> compareBy(localeOrder) { it.type ?: "" }
-        Column.Instances -> compareBy { it.instances.size }
+        Column.Created -> compareBy { it.count }
         Column.Injects -> compareBy { it.definition?.injects?.size ?: 0 }
         // What the cell shows, not the hidden FQN: sorting by package would look unsorted
         Column.Definition -> compareBy(localeOrder) {
-            it.definition?.let { def -> "${def.injectionType ?: "?"} - ${shortName(def.creates)}" } ?: ""
+            it.definition?.let { def -> "${def.injectionType ?: "?"} - ${createsText(def)}" } ?: ""
         }
     }
 
@@ -261,6 +233,23 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
         }
     }
 
+    /** What a definition creates, by its simple name; an instance handed in at create names no class. */
+    private fun createsText(def: KontainerDefinition): String = if (def.handedIn) HANDED_IN else shortName(def.creates)
+
+    /** The count, then the creation time, or the first and the last one for several creations. */
+    private fun FlowContent.created(service: KontainerService) {
+        fun at(millis: Double?) = millis?.let { Date(it).toLocaleString() } ?: "n/a"
+
+        div { +service.count.formatNumber() }
+
+        if (service.count == 1.0) {
+            div { muted(at(service.firstCreatedAtMillis)) }
+        } else {
+            div { muted("first ${at(service.firstCreatedAtMillis)}") }
+            div { muted("last ${at(service.lastCreatedAtMillis)}") }
+        }
+    }
+
     private fun TBODY.row(service: KontainerService) {
         tr {
             key = service.cls ?: ""
@@ -268,22 +257,12 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
             td(classes = "insights-mono insights-path") { +(service.cls ?: "n/a") }
             td {
                 ui.basic.label { +(service.type ?: "n/a") }
-                if (service.instances.isNotEmpty()) {
+                if (service.hasCreations) {
                     div { muted(if (service.isProcessWide) "process-wide" else "this request's") }
                 }
             }
             td(classes = "insights-mono") {
-                if (service.instances.isEmpty()) muted("-")
-                service.instances.forEach { instance ->
-                    div {
-                        span {
-                            title = instance.cls ?: ""
-                            +shortName(instance.cls)
-                        }
-                        +" "
-                        muted(instance.createdAtMillis?.let { Date(it).toLocaleString() } ?: "n/a")
-                    }
-                }
+                if (service.hasCreations) created(service) else muted("-")
             }
             td(classes = "insights-mono") {
                 val injects = service.definition?.injects ?: emptyList()
@@ -309,7 +288,7 @@ internal class KontainerTab(ctx: Ctx<Props>) : Component<KontainerTab.Props>(ctx
                         +"${def.injectionType ?: "?"} - "
                         span {
                             title = def.creates ?: ""
-                            +shortName(def.creates)
+                            +createsText(def)
                         }
                         def.codeLocation?.let { location -> div { muted(location) } }
                     }

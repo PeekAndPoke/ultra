@@ -46,13 +46,17 @@ configure<I18nExtension> {
     // sourceSet.set("main")       // for a plain kotlin("jvm") module; default is commonMain
 }`} lang="kotlin" theme="vitesse-dark"/>
 
+    <p>The plugin currently lives in Ultra's own <code>buildSrc</code> and is not published, so only modules
+        inside the Ultra build can apply it. Elsewhere, use the runtime directly as in Getting Started.</p>
+
     <p>Generated code lands in <code>build/generated/i18n/&lt;sourceSet&gt;/kotlin</code> and is registered
         on the source set through the task provider, so every compilation depends on generation
         automatically. There is no manual wiring and no committed generated code.</p>
 
     <h2>What gets generated</h2>
 
-    <p>Two things: a baked catalog object holding every locale's strings, and typed accessors hanging off
+    <p>Two things: a baked catalog object holding every locale's strings, named <code>&lt;moduleName&gt;Catalog</code>
+        (here <code>AppCatalog</code>), and typed accessors hanging off
         the open translation surface.</p>
 
     <Code code={`// Generated — accessors named after your namespaces
@@ -64,13 +68,13 @@ i18n.translate.checkout.items(count = 3)
 i18n.translate.checkout.nested.deep(value = "x")`} lang="kotlin" theme="vitesse-dark"/>
 
     <p><strong>The fallback catalog alone defines the API.</strong> Other languages may omit keys &mdash;
-        they fall through the chain &mdash; but they can never introduce one the fallback does not have. That
+        they fall through the chain &mdash; but a key the fallback does not have gets no accessor. That
         is what keeps the generated surface stable and makes a removed key a compile error at every call
         site.</p>
 
     <h2>The checker</h2>
 
-    <p><code>checkI18n</code> is wired into <code>check</code>, so it runs with your tests. It compares every
+    <p><code>checkI18n</code> is wired into <code>check</code>, so it runs with <code>check</code> and <code>build</code>. It compares every
         non-fallback catalog against the fallback:</p>
 
     <div class="not-prose my-8">
@@ -95,7 +99,7 @@ i18n.translate.checkout.nested.deep(value = "x")`} lang="kotlin" theme="vitesse-
                 <td class="py-2 pr-4">Warning &mdash; error under <code>-Pi18n.strict</code></td>
             </tr>
             <tr class="border-b border-white/5">
-                <td class="py-2 pr-4">An optional language is incomplete</td>
+                <td class="py-2 pr-4">An optional base language is incomplete (a regional catalog may omit keys)</td>
                 <td class="py-2 pr-4">Warning &mdash; error under <code>-Pi18n.strict</code></td>
             </tr>
             <tr class="border-b border-white/5">
@@ -122,8 +126,8 @@ i18n.translate.checkout.nested.deep(value = "x")`} lang="kotlin" theme="vitesse-
         <strong>later installs win</strong> on shared keys:</p>
 
     <Code code={`val i18n = I18n(locale, fallback) {
-    install(KraftFormsI18nCatalog)   // framework first
-    install(AppI18nCatalog)          // app last — overrides on conflict
+    install(KraftFormsCatalog)   // framework first
+    install(AppCatalog)          // app last — overrides on conflict
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>So an app can restate a framework string without forking the framework, and a library can ship

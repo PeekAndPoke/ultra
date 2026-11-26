@@ -16,7 +16,7 @@ import io.peekandpoke.kraft.KraftApp
  * ```
  *
  * Non-lazy addons start loading immediately (via dynamic JS import).
- * Lazy addons defer loading until a component first subscribes to them.
+ * Lazy addons defer loading until they are first read or subscribed to.
  */
 fun KraftApp.Builder.addons(block: AddonRegistryBuilder.() -> Unit) = apply {
     val registry = AddonRegistryBuilder().apply(block).build()

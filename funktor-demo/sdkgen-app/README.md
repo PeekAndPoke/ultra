@@ -22,17 +22,18 @@ module resolution and type checker.
 cd funktor-demo/sdkgen-app
 pnpm install
 pnpm run typecheck     # vue-tsc over the app AND the generated SDK
-pnpm run dev           # http://localhost:36591
+pnpm run dev           # http://localhost:36593
 ```
 
 Then start the demo server (`./gradlew :funktor-demo:server:run`) and open
-<http://localhost:36591>.
+<http://localhost:36593>.
 
 **The API lives behind a host matcher.** `server.kt` mounts it under `host("api.*".toRegex())`, so it
 is NOT served on plain `localhost:36587` — a request there 404s. The app uses
 `http://api.funktor-demo.localhost:36587`, the same base the Kraft frontends use
-(`AdminAppConfig.apiBaseUrl`), and the server's CORS list allows this app's origin on **36591** —
-next in the series after adminapp 36588, www 36589, ops 36590.
+(`AdminAppConfig.apiBaseUrl`), and the server's CORS list allows this app's origin on **36593**,
+next in the series after adminapp 36588, www 36589, ops 36590, b2b 36591, b2b2c 36592. The port is
+strict: if it is taken, Vite fails instead of moving to a port the CORS list does not allow.
 
 `src/funktorsdk/` is **generated and git-ignored**. The generator owns that directory outright —
 every run replaces it wholesale, so nothing hand-written may live there.

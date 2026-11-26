@@ -60,12 +60,12 @@ class BucketedDistributionEdgeCasesSpec : StringSpec() {
             }
         }
 
-        "createExponential - tailCut out of range throws" {
+        "createExponential - non-finite lambda throws" {
             shouldThrow<IllegalArgumentException> {
-                BucketedDistribution.createExponential(tailCut = 0.5) // too large
+                BucketedDistribution.createExponential(lambda = Double.NaN)
             }
             shouldThrow<IllegalArgumentException> {
-                BucketedDistribution.createExponential(tailCut = 1e-15) // too small
+                BucketedDistribution.createExponential(lambda = Double.POSITIVE_INFINITY)
             }
         }
 

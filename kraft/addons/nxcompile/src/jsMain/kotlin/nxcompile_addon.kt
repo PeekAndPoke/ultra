@@ -10,7 +10,7 @@ import kotlin.js.Promise
 /**
  * Facade for the lazily-loaded @nx-js/compiler-util addon.
  *
- * Provides type-safe access to sandboxed JavaScript code evaluation.
+ * Provides type-safe access to JavaScript code evaluation against a context object (not a security sandbox).
  *
  * See: https://blog.risingstack.com/writing-a-javascript-framework-sandboxed-code-evaluation/
  */

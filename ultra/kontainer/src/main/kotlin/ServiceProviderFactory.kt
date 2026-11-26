@@ -1,71 +1,74 @@
 package io.peekandpoke.ultra.kontainer
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Function as JavaFunction
 import kotlin.reflect.KClass
 
 /**
  * Creates and caches [ServiceProvider] instances for a [Kontainer].
  *
- * Manages thread-safe access to providers and applies dynamic overrides.
+ * Creates each provider at most once, without a lock shared by all callers, and applies dynamic overrides.
  */
-class ServiceProviderFactory(
+class ServiceProviderFactory internal constructor(
     val blueprint: KontainerBlueprint,
-    val dynamics: DynamicOverrides,
+    internal val dynamics: DynamicOverrides,
     providerProviders: Map<KClass<*>, ServiceProvider.Provider>,
 ) {
-    private val lock: Any = Any()
-
+    /** The blueprint's providers, shared by all its kontainers and never changed */
     private val providerProviders: Map<KClass<*>, ServiceProvider.Provider> = providerProviders
-        .plus(
-            dynamics.overrides.map { (cls, provider) ->
-                val baseType = blueprint.dynamicsBaseTypeLookUp.getDistinctFor(cls)
 
-                val instance = provider()
+    /** The overrides by the service they replace, looked up before [providerProviders]; a later one wins */
+    private val overrideProviders: Map<KClass<*>, ServiceProvider.Provider> = when {
+        dynamics.overrides.isEmpty() -> emptyMap()
 
-                baseType to ServiceProvider.Provider.forOverride(
-                    definition = ServiceDefinition(
-                        serviceCls = cls,
-                        type = ServiceType.Singleton,
-                        kind = ServiceKind.Dynamic,
-                        producer = ServiceProducer.forInstance(instance),
-                        overwrites = blueprint.definitions[baseType]
-                    ),
-                    instance = instance,
-                )
-            }
-        )
+        else -> dynamics.overrides.entries.associate { (cls, provider) ->
+            val baseType = blueprint.overriddenServiceOf(cls)
 
-    private val providers: MutableMap<KClass<*>, ServiceProvider> = mutableMapOf()
+            // The override runs here, at create, once per kontainer; when it throws, no kontainer results
+            val instance = provider()
 
-    /** Creates a new [Kontainer] instance, merging in additional [overrides] */
-    fun newKontainer(overrides: DynamicOverrides): Kontainer {
-        return blueprint.instantiate(
+            baseType to ServiceProvider.Provider.forOverride(
+                definition = ServiceDefinition(
+                    serviceCls = cls,
+                    type = ServiceType.Singleton,
+                    kind = ServiceKind.Dynamic,
+                    producer = ServiceProducer.forInstance(instance),
+                    overwrites = blueprint.definitions[baseType],
+                    // Names the override lambda's class: no stack walk on every create
+                    codeLocation = ServiceDefinition.CodeLocation.of(provider.javaClass),
+                ),
+                instance = instance,
+            )
+        }
+    }
+
+    /** Presized for a typical request; the table itself is allocated on the first provider */
+    private val providers: ConcurrentHashMap<KClass<*>, ServiceProvider> = ConcurrentHashMap(32)
+
+    /** Creates a new [Kontainer] for [Kontainer.clone], merging in [overrides]; checked like [KontainerBlueprint.create] */
+    internal fun newKontainer(overrides: DynamicOverrides): Kontainer {
+        return blueprint.createChecked(
             dynamics.merge(overrides)
         )
     }
 
     /**
-     * Get the [ServiceProducer] for the given [cls].
+     * Get the [ServiceProvider] for the given [cls], creating it on first use.
      */
-    fun getProvider(cls: KClass<*>): ServiceProvider = synchronized(lock) {
-        providers.getOrPut(cls) {
-            providerProviders.getValue(cls).provide()
-        }
+    fun getProvider(cls: KClass<*>): ServiceProvider = providers[cls] ?: providers.computeIfAbsent(cls, createProvider)
+
+    /** Creates the provider for a class on its first use; one instance, so a get allocates no lambda */
+    private val createProvider = JavaFunction<KClass<*>, ServiceProvider> { cls ->
+        (overrideProviders[cls] ?: providerProviders.getValue(cls)).provide()
     }
 
     /**
      * Checks if the [ServiceProvider] for the given [cls] is created.
      */
-    fun isProviderCreated(cls: KClass<*>): Boolean = synchronized(lock) {
-        providers.contains(cls)
-    }
+    fun isProviderCreated(cls: KClass<*>): Boolean = providers.containsKey(cls)
 
     /** Gets all providers, creating any that haven't been instantiated yet */
-    fun getAllProviders(): Map<KClass<*>, ServiceProvider> = synchronized(lock) {
-
-        providerProviders.mapValues { (cls, provider) ->
-            providers.getOrPut(cls) {
-                provider.provide()
-            }
-        }
+    fun getAllProviders(): Map<KClass<*>, ServiceProvider> = providerProviders.mapValues { (cls, provider) ->
+        providers.computeIfAbsent(cls) { (overrideProviders[cls] ?: provider).provide() }
     }
 }

@@ -13,6 +13,7 @@ import io.peekandpoke.kraft.vdom.VDom
 import io.peekandpoke.ultra.html.css
 import kotlinx.browser.window
 import kotlinx.coroutines.await
+import kotlinx.coroutines.flow.onEach
 import kotlinx.css.Overflow
 import kotlinx.css.TextAlign
 import kotlinx.css.height
@@ -26,7 +27,12 @@ import kotlinx.html.div
 import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
 
-/** Renders a single page of a PDF at a time with page navigation. */
+/**
+ * Renders a single page of a PDF at a time with page navigation.
+ *
+ * The viewer owns the document it loads: on unmount it destroys it, which ends its pdf.js worker. A `State.doc` handed
+ * to `onChange` cannot be used after that.
+ */
 @Suppress("FunctionName")
 fun Tag.PagedPdfViewer(
     src: PdfSource,
@@ -71,7 +77,10 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
 
     private val jobQueue = SimpleAsyncQueue()
 
-    private val pdfLoader = dataLoader { props.src.load() }
+    // Before the loader: it hands every document it loads to the owner, also one arriving after unmount
+    private val documents = PdfDocumentOwner()
+
+    private val pdfLoader = dataLoader { props.src.load().onEach { documents.offer(it) } }
 
     private var state: State by value(State()) { props.onChange(it) }
 
@@ -89,10 +98,15 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
         pdfLoader.state {
             val doc = (it as? DataLoader.State.Loaded<PdfjsLib.PDFDocumentProxy>)?.data
 
-            if (doc != null && state.doc == null) {
+            if (doc != null && documents.claim(doc)) {
                 jobQueue.add {
-                    calculateInitialScale(doc)
-                    modifyState { copy(doc = doc) }
+                    try {
+                        calculateInitialScale(doc)
+                        modifyState { copy(doc = doc) }
+                    } catch (e: Throwable) {
+                        // An unmount cut it off: that is no news
+                        if (!documents.isReleased) throw e
+                    }
                 }
             }
         }
@@ -104,6 +118,12 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
                     canvas.width = it.offsetWidth
                     canvas.height = it.offsetHeight
                 }
+            }
+
+            // The document holds a pdf.js worker until destroyed: one per visit would pile up (ULTRA-00349)
+            onUnmount {
+                jobQueue.clear()
+                documents.release()
             }
         }
     }
@@ -165,6 +185,8 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
     }
 
     private suspend fun calculateInitialScale(doc: PdfjsLib.PDFDocumentProxy) {
+        if (documents.isReleased) return
+
         val page = doc.getPage(state.page).await()
 
         val (pageLeft, pageTop, pageRight, pageBottom) = page.view
@@ -183,8 +205,10 @@ class PagedPdfViewer(ctx: Ctx<Props>) : Component<PagedPdfViewer.Props>(ctx) {
     }
 
     private suspend fun renderPage() {
+        if (documents.isReleased) return
+
         state.doc?.let { doc ->
-            getCanvas().visitGuarded { canvas ->
+            getCanvas().visitGuarded(quiet = { documents.isReleased }) { canvas ->
                 val context = canvas.getContext("2d") as CanvasRenderingContext2D
 
                 val page = doc.getPage(state.page).await()

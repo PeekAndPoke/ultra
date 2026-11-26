@@ -57,7 +57,7 @@ external class Application {
     /** Like [resize], on the next animation frame; several calls in one frame resize once. */
     fun queueResize()
 
-    /** Destroys the application and frees resources. */
+    /** Destroys the application and frees resources, its WebGL context included (pixi's context system loses it). */
     fun destroy(rendererDestroy: Boolean = definedExternally, options: dynamic = definedExternally)
 }
 

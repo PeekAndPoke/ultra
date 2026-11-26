@@ -7,7 +7,6 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldStartWith
 import io.peekandpoke.ultra.common.Lookup
 import io.peekandpoke.ultra.kontainer.InjectionContext
@@ -144,19 +143,18 @@ class ToolsCharacterizationSpec : StringSpec() {
             }
         }
 
-        "Debug info: the instances each provider created in this kontainer" {
+        "Debug info: how many instances each provider created in this kontainer" {
 
             val info = createAndUse().tools.getDebugInfo()
 
             assertSoftly {
-                info.service(ToolsProto::class).instances shouldHaveSize 2
-                info.service(ToolsDyn::class).instances shouldHaveSize 1
-                info.service(ToolsPromoted::class).instances shouldHaveSize 1
-                info.service(ToolsForms::class).instances shouldHaveSize 0
+                info.service(ToolsProto::class).created.count shouldBe 2L
+                info.service(ToolsDyn::class).created.count shouldBe 1L
+                info.service(ToolsPromoted::class).created.count shouldBe 1L
+                info.service(ToolsForms::class).created shouldBe DebugInfo.CreatedDebugInfo(0, null, null)
 
-                withClue("an override reports its instance, created at create") {
-                    info.service(ToolsOverridden::class).instances.map { it.cls.fqn } shouldBe
-                            listOf(ToolsOverride::class.java.name)
+                withClue("an override reports one creation, at create") {
+                    info.service(ToolsOverridden::class).created.count shouldBe 1L
                 }
             }
         }
@@ -194,7 +192,7 @@ class ToolsCharacterizationSpec : StringSpec() {
 
             assertSoftly {
                 dump shouldStartWith "Kontainer dump:\n\n"
-                lines[2].split("|").map { it.trim() } shouldBe listOf("Service ID", "Type", "Kind", "Instances")
+                lines[2].split("|").map { it.trim() } shouldBe listOf("Service ID", "Type", "Kind", "Created")
 
                 rowOf(ToolsSingle::class).columns() shouldBe listOf("Singleton", "Static")
                 rowOf(ToolsPromoted::class).columns() shouldBe listOf("Singleton", "SemiDynamic (ToolsDyn)")
@@ -205,7 +203,8 @@ class ToolsCharacterizationSpec : StringSpec() {
                 rowOf(InjectionContext::class).columns() shouldBe listOf("Singleton", "Dynamic")
                 rowOf(KontainerBlueprint::class).columns() shouldBe listOf("Singleton", "Static")
 
-                rowOf(ToolsOverridden::class).column(3) shouldEndWith ": " + ToolsOverride::class.getName()
+                rowOf(ToolsOverridden::class).column(3) shouldStartWith "1, first "
+                rowOf(ToolsForms::class).column(3) shouldBe ""
 
                 lines.drop(3).filter { it.contains(" | ") } shouldHaveSize 9
             }

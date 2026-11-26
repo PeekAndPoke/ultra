@@ -64,8 +64,11 @@ Across the waves:
 - 2026-11-13: plan stored; triage started (nine agents); ULTRA-00230 started on master.
 - 2026-11-13, wave 1:
   - **Track A (datetime), batch 1 MERGED** (`87ad3489`): ULTRA-00215, ULTRA-00217, ULTRA-00317 DONE, the `recurse`
-    item of ULTRA-00143 done. Gate: round 2 CLEAN, delta round 3 CLEAN. Batch 2 (ULTRA-00211 with ULTRA-00210,
-    shipped together) is next; `completeDay` waits for the 24:00 decision.
+    item of ULTRA-00143 done. **Batch 2 MERGED** (`14376f44`, 2026-11-14): ULTRA-00211 and ULTRA-00210 DONE. Gate:
+    round 1 CLEAN, then four delta rounds on the maintainer's decisions of the day (equality by instant and zone,
+    `isSameInstant`, the `compareTo` tie-break, the Apia loop, converters at millisecond precision); delta 3 found a
+    MAJOR (range predicates depended on the zones), delta 4 CLEAN on the top level. Docs: ULTRA-00339. Next on the
+    track: the 24:00 value of `MpLocalTime` and the `MpLocalDateRange` cap, plan to the maintainer first.
   - **Track B (cache and log), ULTRA-00159: cache batch MERGED** (`8545866a`, 2026-11-14). Gate: 4 rounds, round 4
     CLEAN on the top level. Hot-key expiry fixed, the real defects fixed, TTLs on a monotonic clock, `maxEntries` and
     `maxMemoryUsage` documented as soft bounds (maintainer). **Not green on master under load:** 3 of 200 JVM tests
@@ -91,6 +94,29 @@ Across the waves:
   (`Log` as `dynamicPrototype` changed sharing on redefinition; listing order), round 2 CLEAN. `Log` stays a plain
   prototype. Eleven behaviours of today's Kontainer pinned and ticketed: ULTRA-00327 to ULTRA-00337. Docs:
   ULTRA-00338.
+- 2026-11-14, **track D (kontainer), batch K1: MERGED** (`f575dd29`). ULTRA-00330, 00331, 00332, 00333, 00336 and
+  00337: the redefinition rule, `extend` applying it, `clone` checking like `create`, lazy overrides, built-ins
+  neither registered nor overridden, the checker keying its cache with a copy. Strict gate round 1 CLEAN, delta
+  round 2 CLEAN. On master: kontainer 546, log 74, vault 287, insights 118, cluster 162, funktor:all 289, all green.
+  Next: K2 (ULTRA-00327, 00328, 00334, 00335), then K3 (ULTRA-00329).
+- 2026-11-14, **track D (kontainer), batch K2: MERGED** (`8778c4a9`). ULTRA-00327, 00328, 00334 and 00335: the
+  remembered validation result, the cycle check and dependency graph reading the announced injections, ambiguous
+  injections reported as ambiguous, an ambiguous nullable injection as an error. Strict gate round 1 CLEAN. No
+  blueprint in the repo changed outcome. Next: K3 (ULTRA-00329), after the plan is re-confirmed.
+- 2026-11-14, **track D (kontainer), ULTRA-00344: MERGED** (`eb25d8d0`). The maintainer took the lazy overrides of
+  ULTRA-00333 back: overrides run eagerly at `create` again, once per kontainer; laziness is built in place by the
+  caller. Every refusal comes before any lambda. Gate round 1 CLEAN, delta round 2 CLEAN; fourteen suites green on
+  master (kontainer 565).
+- 2026-11-14, **track D (kontainer), ULTRA-00345 and ULTRA-00346: MERGED** (`f750497f`). An override naming a
+  registered dynamic exactly replaces that service; the `ServiceProviderFactory` constructor is internal. Gate round
+  1 CLEAN. Next on the track: K3 (ULTRA-00329), after its plan is re-confirmed.
+- 2026-11-15, **track A (datetime), ULTRA-00343 batch A: MERGED** (`ebd62a3d`). Time slots are finite; `toRange`
+  of a slot is always two-ended. Gate round 1 CLEAN, delta round 2 CLEAN. Next: batch B (queries on `Partial`),
+  batch C (Genesis and Doomsday removed, the factories return `Partial`), then ULTRA-00347 (dates BC as text).
+- 2026-11-14, **track A (datetime), ULTRA-00341 batches 3b-1 and 3b-2: MERGED** (`e7c882a9`), with master's sentinel
+  values restored. `ComputedList`, lazy `asListOfDates()`, `numDaysInMonth` from the calendar; `MpLocalTimeSlot` as
+  a start plus a duration. ULTRA-00341 is done. Next: ULTRA-00343 as decided by the maintainer: Genesis and
+  Doomsday dropped, open ranges are `Partial` with queries, slots are finite.
 
 ## History
 

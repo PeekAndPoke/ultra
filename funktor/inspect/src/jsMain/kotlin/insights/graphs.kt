@@ -306,7 +306,6 @@ private fun InsightsKontainerGraph.toGraphData() = KontainerGraphData(
             cls = service.cls,
             type = service.type,
             definition = service.definition.toDefinition(),
-            instances = emptyList(),
         )
     },
 )

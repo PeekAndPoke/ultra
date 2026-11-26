@@ -25,7 +25,8 @@ class DynamicsChecker internal constructor(val dynamics: Set<KClass<*>>) {
      */
     fun getUnexpected(given: Set<KClass<*>>): Set<KClass<*>> {
 
-        return unexpectedLookUp.getOrPut(given) {
+        // Stored under a copy: [given] may be a live view of a request's overrides, which would keep them alive
+        return unexpectedLookUp[given] ?: unexpectedLookUp.getOrPut(given.toSet()) {
             given.filter { givenClass ->
                 dynamics.none { dynamic -> dynamic.java.isAssignableFrom(givenClass.java) }
             }.toSet()

@@ -4,16 +4,22 @@ import io.peekandpoke.ultra.common.ComparableTo
 import io.peekandpoke.ultra.common.slumber.Slumber
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
+import kotlin.math.abs
 import kotlin.time.Duration
 
+/**
+ * An instant seen in a [timezone].
+ *
+ * The instant is the truth (ULTRA-00211): [datetime] and every local field are derived from it, so both sides of a
+ * DST overlap are distinct values. Build one with [MpInstant.atZone], or from a local time with [of].
+ */
 @Suppress("Detekt:TooManyFunctions")
 @Serializable(with = MpZonedDateTimeSerializer::class)
 @Slumber.As(MpDateTimeRawData::class)
-data class MpZonedDateTime(
-    val datetime: MpLocalDateTime,
+class MpZonedDateTime private constructor(
+    private val instant: MpInstant,
     val timezone: MpTimezone,
 ) : MpAbsoluteDateTime, ComparableTo<MpZonedDateTime> {
 
@@ -26,10 +32,18 @@ data class MpZonedDateTime(
         }
 
         /**
-         * Creates from a local [datetime] and a [timezone]
+         * Creates from a local [datetime] and a [timezone].
+         *
+         * In a DST overlap the earlier offset wins; in a gap the time moves forward by the length of the gap, and
+         * [MpZonedDateTime.datetime] reads the resolved wall time.
          */
         fun of(datetime: MpLocalDateTime, timezone: MpTimezone): MpZonedDateTime {
-            return MpZonedDateTime(datetime = datetime, timezone = timezone)
+            return MpZonedDateTime(instant = datetime.toInstant(timezone), timezone = timezone)
+        }
+
+        /** The [instant] in the [timezone], unchanged. */
+        internal fun of(instant: MpInstant, timezone: MpTimezone): MpZonedDateTime {
+            return MpZonedDateTime(instant = instant, timezone = timezone)
         }
 
         /**
@@ -148,7 +162,20 @@ data class MpZonedDateTime(
         val Doomsday: MpZonedDateTime = MpInstant.Doomsday.atZone(MpTimezone.UTC)
     }
 
-    private val instant: MpInstant = datetime.toInstant(timezone)
+    /** The wall-clock time of the instant in the [timezone]. */
+    val datetime: MpLocalDateTime = MpLocalDateTime(TimezoneEngine.toLocalDateTime(timezone, instant.value))
+
+    /**
+     * Equal when the instant and the [timezone] are equal (ULTRA-00211): the two sides of a DST overlap differ, a time
+     * in a gap equals the time it resolves to. The one place that decides equality, together with [hashCode].
+     */
+    override fun equals(other: Any?): Boolean {
+        return other is MpZonedDateTime && instant == other.instant && timezone == other.timezone
+    }
+
+    override fun hashCode(): Int {
+        return 31 * instant.hashCode() + timezone.hashCode()
+    }
 
     /** The year */
     val year: Int get() = datetime.year
@@ -157,7 +184,7 @@ data class MpZonedDateTime(
     val monthNumber: Int get() = datetime.monthNumber
 
     /** The month */
-    val month: Month get() = datetime.month
+    val month: MpMonth get() = datetime.month
 
     /** The day of the month */
     val dayOfMonth: Int get() = datetime.dayOfMonth
@@ -175,23 +202,50 @@ data class MpZonedDateTime(
     val milliSecond: Int get() = datetime.milliSecond
 
     /** The day of the week */
-    val dayOfWeek: DayOfWeek get() = datetime.dayOfWeek
+    val dayOfWeek: MpDayOfWeek get() = datetime.dayOfWeek
 
     /** The day of the year */
     val dayOfYear: Int get() = datetime.dayOfYear
 
     /**
-     * Compares to the [other].
+     * Orders by instant, then by local date-time, then by zone id, like java.time's `ChronoZonedDateTime`, so `0`
+     * exactly when [equals]. To compare by point in time only, use [isSameInstant].
      */
     override fun compareTo(other: MpZonedDateTime): Int {
-        return instant.compareTo(other.instant)
+        val byInstant = instant.compareTo(other.instant)
+        if (byInstant != 0) return byInstant
+
+        val byLocal = datetime.compareTo(other.datetime)
+        if (byLocal != 0) return byLocal
+
+        return timezone.id.compareTo(other.timezone.id)
     }
 
     /**
      * Converts to string.
      */
     override fun toString(): String {
-        return "MpZonedDateTime(${toIsoString()})"
+        val iso = toIsoString()
+        val zoneStart = iso.lastIndexOf('[')
+
+        // The offset tells the two sides of a DST overlap apart; toIsoString() stays without it (ULTRA-00211).
+        return when {
+            zoneStart < 0 -> "MpZonedDateTime($iso)"
+            else -> "MpZonedDateTime(${iso.substring(0, zoneStart)}${offsetText()}${iso.substring(zoneStart)})"
+        }
+    }
+
+    /** The offset at the instant as `+hh:mm`, or `+hh:mm:ss` when it has seconds. */
+    private fun offsetText(): String {
+        val total = timezone.offsetSecondsAt(instant)
+        val sign = if (total < 0) "-" else "+"
+        val absolute = abs(total)
+
+        fun Int.pad() = toString().padStart(2, '0')
+
+        val hoursMinutes = "$sign${(absolute / 3600).pad()}:${(absolute % 3600 / 60).pad()}"
+
+        return if (absolute % 60 == 0) hoursMinutes else "$hoursMinutes:${(absolute % 60).pad()}"
     }
 
     /**
@@ -206,7 +260,7 @@ data class MpZonedDateTime(
             offsetMillis == 0L -> "Z"
             else -> {
                 val sign = if (offsetMillis >= 0) "+" else "-"
-                val absMillis = kotlin.math.abs(offsetMillis)
+                val absMillis = abs(offsetMillis)
                 val h = (absMillis / 3_600_000).toInt()
                 val m = ((absMillis % 3_600_000) / 60_000).toInt()
                 "$sign${h.toString().padStart(2, '0')}${m.toString().padStart(2, '0')}"
@@ -294,83 +348,90 @@ data class MpZonedDateTime(
     }
 
     /**
-     * Get the start of the year.
+     * Get the start of the year: the start of its first day, see [atStartOfDay].
      */
-    fun atStartOfYear(): MpZonedDateTime = copy(
-        datetime = MpLocalDateTime.of(year, Month.JANUARY, 1)
-    )
+    fun atStartOfYear(): MpZonedDateTime = MpLocalDate.of(year, 1, 1).atStartOfDay(timezone)
 
     /**
-     * Get the start of the month.
+     * Get the start of the month: the start of its first day, see [atStartOfDay].
      */
-    fun atStartOfMonth(): MpZonedDateTime = copy(
-        datetime = MpLocalDateTime.of(year, month, 1)
-    )
+    fun atStartOfMonth(): MpZonedDateTime = MpLocalDate.of(year, monthNumber, 1).atStartOfDay(timezone)
 
     /**
-     * Get the start of the day.
+     * Get the start of the day: midnight, or the end of the gap when midnight does not exist (java.time's rule).
      */
-    fun atStartOfDay(): MpZonedDateTime = copy(
-        datetime = MpLocalDateTime.of(year, month, dayOfMonth)
-    )
+    fun atStartOfDay(): MpZonedDateTime = toLocalDate().atStartOfDay(timezone)
 
     /**
-     * Get the start of the hour.
+     * Get the start of the hour, keeping the current offset in a DST overlap.
+     *
+     * A start that falls into a DST gap resolves like [of], so the result can be later than this one (Toronto
+     * 1919-03-31T00:45 gives 01:00).
      */
-    fun atStartOfHour(): MpZonedDateTime = copy(
-        datetime = MpLocalDateTime.of(year, month, dayOfMonth, hour)
-    )
+    fun atStartOfHour(): MpZonedDateTime = withLocal(MpLocalDateTime.of(year, monthNumber, dayOfMonth, hour))
 
     /**
-     * Get the start of the minute.
+     * Get the start of the minute, keeping the current offset in a DST overlap.
      */
-    fun atStartOfMinute(): MpZonedDateTime = copy(
-        datetime = MpLocalDateTime.of(year, month, dayOfMonth, hour, minute)
-    )
+    fun atStartOfMinute(): MpZonedDateTime =
+        withLocal(MpLocalDateTime.of(year, monthNumber, dayOfMonth, hour, minute))
 
     /**
-     * Get the start of the second.
+     * Get the start of the second, keeping the current offset in a DST overlap.
      */
-    fun atStartOfSecond(): MpZonedDateTime = copy(
-        datetime = MpLocalDateTime.of(year, month, dayOfMonth, hour, minute, second)
-    )
+    fun atStartOfSecond(): MpZonedDateTime =
+        withLocal(MpLocalDateTime.of(year, monthNumber, dayOfMonth, hour, minute, second))
+
+    /** The local [datetime] in this zone, keeping the current offset where it is still valid (java.time's rule). */
+    private fun withLocal(datetime: MpLocalDateTime): MpZonedDateTime {
+        val resolved = TimezoneEngine.toInstant(
+            timezone = timezone,
+            local = datetime.value,
+            preferredOffsetSeconds = timezone.offsetSecondsAt(instant),
+        )
+
+        return MpZonedDateTime(instant = MpInstant(resolved), timezone = timezone)
+    }
 
     /**
      * Gets the start of the upcoming [dayOfWeek].
      */
-    fun atStartOfNext(dayOfWeek: DayOfWeek): MpZonedDateTime {
+    fun atStartOfNext(dayOfWeek: DayOfWeek): MpZonedDateTime = atStartOfNext(dayOfWeek.mp)
 
-        var result = plus(1, DateTimeUnit.DAY).atStartOfDay()
-
-        while (result.dayOfWeek != dayOfWeek) {
-            result = result.plus(1, DateTimeUnit.DAY).atStartOfDay()
-        }
-
-        return result
+    /**
+     * Gets the start of the upcoming [dayOfWeek], after today.
+     *
+     * When the zone skips that date (Samoa skipped 2011-12-30), the start of the day after it, like [atStartOfDay].
+     */
+    fun atStartOfNext(dayOfWeek: MpDayOfWeek): MpZonedDateTime {
+        // Steps on the date: stepping on the zoned value looped forever over a day the zone skips (ULTRA-00211)
+        return toLocalDate().atStartOfNext(dayOfWeek).atStartOfDay(timezone)
     }
 
     /**
      * Gets the start of the preceding [dayOfWeek].
      */
-    fun atStartOfPrevious(dayOfWeek: DayOfWeek): MpZonedDateTime {
+    fun atStartOfPrevious(dayOfWeek: DayOfWeek): MpZonedDateTime = atStartOfPrevious(dayOfWeek.mp)
 
-        var result = atStartOfDay()
-
-        while (result.dayOfWeek != dayOfWeek) {
-            result = result.minus(1, DateTimeUnit.DAY).atStartOfDay()
-        }
-
-        return result
+    /**
+     * Gets the start of the preceding [dayOfWeek], today included.
+     *
+     * When the zone skips that date (Samoa skipped 2011-12-30), the start of the day after it, like [atStartOfDay].
+     */
+    fun atStartOfPrevious(dayOfWeek: MpDayOfWeek): MpZonedDateTime {
+        // Steps on the date: stepping on the zoned value looped forever over a day the zone skips (ULTRA-00211)
+        return toLocalDate().atStartOfPrevious(dayOfWeek).atStartOfDay(timezone)
     }
 
     /**
-     * Sets the time of the day to the given [time].
+     * Sets the time of the day to the given [time], keeping the current offset in a DST overlap.
+     *
+     * [MpLocalTime.EndOfDay] (24:00) gives the start of the next day, see [atStartOfDay].
      */
     fun atTime(time: MpLocalTime): MpZonedDateTime {
-        return MpLocalDateTime.of(
-            date = toLocalDate(),
-            time = time
-        ).atZone(timezone = timezone)
+        if (time.isEndOfDay) return toLocalDate().plusDays(1).atStartOfDay(timezone)
+
+        return withLocal(MpLocalDateTime.of(date = toLocalDate(), time = time))
     }
 
     /**

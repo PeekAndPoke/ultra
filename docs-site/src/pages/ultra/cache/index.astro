@@ -19,7 +19,7 @@ import {Code} from 'astro:components';
 
     <p>Most JVM caches (Caffeine, Guava) are excellent but JVM-only. When you need the same caching API in
         <code>commonMain</code> for code shared between JVM and JS, your options narrow quickly. Cache fills that gap
-        with a clean builder DSL and composable behaviours that work on all Kotlin platforms.</p>
+        with a clean builder DSL and composable behaviours that work on JVM, JS and native.</p>
 
     <Aside>We needed caching in Slumber's serialization hot path. It had to be fast, multiplatform, and not pull
         in a JVM-only dependency. So here we are.
@@ -137,8 +137,8 @@ val user = cache.getOrPut("user:99") {
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Kotlin Multiplatform</h3>
-            <p class="text-sm text-gray-400">Works in <code>commonMain</code>, <code>jvmMain</code>, and
-                <code>jsMain</code>.</p>
+            <p class="text-sm text-gray-400">Works in <code>commonMain</code>, <code>jvmMain</code>,
+                <code>jsMain</code> and <code>nativeMain</code>.</p>
         </div>
         <div class="p-4 rounded-lg border border-white/10 bg-white/[0.02]">
             <h3 class="text-white font-semibold mb-1">Coroutine-Based</h3>

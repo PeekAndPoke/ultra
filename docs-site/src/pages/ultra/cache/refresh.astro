@@ -11,8 +11,8 @@ import {Code} from 'astro:components';
     <h1>Background Refresh</h1>
 
     <p class="text-xl text-gray-400 !mt-2 !mb-8">
-        Stale-while-revalidate for your cache. When an entry gets old, refresh it in the background —
-        no reader ever sees a miss, no reader ever waits.
+        Stale-while-revalidate for your cache. When an entry gets old, refresh it in the background,
+        while readers keep getting the old value without waiting.
     </p>
 
     <h2>The problem with expiry</h2>
@@ -23,7 +23,8 @@ import {Code} from 'astro:components';
 
     <p><code>refreshAfterWrite</code> flips this: when the TTL passes, the <strong>stale value keeps being
         served</strong>
-        while a background coroutine quietly reloads it. No reader ever sees a miss.</p>
+        while a background coroutine quietly reloads it. Readers see no gap, unless a <code>hardTtl</code> or
+        another behaviour evicts the entry.</p>
 
     <Aside>This is the stale-while-revalidate pattern from HTTP caching, applied to an in-memory cache.
         If you've used Caffeine's <code>refreshAfterWrite</code>, it's the same idea.
@@ -60,7 +61,7 @@ cache.put("user:42", initialProfile)
     <Code code={`val cache = fastCache<String, String> {
     refreshAfterWrite(
         ttl = 5.minutes,          // start refreshing after 5 minutes
-        hardTtl = 30.minutes,     // evict completely after 30 minutes
+        hardTtl = 30.minutes,     // evict 30 minutes after the last write
     ) { key ->
         fetchFromApi(key)
     }
@@ -71,14 +72,22 @@ cache.put("user:42", initialProfile)
 
     <h2>Deduplication</h2>
 
-    <p>Only one refresh runs per key at a time. If the cache detects that key <code>"x"</code> is stale and a
-        refresh is already in-flight, it skips launching another one. When the refresh completes and calls
-        <code>cache.put()</code>, the write timestamp resets and the entry is fresh again.</p>
+    <p>If the cache detects that key <code>"x"</code> is stale and a refresh is already in-flight, it skips
+        launching another one. A write to the key frees it, though: once the new value is stale in turn, a second
+        refresh can run beside the first. When a refresh completes, its value is stored like a <code>put()</code>,
+        the write timestamp resets and the entry is fresh again.</p>
+
+    <p>A refresh replaces only the value it started from. If the entry was written, removed or evicted while the
+        loader ran, the loaded value is dropped without notice. The comparison is by identity: writing back the very
+        instance the refresh started from still lets the refresh replace it.</p>
+
+    <p>The stored result counts like any put: as an access for <code>expireAfterAccess</code> and the LRU order of
+        <code>maxEntries</code> and <code>maxMemoryUsage</code>, and as a put in the statistics.</p>
 
     <h2>Error handling</h2>
 
-    <p>If the loader throws, the refresh is considered failed. The key is marked as eligible for retry on the
-        next processing loop iteration (~50ms later). This means a transient failure (network blip, temporary
+    <p>If the loader throws, the refresh is considered failed and the stale value keeps being served. The key is
+        marked as eligible for retry on the next processing loop iteration (~50ms later). This means a transient failure (network blip, temporary
         API error) will self-heal on the next loop cycle.</p>
 
     <Code code={`var attempt = 0
@@ -103,7 +112,7 @@ val cache = fastCache<String, String> {
     refreshAfterWrite(ttl = 5.minutes) { key ->
         userService.fetchProfile(key)
     }
-    maxEntries(10_000)               // hard cap on entry count
+    maxEntries(10_000)               // cap on entry count (soft)
     onEviction { key, _ ->            // log evictions
         logger.info("evicted ${'$'}key")
     }

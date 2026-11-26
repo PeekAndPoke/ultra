@@ -2,8 +2,8 @@
 // Update these when releasing — all pages reference this file.
 
 // Versions
-export const ultraVersion = '0.118.0';
-export const kraftVersion = '0.118.0';
+export const ultraVersion = '0.119.0';
+export const kraftVersion = '0.119.0';
 export const kotlinVersion = '2.4.21';
 export const fomanticVersion = '2.8.8';
 
@@ -100,7 +100,7 @@ export const pathToCategory: Record<string, keyof typeof categoryTints> = {
 export const dep = {
     kontainer: `${ultraGroup}:kontainer:${ultraVersion}`,
     slumber: `${ultraGroup}:slumber:${ultraVersion}`,
-    streams: `${ultraGroup}:streams:${ultraVersion}`,
+    streams: `${ultraGroup}:stream:${ultraVersion}`,
     datetime: `${ultraGroup}:datetime:${ultraVersion}`,
     cache: `${ultraGroup}:cache:${ultraVersion}`,
     i18n: `${ultraGroup}:i18n:${ultraVersion}`,

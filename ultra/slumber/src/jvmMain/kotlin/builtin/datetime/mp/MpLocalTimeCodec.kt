@@ -17,6 +17,10 @@ object MpLocalTimeAwaker : Awaker {
         //  the same wall-clock time serializes 1000x apart depending on which codec produced it.
         // TODO(scan): no range validation, unlike the javatime sibling. A negative or >= one-day value
         //  is accepted and wrapped into the day (e.g. -1000 awakes as 23:59:59) instead of awaking to null.
+        // Exactly one day is 24:00 (MpLocalTime.EndOfDay), compared as a Double so a fraction like 86400000.5 does not
+        // truncate into it; every other value wraps into the day, as before.
+        if (data.toDouble() == MpLocalTime.MILLIS_PER_DAY.toDouble()) return MpLocalTime.EndOfDay
+
         return MpLocalTime.ofMilliSeconds(data.toLong().mod(MpLocalTime.MILLIS_PER_DAY.toLong()).toInt())
     }
 }

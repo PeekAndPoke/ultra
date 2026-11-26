@@ -29,7 +29,7 @@ codec.awake<User>(mapOf("name" to "Bob", "age" to 25))
 
 <h2>Nested data classes</h2>
 
-<p>Nesting works recursively — no depth limit:</p>
+<p>Nesting works recursively:</p>
 
 <Code code={`data class Address(val city: String, val zip: String)
 data class Company(val name: String, val hq: Address)
@@ -77,7 +77,9 @@ val restored = codec.awake<AppConfig>(data)
 
 <p>By default, only constructor parameters are serialized. To include computed properties, use <code>@Slumber.Field</code>:</p>
 
-<Code code={`data class Invoice(val items: List<Double>, val taxRate: Double) {
+<Code code={`import io.peekandpoke.ultra.common.slumber.Slumber
+
+data class Invoice(val items: List<Double>, val taxRate: Double) {
     @Slumber.Field
     val subtotal get() = items.sum()
 

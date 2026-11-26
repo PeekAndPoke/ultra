@@ -52,6 +52,7 @@ data class Address(
 
     <Code code={`import io.peekandpoke.monko.MonkoRepository
 import io.peekandpoke.monko.MonkoDriver
+import io.peekandpoke.ultra.reflection.kType
 
 class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
     name = "persons",
@@ -62,11 +63,16 @@ class PersonsRepo(driver: MonkoDriver) : MonkoRepository<Person>(
     <h2>4. Configure the connection</h2>
 
     <Code code={`import io.peekandpoke.monko.MongoDbConfig
+import io.peekandpoke.ultra.common.model.Redacted
 
 val config = MongoDbConfig(
-    connectionString = "mongodb://root:root@localhost:27017",
+    connectionString = Redacted("mongodb://root:root@localhost:27017"),
     database = "my_app",
 )`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Register the config and the repository in Kontainer, see
+        <a href="/ultra/monko/kontainer-integration">Kontainer Integration</a>. The <code>repo</code> below is the
+        <code>PersonsRepo</code> you get from the kontainer.</p>
 
     <h2>5. Basic CRUD</h2>
 
@@ -83,8 +89,8 @@ val found = repo.findById("persons/person-1")
 val updated = found!!.modify { it.copy(age = 31) }
 repo.save(updated)
 
-// Atomic read-modify-write
-repo.modifyById("persons/person-1") { copy(age = it.age + 1) }
+// Read-modify-write: findById, then save (not atomic)
+repo.modifyById("persons/person-1") { it.copy(age = it.age + 1) }
 
 // Delete
 repo.remove("persons/person-1")

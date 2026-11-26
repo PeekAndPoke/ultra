@@ -10,15 +10,25 @@ abstract class TypeLookup {
 
     /**
      * Get all matching types for the given [type]
+     *
+     * The answer for a type must not change: [getDistinctFor] keeps the distinct candidate it derives from it.
      */
     abstract fun getAllCandidatesFor(type: KClass<*>): Set<KClass<*>>
 
     /**
+     * The distinct candidate of each type resolved so far; a failed resolution is not kept, so it throws every time
+     */
+    private val distinctCache = ConcurrentHashMap<KClass<*>, KClass<*>>()
+
+    /**
      * Gets a distinct candidate for the given [type]
      *
-     * If there is no super type or more than one found, a [ServiceNotFound] is thrown.
+     * No candidate throws [ServiceNotFound], more than one throws [ServiceAmbiguous].
      */
-    fun getDistinctFor(type: KClass<*>): KClass<*> {
+    fun getDistinctFor(type: KClass<*>): KClass<*> =
+        distinctCache[type] ?: resolveDistinctFor(type).also { distinctCache[type] = it }
+
+    private fun resolveDistinctFor(type: KClass<*>): KClass<*> {
 
         val candidates = getAllCandidatesFor(type)
 
@@ -95,7 +105,7 @@ abstract class TypeLookup {
                 val map = getAllCandidatesFor(type)
                     .associateWith {
                         { kontainer: Kontainer, context: InjectionContext ->
-                            kontainer.get(it, context)
+                            kontainer.getCandidate(it, context)
                         }
                     }
 
@@ -103,16 +113,32 @@ abstract class TypeLookup {
             }
 
         /**
+         * The result of [getDistinctForOrNull] for each type asked so far, [NoDistinct] for null
+         */
+        private val distinctOrNullCache = ConcurrentHashMap<KClass<*>, Any>()
+
+        /**
          * Get a distinct super type of the given [type] or null if there is none or multiple candidates
          */
         fun <T : Any> getDistinctForOrNull(type: KClass<T>): KClass<T>? {
-            val candidates = getAllCandidatesFor(type)
+
+            val found = distinctOrNullCache[type] ?: run {
+                val candidates = getAllCandidatesFor(type)
+
+                when (candidates.size) {
+                    1 -> candidates.first()
+                    else -> NoDistinct
+                }.also { distinctOrNullCache[type] = it }
+            }
 
             @Suppress("UNCHECKED_CAST")
-            return when (candidates.size) {
-                1 -> candidates.first() as KClass<T>
-                else -> null
+            return when (found) {
+                NoDistinct -> null
+                else -> found as KClass<T>
             }
         }
+
+        /** Marks a type without a distinct candidate in [distinctOrNullCache] */
+        private object NoDistinct
     }
 }

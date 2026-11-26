@@ -7,14 +7,14 @@ import kotlin.jvm.JvmName
 
 fun ts(
     fromHour: Int, fromMinute: Int, toHour: Int, toMinute: Int
-) = MpLocalTimeSlot(
+) = MpLocalTimeSlot.of(
     from = MpLocalTime.of(hour = fromHour, minute = fromMinute),
     to = MpLocalTime.of(hour = toHour, minute = toMinute),
 )
 
 fun ts(
     fromHour: Int, fromMinute: Int, fromSecond: Int, toHour: Int, toMinute: Int, toSecond: Int
-) = MpLocalTimeSlot(
+) = MpLocalTimeSlot.of(
     from = MpLocalTime.of(hour = fromHour, minute = fromMinute, second = fromSecond),
     to = MpLocalTime.of(hour = toHour, minute = toMinute, second = toSecond),
 )

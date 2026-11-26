@@ -1,15 +1,18 @@
 package io.peekandpoke.ultra.kontainer.e2e.characterization
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 import io.peekandpoke.ultra.common.Lookup
 import io.peekandpoke.ultra.kontainer.InjectionContext
 import io.peekandpoke.ultra.kontainer.Kontainer
+import io.peekandpoke.ultra.kontainer.KontainerInconsistent
 import io.peekandpoke.ultra.kontainer.e2e.Reported
 import io.peekandpoke.ultra.kontainer.e2e.reportedOf
 import io.peekandpoke.ultra.kontainer.kontainer
@@ -289,8 +292,8 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         }
     }
 
-    // Pinned as it is; the fix is ticket ULTRA-00329.
-    "CURRENT BEHAVIOUR: a global singleton's Lookup stays bound to the first kontainer, which records every prototype" {
+    // ULTRA-00329: this pin said "CURRENT BEHAVIOUR" while the Lookup stayed bound to kontainer one.
+    "A global singleton's Lookup is bound to the blueprint-wide kontainer, not to the kontainer that created it" {
 
         abstract class Base : Counted()
         class ProtoImpl : Base()
@@ -312,9 +315,10 @@ class InjectionFormsCharacterizationSpec : StringSpec({
 
             repeat(3) { two.get(Holder::class).lookup.get(ProtoImpl::class) }
 
-            withClue("the prototypes are created by kontainer one's provider, although used through kontainer two") {
-                one.getProvider(ProtoImpl::class).instances.size shouldBe 3
-                two.getProvider(ProtoImpl::class).instances.size shouldBe 0
+            withClue("the prototypes are created by the blueprint-wide kontainer's provider, by no request's") {
+                one.getProvider(ProtoImpl::class).created.count shouldBe 0L
+                two.getProvider(ProtoImpl::class).created.count shouldBe 0L
+                blueprint.globalKontainer.getProvider(ProtoImpl::class).created.count shouldBe 3L
             }
         }
     }
@@ -509,8 +513,8 @@ class InjectionFormsCharacterizationSpec : StringSpec({
         }
     }
 
-    // Pinned as it is; the fix is ticket ULTRA-00335.
-    "CURRENT BEHAVIOUR: a nullable parameter with two candidates injects null without a validation error, and promotes" {
+    // ULTRA-00335: an ambiguous nullable injection is a validation error.
+    "A nullable parameter with two candidates is a validation error naming the colliding services" {
 
         abstract class Base
         class SingleImpl : Base()
@@ -523,13 +527,53 @@ class InjectionFormsCharacterizationSpec : StringSpec({
             dynamic(DynImpl::class)
         }
 
-        val one = blueprint.create()
-        val two = blueprint.create()
+        shouldThrow<KontainerInconsistent> {
+            blueprint.create()
+        }.message shouldContain "Parameter 'base' is ambiguous. The following services collide: " +
+                "SingleImpl, DynImpl"
+    }
+
+    // ULTRA-00335: the same for Lazy<T?>.
+    "A Lazy nullable parameter with two candidates is a validation error naming the colliding services" {
+
+        abstract class Base
+        class ImplOne : Base()
+        class ImplTwo : Base()
+        class Holder(val base: Lazy<Base?>)
+
+        shouldThrow<KontainerInconsistent> {
+            kontainer {
+                singleton(Holder::class)
+                singleton(ImplOne::class)
+                singleton(ImplTwo::class)
+            }.create()
+        }.message shouldContain "Parameter 'base' is ambiguous. The following services collide: " +
+                "ImplOne, ImplTwo"
+    }
+
+    "A nullable parameter with one candidate is injected, with none it is null (unchanged)" {
+
+        class Present
+        class Absent
+        class Holder(
+            val present: Present?,
+            val absent: Absent?,
+            val lazyPresent: Lazy<Present?>,
+            val lazyAbsent: Lazy<Absent?>,
+        )
+
+        val subject = kontainer {
+            singleton(Holder::class)
+            singleton(Present::class)
+        }.create()
+
+        val holder = subject.get(Holder::class)
 
         assertSoftly {
-            one.get(Holder::class).base.shouldBeNull()
-            one.reportedOf(Holder::class) shouldBe Reported.SemiDynamicSingleton
-            one.get(Holder::class) shouldNotBeSameInstanceAs two.get(Holder::class)
+            holder.present shouldBe subject.get(Present::class)
+            holder.absent.shouldBeNull()
+            holder.lazyPresent.value shouldBe subject.get(Present::class)
+            holder.lazyAbsent.value.shouldBeNull()
         }
     }
 })

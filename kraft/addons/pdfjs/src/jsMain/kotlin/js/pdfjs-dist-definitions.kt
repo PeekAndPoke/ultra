@@ -51,6 +51,12 @@ external interface PdfjsLib {
 
     interface PDFDocumentLoadingTask {
         val promise: Promise<PDFDocumentProxy>
+
+        /** True once the task, and with it its document and worker, was destroyed. */
+        val destroyed: Boolean
+
+        /** Ends the task, its document and its worker. */
+        fun destroy(): Promise<Unit>
     }
 
     /**
@@ -62,6 +68,12 @@ external interface PdfjsLib {
         val fingerprints: Array<String?>
 
         fun getPage(page: Int): Promise<PDFPageProxy>
+
+        /** The task that loaded this document. */
+        val loadingTask: PDFDocumentLoadingTask
+
+        /** Frees the document and terminates its worker. */
+        fun destroy(): Promise<Unit>
     }
 
     /**
