@@ -77,7 +77,9 @@ import {Code} from 'astro:components';
     <h2>statistics</h2>
 
     <p>Track hits, misses, puts, and evictions. The <code>statistics()</code> builder method returns a
-        <code>StatisticsBehaviour</code> handle — hold onto it to call <code>snapshot()</code> later:</p>
+        <code>StatisticsBehaviour</code> handle — hold onto it to call <code>snapshot()</code> later.
+        <code>remove()</code> and <code>clear()</code> are not evictions and do not count in
+        <code>evictionCount</code>:</p>
 
     <Code code={`import io.peekandpoke.ultra.cache.FastCache
 import io.peekandpoke.ultra.cache.fastCache

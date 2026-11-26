@@ -1,7 +1,6 @@
 # ULTRA-00159: ultra/cache: scan findings
 
-> **Status (2026-11-26): IN PROGRESS.** Estimator review round 3 fixes built on `wt/cache-log`; awaiting
-> the review gate.
+> **Status (2026-11-26): DONE.** Estimator gate PASS in round 4 (plus a clean check of its MINOR fixes); merged into master (161f8076). Open elsewhere: ULTRA-00321 (does a background refresh count as an access).
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -1306,3 +1305,8 @@ Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behavio
 - 2026-11-26: estimator review round 3 (two opus reviewers): NOT CLEAN; maintainer decisions D1-D3; all
   fixes and MINORs built (Round 3 fixes). Awaiting the review gate.
 - 2026-11-26: review round 4 on the fixes: CLEAN on both charters; its five MINORs applied (Round 4).
+- 2026-11-26: estimator review round 3 (opus max, two reviewers, full change set) NOT CLEAN; the maintainer's
+  decisions applied (over-budget entry evicted alone, cap direction as text, fun interface). Round 4 CLEAN on both
+  charters; its MINORs and a further check's MINORs fixed. Full suite on the branch: 19 279 tests, 0 failures
+  (XML). Merged (161f8076); CHANGELOG written (7e4fa30f). Docs: ULTRA-00326. DONE.
+- 2026-11-26: DONE.

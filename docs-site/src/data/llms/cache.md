@@ -254,7 +254,8 @@ val cache = fastCache<String, String> {
 
 ### onEviction
 
-Callback fired when entries are evicted by behaviours. Does NOT fire on explicit `remove()`.
+Callback fired when entries are evicted by behaviours. Does NOT fire on explicit `remove()` or `clear()`; neither
+counts in `evictionCount`.
 
 ```kotlin
 val cache = fastCache<String, Connection> {

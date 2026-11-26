@@ -1,7 +1,6 @@
 # ULTRA-00326: Docs: ultra/cache after ULTRA-00159 (refresh, soft size bounds, clock, estimator)
 
-> **Status (2026-11-26): IN PROGRESS.** Pages and mirror written on `wt/cache-log`; `pnpm astro build` green.
-> Waits for the cache code review running in parallel: a code change there may need a docs change here.
+> **Status (2026-11-26): DONE.** Written on `wt/cache-log`, truth review CLEAN (8 MINORs applied), merged into master (161f8076).
 >
 > **Part of:** ULTRA-00260 (Epic: Docs backlog)
 
@@ -76,7 +75,9 @@ examples compile); its eight MINORs, each checked against the code, applied:
 | 7 | `Rendered` defined in the mirror's example | - | :167 |
 | 8 | `maxEntries`/`maxMemoryUsage` below 1 throw (`FastCache.kt:424, :537`); TTL plus two loop periods also for write TTL and hard TTL; loop delay snippet in the mirror; refresh retries end when the entry is gone by any eviction or `remove()` (`FastCache.kt:836-839`) | `eviction.astro:37-48`, `refresh.astro:97-99`, :114 | :61-72, :239 |
 
-Not written: the ULTRA-00159 follow-up items outside this list (`clear()` is not an eviction, `NullableCache` cycles).
+Written on master after the merge: `clear()` and `remove()` are not evictions and do not count in `evictionCount`
+(`observability.astro` statistics intro, `llms/cache.md` onEviction). `NullableCache` is not in the public docs, so
+its cycle detection has no statement to correct; its KDoc and the 0.119.0 CHANGELOG carry it.
 
 ## Acceptance
 
@@ -90,3 +91,6 @@ Not written: the ULTRA-00159 follow-up items outside this list (`clear()` is not
 - 2026-11-26: pages (`eviction.astro`, `refresh.astro`) and the mirror written against the code: estimator
   section, own estimator, refresh semantics, TTL fallbacks; build green. IN PROGRESS until the parallel code review settles.
 - 2026-11-26: truth review of bb3485e5 CLEAN; its eight MINORs applied to pages and mirror; build green.
+- 2026-11-26: truth review CLEAN, its eight MINORs applied (50318076); merged with the cache branch (161f8076);
+  `clear()` is not an eviction written on master. DONE.
+- 2026-11-26: DONE.
