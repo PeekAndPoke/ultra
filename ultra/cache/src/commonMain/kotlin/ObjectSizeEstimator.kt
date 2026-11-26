@@ -23,38 +23,51 @@ import kotlin.math.roundToLong
  *
  * - **Sampling.** A collection, map or array with more than 64 elements (`sampleSize`) is not walked
  *   whole: up to 64 elements are (just above 64 fewer, as positions coincide - 65 elements give 55),
- *   and the rest is charged by their average; so are the properties of a JS object. The positions
- *   are fixed, never random, so the same value always gets the same estimate; by default they follow
- *   the golden ratio (`SamplePick.GoldenRatio`), spread evenly without a fixed period.
+ *   and the rest is charged by their average; so are the properties of a JS object. Each sampled
+ *   element counts `n / positions` times, and inside a sampled element those factors multiply per
+ *   nested sampled level: where the samples are unlike the rest at several levels, the error is the
+ *   product (three nested levels of 1 000: up to about 3 800 times), up to saturation. An entry
+ *   estimated above the whole budget is evicted alone - see [FastCache.MaxMemoryUsageBehaviour].
+ *   The positions are fixed, never random, so the same value always gets the same estimate; by
+ *   default they follow the golden ratio (`SamplePick.GoldenRatio`), spread evenly without a fixed
+ *   period.
  *   `SamplePick.EvenlySpaced`, a fixed stride, is the alternative - switch with
  *   `EstimatorConfig(samplePick = ...)`. A collection without index access (a set, a linked list, a
  *   map) is sampled over its first 1 024 elements only (`sampleWindow`), to keep the stepping pass
  *   short.
- * - **A cap.** At most 10 000 objects are visited per estimate (`maxObjects`), breadth first, so the cap
- *   cuts the deepest levels and never a whole sibling subtree. A string or primitive array is always
- *   sized from its length: it needs no descent and does not count against the cap. Beyond the cap,
- *   any other object is charged a flat header and two references, without looking inside it - **so
- *   the cap errs low**, by what the cut objects hold.
+ * - **A cap.** At most 10 000 objects are visited per estimate (`maxObjects`), breadth first: where the
+ *   cap is reached, the objects reached last are cut, with everything below them - the deepest
+ *   levels, and on the level where it runs out the siblings queued last (16 innermost lists past a cap
+ *   of 10: 5 walked, 11 cut). A string or primitive array is always sized from its length: it needs
+ *   no descent and does not count against the cap. Beyond the cap, any other object is charged a flat
+ *   header and two references, without looking inside it - **so the cap errs low** for objects
+ *   holding more than that, by what they hold. A cut object holding less (an empty collection: 16
+ *   bytes, a one-field object: 25-28, a type JPMS does not open) is charged up to 16 bytes more: that
+ *   errs high, up to twice its size.
  * - **A bounded identity set.** A shared object is charged once. The set holds every object that is
  *   walked (at most `maxObjects`), so a back-reference never walks a cycle again, and the first
  *   `maxObjects` strings and primitive arrays - twice `maxObjects` in all. A string or primitive array
  *   reached after those is sized without the check, and an object beyond the cap that was not walked
  *   is charged flat each time it is reached: a shared one may count again - **that errs high**.
  * - **No stack, no throw.** The walk is iterative, so a deep graph cannot overflow the stack. An object
- *   whose walk throws (a collection whose iterator fails, a JS getter) is charged flat, and the rest
- *   of the estimate stands; [FastCache.MaxMemoryUsageBehaviour] reports how many in the loop's
- *   failure line. An estimate never throws - on JS not even for a thrown value that is no `Error`,
- *   or a `Proxy` that refuses to be inspected - and saturates at `Long.MAX_VALUE`.
+ *   whose walk throws (a collection whose iterator fails) is charged flat, and the rest of the
+ *   estimate stands; a JS property whose getter throws is charged flat by itself, its object
+ *   walked. [FastCache.MaxMemoryUsageBehaviour] reports how many in the loop's failure line. An
+ *   estimate never throws - on JS not even for a thrown value that is no `Error`, or a `Proxy` that
+ *   refuses to be inspected - and saturates at `Long.MAX_VALUE`.
  * - **Odd settings fall back, never throw:** a `sampleSize` below 1 counts as 1, a `sampleWindow`
  *   below the sample size as the sample size, a `maxObjects` below 1 as 1.
  *
  * The work is bounded by the configuration, not by the value: at most `maxObjects` visits, each
  * handing on at most `sampleSize` elements (twice that for a map) or the fields of one object, each
  * sized or queued in constant time. Not counted in that bound: listing a JS object's own properties,
- * linear in their number on every visit, and a collection's `size` where that is linear (a concurrent
- * queue counts its nodes). Worked example: a list of 100 lists of 100 lists of 100 strings
- * (a million strings, 74 MB). Sampling walks 64 of each 100, so 1 + 64 + 4 096 lists are visited and
- * 262 144 strings sized - estimate / exact 1.00, 15-35 ms on the JVM. Rule of thumb for when the cap
+ * linear in their number on every visit; a collection's `size` where that is linear (a concurrent
+ * queue counts its nodes); iterating a hash map or set, which steps over its empty table slots (a
+ * once-huge `HashMap` costs its table's capacity on every visit, on JS and native too); and user code
+ * that runs in a `size`, `get`, `iterator` or getter. Worked example: a list of 100 lists of 100
+ * lists of 100 strings (a million strings, 74 MB). Sampling walks 63 distinct positions of each 100
+ * (i = 6 and i = 61 both land on 20), so 1 + 63 + 3 969 lists are visited and 250 047 strings sized -
+ * estimate / exact 1.00, 15-35 ms on the JVM. Rule of thumb for when the cap
  * cuts: a value whose top level holds `n` elements of `k` objects each (strings and primitive arrays
  * not counted) stays below the cap while `min(n, 64) * k` stays below `maxObjects`.
  *
@@ -97,19 +110,19 @@ import kotlin.math.roundToLong
  *
  * ```kotlin
  * val cache = fastCache<String, Profile> {
- *     maxMemoryUsage(64L * 1024 * 1024, estimator = object : ObjectSizeEstimator {
- *         override fun estimate(obj: Any?): Long = when (obj) {
+ *     maxMemoryUsage(64L * 1024 * 1024) { obj ->
+ *         when (obj) {
  *             is String -> 40L + 2L * obj.length
  *             is Profile -> 120L + 2L * obj.bio.length
  *             else -> 16L
  *         }
- *     })
+ *     }
  * }
  * ```
  *
  * Or tune the default with an [EstimatorConfig] (sample size, window, cap, header sizes).
  */
-interface ObjectSizeEstimator {
+fun interface ObjectSizeEstimator {
     /** Factory for the default implementation. */
     companion object {
         /** Creates a default [ObjectSizeEstimatorImpl] with the given [cfg]. */
@@ -212,8 +225,10 @@ class ObjectSizeEstimatorImpl(
     enum class SamplePick {
         /**
          * The default: positions `frac(i * 0.618... + 0.5) * size`, a low-discrepancy sequence. Spread
-         * evenly without a fixed period, so a periodic layout is not missed or hit wholesale. Weak only
-         * at a layout that happens to put the large elements on exactly these positions.
+         * evenly without a fixed period, so a periodic layout is not missed or hit wholesale. Weak at a
+         * layout that puts the large elements on exactly these positions, and at the ends: the first
+         * 0.66 % and the last 1.5 % of a large list are never sampled (6 400 elements: positions 42 to
+         * 6 305). The middle element is always sampled.
          */
         GoldenRatio,
 
@@ -267,7 +282,8 @@ class ObjectSizeEstimatorImpl(
     }
 
     /**
-     * One estimate: breadth-first, so the cap cuts the deepest level and never whole sibling subtrees.
+     * One estimate: breadth-first, so the cap cuts the objects reached last - the deepest level, and
+     * the siblings queued last on the level where it runs out.
      *
      * The cap counts the objects queued, visited or waiting: once they reach it, nothing more is
      * queued. A string or primitive array is sized on the spot from its length (it needs no descent and
@@ -295,8 +311,12 @@ class ObjectSizeEstimatorImpl(
                 visit(queue.removeFirst())
             }
 
-            // roundToLong saturates: a weight past what a Long holds gives Long.MAX_VALUE
-            return CountedEstimate(total.roundToLong(), failures, failureClass)
+            // roundToLong saturates: a weight past what a Long holds gives Long.MAX_VALUE. NaN only from
+            // +Infinity and -Infinity summed (negative header sizes in the config): saturated too, as
+            // roundToLong throws on it.
+            val bytes = if (total.isNaN()) Long.MAX_VALUE else total.roundToLong()
+
+            return CountedEstimate(bytes, failures, failureClass)
         }
 
         /**
@@ -441,6 +461,14 @@ class ObjectSizeEstimatorImpl(
     }
 
     /**
+     * What each of [samples] sampled elements out of [size] counts for, inside an element counting
+     * [weight]: finite, at most `Double.MAX_VALUE`. A weight of +Infinity made an element charged 0 now
+     * (queued, or seen) cost `0 * Infinity`, NaN, and the estimate failed instead of saturating.
+     */
+    private fun shareOf(weight: Double, size: Int, samples: Int): Double =
+        (weight * size / samples).coerceAtMost(Double.MAX_VALUE)
+
+    /**
      * Pushes the elements of an indexed list or array: all of them up to [EstimatorConfig.sampleSize],
      * else that many at the positions [EstimatorConfig.samplePick] gives, each counting for its share of
      * the rest. Deterministic: no random pick, so the same value always gives the same estimate.
@@ -452,7 +480,7 @@ class ObjectSizeEstimatorImpl(
         }
 
         val positions = samplePositions(size, sampleSize, cfg.samplePick)
-        val share = weight * size / positions.size
+        val share = shareOf(weight, size, positions.size)
 
         positions.forEach { walk.push(elementAt(it), share) }
     }
@@ -486,7 +514,7 @@ class ObjectSizeEstimatorImpl(
         // The same positions as pushIndexed, over the window, ascending. (A fixed step of
         // window / samples rounded down once left the window's tail unsampled.)
         val positions = samplePositions(window, samples, cfg.samplePick)
-        val share = weight * size / positions.size
+        val share = shareOf(weight, size, positions.size)
         var index = 0
         var taken = 0
 

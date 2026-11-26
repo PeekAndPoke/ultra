@@ -151,6 +151,18 @@ class ObjectSizeEstimatorSpec : StringSpec({
         largeSize shouldBeGreaterThan smallSize
     }
 
+    "a weight past what a Double holds saturates at Long.MAX_VALUE, it does not fail" {
+        // 42 levels of Int.MAX_VALUE references to one element: each level multiplies the weight by
+        // Int.MAX_VALUE / 64, past Double.MAX_VALUE; the shared element, seen already, is charged 0
+        var huge: Any = "x"
+        repeat(42) { huge = Collections.nCopies(Int.MAX_VALUE, huge) }
+
+        val counted = ObjectSizeEstimatorImpl().estimateCounted(huge)
+
+        counted.bytes shouldBe Long.MAX_VALUE
+        counted.failures shouldBe 0
+    }
+
     "an estimate past what a Long holds saturates, and so does the key plus value of a cache entry" {
         // four levels of a million references to one element: the sampled weights multiply past Long
         var huge: Any = "x"

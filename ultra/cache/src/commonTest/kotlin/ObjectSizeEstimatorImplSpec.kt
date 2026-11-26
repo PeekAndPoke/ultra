@@ -3,6 +3,7 @@ package io.peekandpoke.ultra.cache
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
+import kotlin.time.Duration.Companion.seconds
 
 class ObjectSizeEstimatorImplSpec : StringSpec() {
 
@@ -10,6 +11,27 @@ class ObjectSizeEstimatorImplSpec : StringSpec() {
 
     init {
         timeout = TEST_TIMEOUT_MS
+
+        "a lambda is an ObjectSizeEstimator; the factory still gives the default implementation" {
+            val lambda = ObjectSizeEstimator { obj -> if (obj is String) 7L else 1L }
+
+            lambda.estimate("x") shouldBe 7L
+            (lambda is ObjectSizeEstimatorImpl) shouldBe false
+
+            (ObjectSizeEstimator() is ObjectSizeEstimatorImpl) shouldBe true
+
+            val configured = ObjectSizeEstimator(ObjectSizeEstimatorImpl.EstimatorConfig(objectHeader = 1L))
+
+            (configured as ObjectSizeEstimatorImpl).cfg.objectHeader shouldBe 1L
+
+            // and as the trailing lambda of the builder
+            val cache = fastCache<String, String>(loopDelay = 1.seconds) {
+                maxMemoryUsage(100L) { obj -> if (obj == "v") 5L else 0L }
+            }
+            val behaviour = cache.behaviours.single() as FastCache.MaxMemoryUsageBehaviour<String, String>
+
+            behaviour.estimator.estimate("v") shouldBe 5L
+        }
 
         "null estimates to NULL_SIZE" {
             val estimator = ObjectSizeEstimator()
@@ -161,7 +183,11 @@ class ObjectSizeEstimatorImplSpec : StringSpec() {
             val b = EstDataCycle("b", a)
             a.other = b
 
-            ObjectSizeEstimator().estimate(a) shouldBeGreaterThan 0L
+            val counted = ObjectSizeEstimatorImpl().estimateCounted(a)
+
+            counted.bytes shouldBeGreaterThan 0L
+            // terminated by the identity set, not by a failure charged flat
+            counted.failures shouldBe 0
         }
 
         "a self-referential collection still terminates" {
@@ -171,7 +197,8 @@ class ObjectSizeEstimatorImplSpec : StringSpec() {
             list.add("payload")
             list.add(list)
 
-            ObjectSizeEstimator().estimate(list) shouldBeGreaterThan 0L
+            // the list (16 + 2 * 8) and "payload" (16 + 8 + 24 + 14); reached again, it counts nothing
+            ObjectSizeEstimator().estimate(list) shouldBe 32L + 62L
         }
     }
 }

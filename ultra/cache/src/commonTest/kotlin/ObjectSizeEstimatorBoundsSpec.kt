@@ -258,9 +258,8 @@ class ObjectSizeEstimatorBoundsSpec : StringSpec() {
                 parent
             }
 
-            // the same estimate as without any budget: every object is walked once
-            ObjectSizeEstimator().estimate(value) shouldBe
-                ObjectSizeEstimator(ObjectSizeEstimatorImpl.EstimatorConfig(maxObjects = 1_000_000)).estimate(value)
+            // the same estimate as without any budget (round 2: 15 515 408): every object is walked once
+            ObjectSizeEstimator().estimate(value) shouldBe 15_515_408L
         }
 
         "the cap counts the queued objects too, so it cuts before they are walked" {
@@ -270,6 +269,50 @@ class ObjectSizeEstimatorBoundsSpec : StringSpec() {
             // walked: the outer list (16 + 4 * 8), the four inner ones (48 each), five of the sixteen
             // innermost (16 + 8 and a 3-char string of 54); the other eleven charged flat (32)
             estimator.estimate(value) shouldBe 48L + 4 * 48L + 5 * (24L + 54L) + 11 * 32L
+        }
+
+        "sampling: a sampled element of a list weighs the elements over the distinct positions" {
+            // 65 elements give 55 distinct positions: each sampled string counts 65 / 55 times
+            val list = List(65) { "s" + (100 + it) }
+
+            // the list (16 + 65 * 8) and 65 strings of 4 chars (56 each)
+            ObjectSizeEstimator().estimate(list) shouldBe 536L + 65 * 56L
+        }
+
+        "sampling: a sampled element of a set weighs the elements over the distinct positions" {
+            val set = LinkedHashSet(List(65) { "s" + (100 + it) })
+
+            // the set (16 + 65 * 8) and 65 strings of 4 chars (56 each), as for the list
+            ObjectSizeEstimator().estimate(set) shouldBe 536L + 65 * 56L
+        }
+
+        "a weight past what a Double holds saturates at Long.MAX_VALUE, it does not fail" {
+            // 300 levels of 1 000 elements, the next level in the middle (always sampled): each level
+            // multiplies the weight by 1 000 / 64, past Double.MAX_VALUE; the zeros are charged with it
+            fun level(next: Any) = List(1_000) { if (it == 500) next else 0 }
+
+            var value: Any = 0
+            repeat(300) { value = level(value) }
+
+            val counted = ObjectSizeEstimatorImpl().estimateCounted(value)
+
+            counted.bytes shouldBe Long.MAX_VALUE
+            counted.failures shouldBe 0
+        }
+
+        "a weight past what a Double holds with negative header sizes does not fail either" {
+            // the lists grow past +Infinity, the strings (a negative header) past -Infinity; strings,
+            // not objects: they never count against the cap, so every level is walked
+            fun level(depth: Int, next: Any) = List(1_000) { if (it == 500) next else "s$depth-$it" }
+
+            var value: Any = "s"
+            repeat(300) { depth -> value = level(depth, value) }
+
+            val counted = ObjectSizeEstimatorImpl(ObjectSizeEstimatorImpl.EstimatorConfig(objectHeader = -100L))
+                .estimateCounted(value)
+
+            counted.bytes shouldBe Long.MAX_VALUE
+            counted.failures shouldBe 0
         }
 
         "sampling: large elements at the back of a list are seen" {
