@@ -27,6 +27,14 @@ Pages `docs-site/src/pages/ultra/cache/*` and the mirror `docs-site/src/data/llm
   - the size estimator: what the default counts, how far it can be off per platform, what it costs, and how to plug
     in an own `ObjectSizeEstimator`.
   - the maintenance loop holds its cache weakly: a cache nobody references stops.
+  - `maxMemoryUsage`: an entry whose own estimate exceeds the budget is evicted alone at the next pass, never
+    counted, the other entries stay; such a value is never cached, also a small one whose estimate is inflated
+    (sampling errors multiply per nested level). Only a pending write spares it, and that write is sized anew.
+  - the lambda form of an own estimator (`ObjectSizeEstimator` is a `fun interface`):
+    `maxMemoryUsage(bytes) { obj -> ... }`. It is called once for the key and once for the value of each write,
+    each as `Any?`.
+- **False after ULTRA-00159:** "JS charges every number 1 byte" (`eviction.astro:114`, `llms/cache.md:109`): it is 8
+  bytes now.
 
 ## Acceptance
 

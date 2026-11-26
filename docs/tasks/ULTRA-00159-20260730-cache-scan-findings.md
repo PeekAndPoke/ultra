@@ -1124,6 +1124,25 @@ cache jvm **255** / js **238** / native **220**, 0 failures (round 2: 242 / 222 
 tests, 1 JVM, 4 JS). Dependent modules (jvmTest, XML newer than the marker): slumber **1268** / vault
 **287**, 0 failures (round 2: slumber 1249; the difference is not from this change set, which adds no slumber test).
 
+#### Round 4 (2026-11-26): review CLEAN on both charters, MINORs applied
+
+0 CRITICAL, 0 MAJOR. The coordinator's five MINORs, each applied; RED runs on 2b3c58a4 (`allTests`, all three
+platforms, from the XML). Commits: 949d5301 (items 1-3), b885baf1 (item 4), this ticket commit (item 5).
+
+| # | MINOR | Disposition | Change | RED before | Mutant, result |
+|---|---|---|---|---|---|
+| 1 | D1 as decided: only a pending WRITE spares an over-budget entry | FIXED | `FastCache.kt` `evictAlone` (:610) uses `SparedBy.PENDING_PUT` (exists: `pendingKeys[key] == true`, the write-based expiry's rule). `overBudget` and its bookkeeping deleted: a pending put always arrives next pass and is sized anew (`lastWrite` is a put), so no stored size is needed; no path found that still needs it. KDoc :157-160 and :489-492: evicted alone at the next pass, a read does not spare it, only a newer write | new test "a pending read does not spare an entry above the budget": `[a, big]` instead of `[a]` on all three platforms. The spared, removal and clear tests now spare by a pending put (green before: a pending put spared under both rules) | back to `ANY_PENDING_ACTION` → the read test red. This supersedes round 3's `overBudget` rows (its two mutants are gone with it) |
+| 2 | big-to-small overwrite of a spared over-budget entry | FIXED (test) | `FastCacheOverBudgetEntrySpec` "a spared entry above the budget, overwritten with a small value ...": budget 100, a=10, big=500 spared by a pending put of big=40: totals 10, then 50, keys `{a, big}` | green (guard) | the spared entry kept in `data` with its size, uncounted (the equivalent of `currentSize = knownSize` without `overBudget`) → this test and three more red |
+| 3 | JS: `e is CancellationException` can throw | FIXED | new internal expect/actual `isCancellation(e)` (`commonMain/CatchingAll.kt:16`; JVM and native a plain `is`; JS :37 in its own try, `false` when the check throws), used at the refresh loader (:908) and the loop (:985) | `FastCacheNonErrorThrowSpec`, two tests with a Proxy whose `getPrototypeOf` answers `Error.prototype` once and throws from then on, each in a scope with its own `CoroutineExceptionHandler` (so the old code fails fast, no Karma hang): the loop died (expiry never ran, the 5 s `eventually` failed), the loader's throw reached the scope's handler 3 times instead of 0 | JS actual without the try → both red; the loop site back to `is` → the loop test; the loader site back to `is` → the loader test |
+| 4 | negative or forged part sizes | FIXED | `ObjectSizeEstimator.kt` `Walk.charge` (:341): each part's own charge at least 0, in `push` and `visit`. The total is then never NaN (every term is at least 0, every weight finite), so the round 3 NaN guard is **removed**: unreachable, and its mutant could not die; the share clamp is now what keeps a deep sampled value from failing. KDoc :57-58. JS `leafSizeOf` adds through `saturatedPlus` (`jsMain/ObjectSizeEstimatorPlatform.kt:52, :55, :64`) | `BoundsSpec`: a list of `"ok"`, a collection and a map claiming -1 000 000 000 elements gave -23 999 999 876 instead of 92 (all platforms); JS: an `ArrayBuffer` forged with `byteLength` Infinity (and 2^63) and a `Blob` with `size` Infinity gave `Long.MIN_VALUE` instead of `Long.MAX_VALUE`. The negative-header test still gives `Long.MAX_VALUE` | no clamp in `charge` → the negative-size test and the negative-header test; the JS add unsaturated → the forged test; the share clamp removed → the three saturation tests (round 3: it survived behind the NaN guard) |
+| 5 | ULTRA-00326 | DONE | "To add": the over-budget rule (never cached, inflated estimates included, only a pending write spares it), the lambda form, the estimator called once for the key and once for the value as `Any?`; "False after ULTRA-00159": JS numbers 1 byte (`eviction.astro:114`, `llms/cache.md:109`) | - | - |
+
+All 8 mutants restored from `cp` backups and byte-compared; all red.
+
+Final run on b885baf1 (`allTests -x generateDocs`, results deleted before, no stale XML): cache jvm **258** / js
+**244** / native **223**, 0 failures (round 3: 255 / 238 / 220; new: 3 common, 3 JS). Slumber **1268** / vault
+**287**, 0 failures.
+
 ## Changelog text
 
 For the coordinator to put into `CHANGELOG.md`. Signature changes: the new
@@ -1193,17 +1212,19 @@ Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behavio
   strings and primitive arrays): a string or array reached after those, or an object beyond the cap
   reached twice, may count again - that errs high, and no object is ever walked twice. The walk is
   iterative and never throws: an object whose walk fails is charged flat and the rest stands; sampled
-  weights past what a Double holds saturate at Long.MAX_VALUE (such an estimate was charged 32 bytes).
+  weights past what a Double holds saturate at Long.MAX_VALUE (such an estimate was charged 32 bytes);
+  no part is charged below 0 (a collection claiming a negative size made the estimate negative).
   EstimatorConfig.samplePick = SamplePick.GoldenRatio by default; EvenlySpaced, a fixed stride, is
   the alternative. Odd settings fall back (sampleSize and maxObjects below 1 count as 1, a window
   below the sample size as the sample size). Estimates change for large values (measured accuracy and
   limits in the KDoc). One estimate of 10 000 strings: JVM 17 ms -> 0.03 ms, JS 450 ms -> 0.2 ms,
   native 3.7 s -> 0.7 ms. EstimatorConfig gains sampleSize, sampleWindow, maxObjects and samplePick
   (source compatible; binary incompatible for its constructor and copy).
-- maxMemoryUsage: an entry whose own size exceeds maxMemorySize is evicted alone and never counted;
-  the other entries stay (as in Caffeine; it used to evict every older entry first, then itself). Such
-  a value is never cached, also a small one whose estimate is inflated: sampling errors multiply per
-  nested sampled level.
+- maxMemoryUsage: an entry whose own size exceeds maxMemorySize is evicted alone at the next pass and
+  never counted; the other entries stay (as in Caffeine; it used to evict every older entry first, then
+  itself). A read does not spare it, only a newer pending write, which is sized anew. Such a value is
+  never cached, also a small one whose estimate is inflated: sampling errors multiply per nested
+  sampled level.
 - ObjectSizeEstimator is a fun interface, so a lambda works: maxMemoryUsage(bytes) { obj -> ... }.
   ObjectSizeEstimator() and ObjectSizeEstimator(config) still give the default estimator.
 - maxMemoryUsage: entry sizes and the total saturate at Long.MAX_VALUE and are never negative (a
@@ -1213,10 +1234,11 @@ Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behavio
 - JS: every number is charged 8 bytes (was 1). An ArrayBuffer, a typed array or a DataView is
   charged its byte length, a Blob its size; a JS Map or Set is charged an empty object. A getter that
   throws, or a Proxy that refuses to be inspected, is charged flat and counted - also when it throws
-  a value that is no Error. An own property holding a function now counts its reference.
+  a value that is no Error. An own property holding a function now counts its reference. A forged
+  byteLength or Blob size past what a Long holds saturates instead of wrapping negative.
 - JS: a size estimator, behaviour, eviction listener or refresh loader throwing a value that is no
   Error (throw 'x') no longer ends the processing loop; it is counted like any failure, as
-  "ThrownValue".
+  "ThrownValue". The same for a thrown Proxy whose type checks throw.
 - JVM ObjectSizeEstimator: field lookup memoized per class; an inner class is no longer charged its
   outer instance.
 - maxMemoryUsage estimates an entry when it is written; reads reuse that size (a value changed in
@@ -1270,3 +1292,4 @@ Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behavio
   a clean one: the coordinator asks the maintainer before the next round.
 - 2026-11-26: estimator review round 3 (two opus reviewers): NOT CLEAN; maintainer decisions D1-D3; all
   fixes and MINORs built (Round 3 fixes). Awaiting the review gate.
+- 2026-11-26: review round 4 on the fixes: CLEAN on both charters; its five MINORs applied (Round 4).
