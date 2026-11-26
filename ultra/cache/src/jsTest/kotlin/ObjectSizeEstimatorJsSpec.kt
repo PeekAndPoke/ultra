@@ -177,4 +177,15 @@ class ObjectSizeEstimatorJsSpec : StringSpec({
         counted.failures shouldBe 1
         counted.failureClass shouldBe "Throwable"
     }
+
+    "a forged byte length or Blob size past what a Long holds saturates, it does not wrap negative" {
+        val estimator = ObjectSizeEstimator()
+
+        estimator.estimate(js("Object.create(ArrayBuffer.prototype, { byteLength: { value: Infinity } })")) shouldBe
+            Long.MAX_VALUE
+        val twoToThe63: dynamic = js("Object.create(ArrayBuffer.prototype, { byteLength: { value: Math.pow(2, 63) } })")
+
+        estimator.estimate(twoToThe63) shouldBe Long.MAX_VALUE
+        estimator.estimate(js("Object.create(Blob.prototype, { size: { value: Infinity } })")) shouldBe Long.MAX_VALUE
+    }
 })

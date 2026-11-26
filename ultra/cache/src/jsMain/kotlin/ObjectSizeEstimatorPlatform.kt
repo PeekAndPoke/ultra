@@ -49,13 +49,20 @@ actual object ObjectSizeEstimatorPlatform {
      */
     internal actual fun leafSizeOf(obj: Any, cfg: EstimatorConfig): Long? {
         val bytes = byteLengthOf(obj)
-        if (bytes >= 0) return cfg.arrayHeader + bytes.toLong()
+        if (bytes >= 0) return saturatedPlus(cfg.arrayHeader, bytes.toLong())
 
         val blob = blobSizeOf(obj)
-        if (blob >= 0) return cfg.objectHeader + blob.toLong()
+        if (blob >= 0) return saturatedPlus(cfg.objectHeader, blob.toLong())
 
         return null
     }
+
+    /**
+     * [header] + [size] for a [size] of at least 0, at most `Long.MAX_VALUE`: a forged `byteLength` or
+     * `size` of `Infinity` reads as `Long.MAX_VALUE`, and the header added to it wrapped negative.
+     */
+    private fun saturatedPlus(header: Long, size: Long): Long =
+        if (header > 0 && size > Long.MAX_VALUE - header) Long.MAX_VALUE else header + size
 
     private fun ownPropertyNames(dyn: dynamic): Array<String> =
         js("Object.getOwnPropertyNames")(dyn).unsafeCast<Array<String>>()

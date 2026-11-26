@@ -301,8 +301,9 @@ class ObjectSizeEstimatorBoundsSpec : StringSpec() {
         }
 
         "a weight past what a Double holds with negative header sizes does not fail either" {
-            // the lists grow past +Infinity, the strings (a negative header) past -Infinity; strings,
-            // not objects: they never count against the cap, so every level is walked
+            // the lists grow past +Infinity; the strings, negative by their header, are charged 0, not
+            // -Infinity (beside +Infinity a NaN). Strings, not objects: they never count against the
+            // cap, so every level is walked
             fun level(depth: Int, next: Any) = List(1_000) { if (it == 500) next else "s$depth-$it" }
 
             var value: Any = "s"
@@ -312,6 +313,14 @@ class ObjectSizeEstimatorBoundsSpec : StringSpec() {
                 .estimateCounted(value)
 
             counted.bytes shouldBe Long.MAX_VALUE
+            counted.failures shouldBe 0
+        }
+
+        "a collection or a map claiming a negative size is charged nothing for itself, never a negative amount" {
+            val counted = ObjectSizeEstimatorImpl().estimateCounted(listOf("ok", NegativeCollection(), NegativeMap()))
+
+            // the list (16 + 3 * 8) and "ok" (52); the two that claim -1 000 000 000 elements: 0 each
+            counted.bytes shouldBe 40L + 52L
             counted.failures shouldBe 0
         }
 
@@ -425,4 +434,18 @@ private class CountingCollection(private val claimed: Int, private val length: I
             return "s"
         }
     }
+}
+
+/** Claims a negative number of elements and has none. */
+private class NegativeCollection : AbstractCollection<String>() {
+    override val size: Int = -1_000_000_000
+
+    override fun iterator(): Iterator<String> = emptyList<String>().iterator()
+}
+
+/** Claims a negative number of entries and has none. */
+private class NegativeMap : AbstractMap<String, String>() {
+    override val size: Int = -1_000_000_000
+
+    override val entries: Set<Map.Entry<String, String>> = emptySet()
 }

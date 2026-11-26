@@ -54,7 +54,8 @@ import kotlin.math.roundToLong
  *   estimate stands; a JS property whose getter throws is charged flat by itself, its object
  *   walked. [FastCache.MaxMemoryUsageBehaviour] reports how many in the loop's failure line. An
  *   estimate never throws - on JS not even for a thrown value that is no `Error`, or a `Proxy` that
- *   refuses to be inspected - and saturates at `Long.MAX_VALUE`.
+ *   refuses to be inspected - and saturates at `Long.MAX_VALUE`. No part is charged below 0, not
+ *   even a collection claiming a negative size.
  * - **Odd settings fall back, never throw:** a `sampleSize` below 1 counts as 1, a `sampleWindow`
  *   below the sample size as the sample size, a `maxObjects` below 1 as 1.
  *
@@ -311,12 +312,9 @@ class ObjectSizeEstimatorImpl(
                 visit(queue.removeFirst())
             }
 
-            // roundToLong saturates: a weight past what a Long holds gives Long.MAX_VALUE. NaN only from
-            // +Infinity and -Infinity summed (negative header sizes in the config): saturated too, as
-            // roundToLong throws on it.
-            val bytes = if (total.isNaN()) Long.MAX_VALUE else total.roundToLong()
-
-            return CountedEstimate(bytes, failures, failureClass)
+            // roundToLong saturates: a weight past what a Long holds gives Long.MAX_VALUE. The total is
+            // never NaN: every term is at least 0 (see charge) and every weight finite (see shareOf).
+            return CountedEstimate(total.roundToLong(), failures, failureClass)
         }
 
         /**
@@ -332,7 +330,16 @@ class ObjectSizeEstimatorImpl(
                 },
             )
 
-            total += own * weight
+            charge(own, weight)
+        }
+
+        /**
+         * Adds [own] bytes counting [weight] times. Never below 0 per part: a collection claiming a
+         * negative size, or negative header sizes in the config, would make the estimate negative, and
+         * -Infinity beside +Infinity a NaN.
+         */
+        private fun charge(own: Double, weight: Double) {
+            total += own.coerceAtLeast(0.0) * weight
         }
 
         /** What [obj] is charged now - 0 when it is queued, or was counted already. */
@@ -396,7 +403,7 @@ class ObjectSizeEstimatorImpl(
                 },
             )
 
-            total += own * next.weight
+            charge(own.toDouble(), next.weight)
         }
     }
 
