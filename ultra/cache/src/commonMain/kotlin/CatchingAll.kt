@@ -7,7 +7,7 @@ package io.peekandpoke.ultra.cache
 internal expect inline fun <R> catchingAll(block: () -> R, onFailure: (Throwable) -> R): R
 
 /** Stands in for a thrown JS value that is no `Error`; its class name is what a failure report shows. */
-internal class ThrownValue(val value: Any?) : RuntimeException("a thrown value that is no Throwable")
+internal class ThrownValue : RuntimeException("a thrown value that is no Throwable")
 
 /** The class name a failure report shows for this throwable. */
 internal expect fun Throwable.failureName(): String?

@@ -122,4 +122,59 @@ class ObjectSizeEstimatorJsSpec : StringSpec({
         inList.bytes shouldBe 40L + 52L + 32L + 58L
         inList.failures shouldBe 1
     }
+
+    "a property holding a function counts its reference only" {
+        val obj: dynamic = js("({ f: function() {}, s: 'x' })")
+
+        // header and two references, "x" (16 + 8 + 24 + 2); the function itself is not walked
+        ObjectSizeEstimator().estimate(obj) shouldBe (16L + 2 * 8L) + 50L
+    }
+
+    "a getter throwing a proxy whose type check throws is charged flat as that property only" {
+        // `e is Throwable` is an instanceof, which runs the proxy's getPrototypeOf trap
+        val obj: dynamic = js(
+            "(function() { var p = new Proxy({}, { getPrototypeOf: function() { throw 'trap'; } }); " +
+                "var o = { good: 'fine' }; " +
+                "Object.defineProperty(o, 'bad', { enumerable: true, get: function() { throw p; } }); " +
+                "return o; })()"
+        )
+
+        val counted = ObjectSizeEstimatorImpl().estimateCounted(obj)
+
+        // header and two references, the property flat, "fine"
+        counted.bytes shouldBe (16L + 2 * 8L) + 32L + 56L
+        counted.failures shouldBe 1
+        counted.failureClass shouldBe "ThrownValue"
+    }
+
+    "a getter throwing a revoked proxy is charged flat as that property only" {
+        val obj: dynamic = js(
+            "(function() { var r = Proxy.revocable({}, {}); r.revoke(); " +
+                "var o = { good: 'fine' }; " +
+                "Object.defineProperty(o, 'bad', { enumerable: true, get: function() { throw r.proxy; } }); " +
+                "return o; })()"
+        )
+
+        val counted = ObjectSizeEstimatorImpl().estimateCounted(obj)
+
+        counted.bytes shouldBe (16L + 2 * 8L) + 32L + 56L
+        counted.failures shouldBe 1
+        counted.failureClass shouldBe "ThrownValue"
+    }
+
+    "a getter throwing an Error whose name cannot be read is charged flat as that property only" {
+        // an Error by its prototype, but every property read throws: the failure's name is not readable
+        val obj: dynamic = js(
+            "(function() { var e = new Proxy(new Error('x'), { get: function() { throw 'no name'; } }); " +
+                "var o = { good: 'fine' }; " +
+                "Object.defineProperty(o, 'bad', { enumerable: true, get: function() { throw e; } }); " +
+                "return o; })()"
+        )
+
+        val counted = ObjectSizeEstimatorImpl().estimateCounted(obj)
+
+        counted.bytes shouldBe (16L + 2 * 8L) + 32L + 56L
+        counted.failures shouldBe 1
+        counted.failureClass shouldBe "Throwable"
+    }
 })
