@@ -43,6 +43,21 @@
 - `monko/core`: repeated `filter()` calls in `find { }` combine with AND (one flat `$and`, in call order). Before, a
   second call replaced the first, so code that relied on that now gets fewer results. A single call is sent unchanged;
   `sort`, `limit` and `skip` still keep the last value (ULTRA-00361).
+- `ultra/cache`: the default `ObjectSizeEstimator` estimates instead of walking everything, so estimates change for
+  large values. A collection, map, array or JS object of more than 64 elements is sampled at up to 64 fixed positions
+  (golden ratio by default; without index access over the first 1 024 elements) and the rest charged by the samples'
+  average; at most 10 000 objects are visited, breadth first, any further one charged flat (32 bytes). Sampling errs
+  either way and its errors multiply per nested level; with the default estimator `maxMemoryUsage` is not a memory
+  bound for data an attacker shapes. The docs list which way each estimate errs and how to plug in your own.
+  `EstimatorConfig` gains `sampleSize`, `sampleWindow`, `maxObjects` and `samplePick` (`SamplePick.GoldenRatio` /
+  `EvenlySpaced`): source compatible, binary incompatible for its constructor and `copy` (ULTRA-00159).
+- `ultra/cache`, behaviour change: an entry whose own size exceeds `maxMemorySize` is evicted alone at the next pass
+  and never counted; the other entries stay (as in Caffeine). It used to evict every older entry first, then itself.
+  A read does not spare it, only a newer pending write, which is sized anew. Such a value is never cached, also a small
+  one whose estimate is inflated (ULTRA-00159).
+- `ultra/cache`, behaviour change on JS: every number is charged 8 bytes (was 1); an `ArrayBuffer`, typed array or
+  `DataView` an array header plus its byte length, a `Blob` an object header plus its size; a JS `Map` or `Set` an
+  empty object (ULTRA-00159).
 
 ### Performance
 
@@ -55,6 +70,9 @@
   info names the class where the override lambda was written (without the per-run `$$Lambda...` suffix) instead of the
   useless `ServiceProviderFactory.<init>`. `create` with one override from 1.3 us and 1.7 KB to 0.12 us and 1.0 KB
   (ULTRA-00353).
+- `ultra/cache`: the default `ObjectSizeEstimator` has a bounded cost (an identity set instead of a linear scan, plus
+  the sampling and the cap above). One estimate of 10 000 strings: JVM 17 ms to 0.03 ms, JS 450 ms to 0.2 ms, native
+  3.7 s to 0.7 ms (ULTRA-00159).
 
 ### Fixes
 
@@ -81,12 +99,29 @@
 - `ultra/maths`: `Ease.In.elastic` returns the standard curve (it was NaN for most inputs), and `Ease.In.bounce` runs
   from 0 to 1 (it ran from 1 to 0) (ULTRA-00358).
 - `funktor-demo`: the sdkgen-app dev server moves from 36591 (b2b-app's port) to 36593 with `strictPort` (ULTRA-00360).
+- `ultra/cache`: `ObjectSizeEstimator` is a `fun interface`, so a lambda works: `maxMemoryUsage(bytes) { obj -> ... }`.
+  `ObjectSizeEstimator()` and `ObjectSizeEstimator(config)` still give the default estimator (ULTRA-00159).
+- `ultra/cache`: a size estimator throwing for a new entry charges a fallback (new `maxMemoryUsage(maxMemorySize,
+  estimator, fallbackSize)`, default 1 024 bytes; zero or below counts as the default) instead of 0; an existing entry
+  keeps its previous size. Entry sizes and the total saturate at `Long.MAX_VALUE` and are never negative; a collection,
+  map or array whose size is no count (negative, or on JS no number) is charged flat and counted as a failure. The
+  default estimator never throws: a part it cannot walk is charged flat and counted in the loop's failure line
+  ("size estimate (part charged flat)") (ULTRA-00159).
+- `ultra/cache`: `maxMemoryUsage` estimates an entry when it is written; reads reuse that size (a value changed in
+  place keeps its old size) and still count as an access (ULTRA-00159).
+- `ultra/cache` on JS: a size estimator, behaviour, eviction listener or refresh loader throwing a value that is no
+  Error (`throw 'x'`), or a Proxy whose type checks throw, no longer ends the processing loop; it is counted as a
+  failure. A getter that throws, or a Proxy that refuses to be inspected, is charged flat and counted. An own property
+  holding a function counts its reference. A forged `byteLength` or `Blob` size saturates (ULTRA-00159).
 
 ### Docs
 
 - Every library's docs pages, LLM files and READMEs checked against the code, except datetime (after ULTRA-00343):
   dozens of examples that did not compile or threw, wrong behaviour claims and dead links fixed. The streams artifact
   is `io.peekandpoke.ultra:stream`; the docs named `streams` (ULTRA-00338, ULTRA-00356).
+- `ultra/cache`: the eviction and refresh pages and the LLM mirror describe the estimator (what it counts, which way
+  it errs per platform, its cost, the over-budget rule), how to build and plug in your own, the monotonic clock, the
+  TTL fallbacks and the refresh semantics (ULTRA-00326).
 
 ### Build
 
