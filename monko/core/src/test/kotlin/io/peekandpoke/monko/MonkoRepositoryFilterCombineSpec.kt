@@ -68,12 +68,18 @@ class MonkoRepositoryFilterCombineSpec : FreeSpec() {
         "the order of the filter() calls does not change the result" {
             val repo = seeded()
 
-            val found = repo.find {
+            val colorFirst = repo.find {
+                filter(eq("color", "blue"))
+                filter(eq("size", 9))
+            }.toList()
+
+            val sizeFirst = repo.find {
                 filter(eq("size", 9))
                 filter(eq("color", "blue"))
             }.toList()
 
-            found.map { it._key } shouldContainExactlyInAnyOrder listOf("blue-big")
+            colorFirst.map { it._key } shouldContainExactlyInAnyOrder listOf("blue-big")
+            sizeFirst.map { it._key } shouldContainExactlyInAnyOrder listOf("blue-big")
         }
 
         "a single filter() call still filters on its own" {

@@ -1,6 +1,6 @@
 # ULTRA-00361: Monko: repeated filter() calls combine with AND
 
-> **Status (2026-11-26): IN PROGRESS.** Implemented and mutation-checked; review gate next.
+> **Status (2026-11-26): DONE.** Gate PASS in round 1 (one MINOR, fixed); committed on master.
 
 **Security-critical:** no (query building: mutation-checked per the testing rule)
 
@@ -53,10 +53,27 @@ Settled with the maintainer on 2026-11-26 ("Plan ok, please proceed"):
 
 ## Review record (LEDGER)
 
+Round 1, standard gate, three charters (implementation and code style, domain, security) in one pass, rung 1
+reviewer-opus-high (Opus high while the Fable credits are out).
+
 | Round | Sev | `path:line` | Claim | Disposition | Reason |
 |---|---|---|---|---|---|
+| 1 | MINOR | `MonkoRepositoryFilterCombineSpec.kt:68` | "order does not change the result" ran one order only | fix | Verified: one order, other conditions. Now runs the same two conditions both ways; M1 (last wins) re-run, still 5 RED |
+
+Probed and CLEAN (reviewer): empty, single and multi filter derivation; one filter snapshot shared by `applyTo`,
+`printQuery` and the `fullCount` `countDocuments`; `applyTo`'s `filter(it)` resolves to `FindFlow.filter`; every
+Monko `find { }` caller in funktor, the demo and tests calls `filter()` at most once (query text unchanged);
+`$text`, `$where`, `$expr`, `$comment` are valid inside `$and`; placeholders bind each element of a combined
+filter, including the ULTRA-00228 hash-keyed document; explicit imports, KDoc resolves; docs match behaviour.
+
+**Verdict:** gate PASS in round 1, no blocking items.
+
+DOCS follow-up: none needed; the docs page and the LLM mirror changed in this ticket.
 
 ## History
 
 - 2026-11-26: created.
 - 2026-11-26: implemented on master (sequential, main checkout); RED, green and four mutants recorded above.
+- 2026-11-26: gate PASS in round 1; the MINOR fixed (both orders tested), monko 275 tests 0 failures from XML.
+  CHANGELOG under Breaking. DONE.
+- 2026-11-26: DONE.

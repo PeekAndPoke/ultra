@@ -40,6 +40,9 @@
   [0, 1] and `tailCut` is removed. `lambda` had no effect before (it cancelled out); the default `ln(1000)` keeps the
   default curve, but a caller that passed `lambda` now gets a different curve. NaN or infinite `lambda` throws
   `IllegalArgumentException` (ULTRA-00358).
+- `monko/core`: repeated `filter()` calls in `find { }` combine with AND (one flat `$and`, in call order). Before, a
+  second call replaced the first, so code that relied on that now gets fewer results. A single call is sent unchanged;
+  `sort`, `limit` and `skip` still keep the last value (ULTRA-00361).
 
 ### Performance
 
