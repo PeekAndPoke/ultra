@@ -58,8 +58,18 @@ val computed = cache.getOrPut("key") { expensiveComputation() }
 
 Evicts entries not read or written within a TTL window. Timer resets on every access.
 
-The TTL counts from the loop pass that sees the access, so an entry can be served up to its TTL plus two loop periods.
-TTLs run on a monotonic clock, not the system time.
+A TTL counts from the loop pass that sees the access (for `expireAfterWrite` and the refresh's `hardTtl`: the write),
+so an entry can be served up to its TTL plus two loop periods.
+TTLs run on a monotonic clock, not the system time (suspended time may not count); `Builder.timeSource(...)` swaps it
+for tests. Odd values never throw: a zero or negative TTL expires at the next pass, below 1 ms counts as 1 ms,
+`Duration.INFINITE` never expires; a loop delay below 1 ms runs as 1 ms. `maxEntries` or `maxMemoryUsage` below 1
+throws `IllegalArgumentException` when the builder adds the behaviour.
+
+```kotlin
+val cache = fastCache<String, String>(loopDelay = 10.milliseconds) {  // default 50 ms
+    expireAfterAccess(1.seconds)
+}
+```
 
 ```kotlin
 val cache = fastCache<String, String> {
@@ -70,7 +80,7 @@ val cache = fastCache<String, String> {
 ### Expire After Write (TTL)
 
 Evicts entries not written within a TTL window. Reads do NOT reset the timer; a write (`put`, `getOrPut` on a miss, a stored
-refresh result) does.
+refresh result) does. A key read in every pass still expires on time: only a pending write spares it.
 
 ```kotlin
 val cache = fastCache<String, String> {
@@ -94,22 +104,101 @@ val cache = fastCache<String, String> {
 
 ### Max Memory Usage
 
-Caps estimated memory. Uses `ObjectSizeEstimator` to recursively measure object graphs.
+Caps the sum of the estimated sizes of keys and values; over budget, least recently accessed entries go first.
 
 ```kotlin
 val cache = fastCache<String, MyData> {
-    maxMemoryUsage(
-        maxMemorySize = 50L * 1024 * 1024,
-        estimator = ObjectSizeEstimator(),
-    )
+    maxMemoryUsage(50L * 1024 * 1024)  // default estimator: ObjectSizeEstimator()
 }
 ```
 
-The estimate is a pressure signal, not a bound, and its error differs per platform: native has no reflection and
-charges any object other than a string, array, collection or map a flat 32 bytes; JS charges every number 1 byte; the
-JVM under-counts maps several-fold and charges types whose fields JPMS keeps closed (`Instant`, `UUID`, `BigDecimal`)
-16 bytes. `ObjectSizeEstimator` is an interface (`estimate(obj: Any?): Long`); pass your own where the number has to
-mean something.
+- Sized on writes only: the estimator runs once for the key and once for the value, on the maintenance loop, outside
+  the cache's lock, once per written key and pass. Reads reuse the size; a value changed in place keeps its old size.
+- An entry whose own size exceeds `maxMemorySize` is evicted alone at the next pass and never counted; the others
+  stay. A read does not spare it, only a newer pending write (sized anew). Such a value is never cached, also a small
+  one whose estimate is inflated.
+- Soft bound like `maxEntries`; sizes saturate at `Long.MAX_VALUE`, never negative.
+
+#### The default estimator
+
+Counts primitives by size; a string as header + reference + array header + 2 B per char; arrays as header +
+elements; a collection as header + one reference per element (a map two) + the elements; any other object as header +
+one reference per field + the fields (JVM: reflection, JS: own properties, native: a flat 32 B). An object reached
+twice in one estimate counts once, except (errs high): past the cap an object not walked before is charged flat each
+time, and strings and primitive arrays after the first `maxObjects` skip the identity check. Bounded cost, configured
+by `EstimatorConfig`:
+
+- Breadth first, at most `maxObjects` (10 000) objects visited; strings and primitive arrays are sized from their
+  length and do not count. Past the cap an object is charged 32 B (header + two references), unvisited.
+- More than `sampleSize` (64) elements or fields: up to 64 fixed positions (`SamplePick.GoldenRatio` by default,
+  `EvenlySpaced` the alternative), the rest charged by their average. Without index access (set, linked list, map):
+  over the first `sampleWindow` (1 024) elements only. Deterministic.
+- Never throws: a part whose walk fails is charged flat and counted in the loop's failure line
+  `FastCache size estimate (part charged flat) failed N time(s): <class>`.
+- Work: at most 10 000 visits, each handing on at most 64 elements (a map 64 keys and 64 values), at most 1 024
+  iterator steps per collection. JVM: 10 000 strings 0.03 ms, a million strings in nested lists 15 to 35 ms. Not in
+  that bound: listing a JS object's own properties, a linear `size` (concurrent queue), hash tables iterated over
+  their empty slots (a once huge `HashMap`), user code in `size`/`get`/`iterator`/getters (lazy ORM collections).
+
+It is an estimate. Which way it errs:
+
+| Where          | Errs       | Why                                                                                          |
+|----------------|------------|----------------------------------------------------------------------------------------------|
+| Sampling       | either way | a sample counts about n/64 times; nested sampled levels multiply (3 levels of 1 000: up to about 3 800x); sets, maps, linked lists unseen past 1 024 |
+| Shared objects | high       | reached via sampled elements, counted with their weight (7.6x measured); may count again past the cap or after the first 10 000 strings and primitive arrays; key, value and other entries sized separately |
+| Cap            | low        | objects past it are 32 B whatever they hold (150 000 objects: 0.63); a cut empty collection up to 16 B high |
+| Reachability   | high       | everything reachable counts, up to the cap (a service reference, a coroutine `Job`)          |
+| JVM            | low        | map entry about 48 B real, 16 charged; boxed elements raw size; JPMS-closed types (`Instant`, `UUID`, `BigDecimal`) an empty object |
+| JVM            | high       | assumes 8 B references, 16 B headers (HotSpot compressed: 4 and 12), 2 B per char (Latin-1: 1) |
+| JS             | mixed      | every number 8 B; equal strings once; a JS `Map`/`Set` an empty object; `ArrayBuffer`, typed array, `DataView`: array header + `byteLength`; `Blob`: object header + `size`; getters and `Proxy` traps run |
+| Native         | either way | any object other than string, array, collection, map: a flat 32 B                           |
+| Writes only    | either way | a value changed in place keeps its old size                                                  |
+
+**With the default estimator `maxMemoryUsage` is not a memory bound for data an attacker shapes**: fixed sample
+positions can be steered far too high (above the whole budget never cached; below it cached, crowding out other
+entries) or far too low (large elements off the samples, or past a set's first 1 024).
+
+#### Your own estimator
+
+`fun interface ObjectSizeEstimator { fun estimate(obj: Any?): Long }`. For untrusted data: a size the app already
+knows (payload length, serialized byte count) plus `maxEntries`.
+
+```kotlin
+class Rendered(val html: String, val byteCount: Int)
+
+val cache = fastCache<String, Rendered> {
+    maxEntries(10_000)
+    maxMemoryUsage(64L * 1024 * 1024) { obj ->
+        when (obj) {
+            is Rendered -> 64L + obj.byteCount   // value: a known size
+            is String -> 40L + 2L * obj.length   // key
+            else -> 0L                           // null
+        }
+    }
+}
+```
+
+Contract: called separately for key and value, each `Any?` (handle `null`); on writes only (and a read of an entry not
+sized yet); on the maintenance loop, so keep it cheap; thread-safe if shared by several caches. It may throw: counted
+in the failure line, a new entry is charged `fallbackSize` (default 1 024; zero or below counts as the default), an
+existing one keeps its size. A negative result counts as 0.
+
+Also: `maxMemoryUsage(bytes, estimator, fallbackSize)`, `addBehaviour(FastCache.MaxMemoryUsageBehaviour(bytes,
+estimator, fallbackSize))`. No (key, value) weigher; `ObjectSizeEstimatorImpl` is final; a lambda delegating to it
+loses the per-part failure count.
+
+Tune the default (more samples, a larger cap: more accuracy, more time; below 1 counts as 1, a window below the
+sample size as the sample size):
+
+```kotlin
+val estimator = ObjectSizeEstimator(
+    ObjectSizeEstimatorImpl.EstimatorConfig(
+        objectHeader = 16L, arrayHeader = 24L, pointerSize = 8L,  // defaults
+        sampleSize = 64, sampleWindow = 1_024, maxObjects = 10_000,
+        samplePick = ObjectSizeEstimatorImpl.SamplePick.GoldenRatio,
+    )
+)
+```
 
 ### Combining Behaviours
 
@@ -139,10 +228,17 @@ Features:
 - **Deduplication**: no second refresh for a key while one is in flight, unless the key is written meanwhile: the write
   frees it, so a later refresh can run beside the older one
 - **Only the value it started from**: if the entry was written, removed or evicted while the loader ran, the result is
-  dropped without notice; the compare is by identity, so writing back the same instance still lets the refresh replace it
+  dropped without notice; the compare is by identity, so writing back the same instance still lets the refresh replace
+  it (readers get the loaded value until the next write or refresh); for booleans, enums, small boxed numbers,
+  interned strings and JS primitives any equal value counts as the same instance
 - **Counts as a put**: the result is an access for `expireAfterAccess` and the LRU order, and a put in the statistics
-- **Hard TTL**: optional `hardTtl` parameter evicts entries past a hard deadline
-- **Error retry**: a failed load keeps the stale value and retries on the next loop iteration (~50ms)
+  (an open question, may change)
+- **Hard TTL**: optional `hardTtl` evicts entries past a hard deadline, also a key read in every pass; a zero or
+  negative `ttl`, or a `hardTtl` not above `ttl`, expires entries unrefreshed
+- **Error retry**: a failed load keeps the stale value and retries every loop pass (~50ms) until it succeeds or the
+  entry is gone (hard TTL, another behaviour's eviction, `remove()`); failures print as
+  `FastCache refresh failed N time(s): <class>`; a `CancellationException` (also `withTimeout`'s) is retried but not
+  counted
 - **Scope integration**: refresh coroutines run in the cache's `CoroutineScope`
 
 ```kotlin

@@ -1,6 +1,7 @@
 # ULTRA-00159: ultra/cache: scan findings
 
-> **Status (2026-07-30): PAUSED.** SCAN IN PROGRESS — 2026-07-30
+> **Status (2026-11-26): IN PROGRESS.** Estimator review round 3 fixes built on `wt/cache-log`; awaiting
+> the review gate.
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -830,11 +831,340 @@ thread is preempted right after the launch.
 Evidence (`--rerun`): cache jvm **201** / js **169** / native **168**, slumber **1249** / vault **287**;
 0 failures, 0 skipped.
 
+### Estimator batch (maintainer decision 3) — 2026-11-14
+
+The maintainer: "yes go for the constant time lookups please. It is called FastCache, so speed is its
+selling point. And eventual accuracy tradeoffs will be documented." Sampling spread over the
+collection, deterministically (his idea of "64 random entries", made reproducible).
+
+| Item | What | Evidence |
+|---|---|---|
+| Identity set | expect/actual `IdentitySet`: JVM `IdentityHashMap`, JS `Set`, native `identityHashCode` + `===`; never calls `hashCode()`/`equals()` of a visited object | cycle tests (data classes, list, map containing itself, a cycle through a list) green; mutant "equality set" (JVM) → the hostile-`hashCode` test and "two equal but distinct objects are both counted" red |
+| Sampling | more than 64 elements: 64 at evenly spaced indexes (lists with `RandomAccess`, arrays), else one stepping pass over the first 1 024 elements (`sampleWindow`) with the same evenly spaced targets; the rest charged by the samples' average (weights); no `Random` | stepping cost measured (JVM): 100 000 elements 2-5 ms, 1 000 000 10-15 ms, so the pass is capped at the window. Mutants: indexed sample = first 64 → front and back tests red; stepping = first 64 → the set test red. Building the set test found a defect of the first version: a fixed step of window / 64 rounded down left the window's tail unsampled (fixed: evenly spaced targets) |
+| Cap | at most 10 000 objects visited (`maxObjects`), each further one charged flat (header and two references), no descent | exact pinned value with `maxObjects = 100`; mutant "no cap" → red |
+| Never throws | iterative walk with an explicit stack; field/property reads guarded (`UnreadableField`, charged flat); a last-resort catch charges a failed walk flat | 100 000-deep nesting green on JVM, JS and native (red before on the JVM: stack overflow) - **corrected in estimator review round 1:** that test asserted only `> 0`, which a recursive walk with the catch also passes; it now pins the exact value; JS getter that throws: exact value pinned; mutant (no guard) → red |
+| Writes only | `maxMemoryUsage` sizes an entry from the batch's last write; reads reuse the size and still stamp the access time | estimator called twice (key and value) for one put and ten reads; mutant "estimate on reads" → red. Access order: a read entry outlives an older unread one; mutant "reads keep the old stamp" → red (a first version of that test survived: equal stamps within one pass tie, and a re-insert moves the entry behind its peers anyway; fixed by separate passes). A value mutated in place after its put keeps its old size (documented) |
+| Fallback | a new entry whose estimate throws is charged `fallbackSize` (default `DEFAULT_FALLBACK_SIZE` = 1 024), never 0; an existing entry keeps its size | an estimator failing for everything still lets `maxMemoryUsage` evict (2 of 5 kept at a budget of 2.5 fallbacks); mutant "fallback 0" → red |
+| JS numbers | all numbers 8 B (the `Double` check first; on JS every number matches it) | JS test; mutant "`Byte` first" → red |
+| KDoc | what is counted, the bounded cost and its accuracy with measured examples, per platform, measured runtime, an own estimator | - |
+
+Accuracy, estimate / old exact walk (JVM): strings 10k 1.00; 1 000 maps of 10 entries 1.00; map of 5 000
+0.97; 6 400 strings with 10 % large at the front 1.07, at the back 0.95, **every tenth 7.8** (the evenly
+spaced indexes - every 100th - align with the period and see only large ones); one object shared by all
+6 400 elements **7.6**; a 29 524-node data-class tree beyond the cap **0.51**; a set of 5 000 whose large
+elements are its last 500, beyond the window, **0.24**.
+
+**For the maintainer:** a deterministic low-discrepancy pick (the golden-ratio sequence,
+`frac(i * 0.618 + 0.5) * size`) instead of the stride would hit 9 of 64 large elements in the every-tenth
+case (true share 10 %) instead of 64 of 64, with front and back unchanged (6/64 each) - a one-line change,
+not made because the brief specified the stride.
+
+Timings, one estimate, before → after: JVM strings 1k 0.22 → 0.14 ms, 10k 17 → 0.08 ms, 100k 1 540 →
+0.09 ms, response-shaped 70 → 1.9 ms; JS strings 10k 450 → 0.2 ms, response 537 → 3.4 ms; native
+strings 10k 3 690 → 0.7 ms, response 16 300 → 3.9 ms.
+
+API: `EstimatorConfig` gains `sampleSize`, `sampleWindow`, `maxObjects` (defaults): source compatible,
+**binary incompatible** for its constructor and `copy` (`component1-3` unchanged).
+`MaxMemoryUsageBehaviour` gains `fallbackSize` (new primary constructor; the old two-parameter one is
+kept, so old calls stay source and binary compatible) and `DEFAULT_FALLBACK_SIZE`. New builder overload
+`maxMemoryUsage(maxMemorySize, estimator, fallbackSize)`; the old one is unchanged.
+`ObjectSizeEstimatorPlatform.getFieldsOf` (public) may now return an internal marker object in its list
+for a field it could not read.
+
+Initialization order: no field in `FastCache` after the `init` block that launches the loop (checked);
+the estimator's state (identity set, stack) is local to each `estimate()` call; `fallbackSize` is a
+constructor value of the behaviour, fixed before the cache is built.
+
+Evidence: `--rerun` cache jvm **212** / js **182** / native **179**, slumber **1249** / vault **287**, 0 failures; cache JVM suite under CPU load (load average 10-19): **10 runs, 0 failures**. Commits 6ef83702 (estimator), cde01a7d (maxMemoryUsage).
+
+### Sampling pick (maintainer decision, 2026-11-14) — "try the golden-ratio ... Then close this topic"
+
+`EstimatorConfig.samplePick: SamplePick` (`GoldenRatio`, `EvenlySpaced`); both sampling paths honour
+it, both deterministic. Golden-ratio positions `frac(i * 0.618... + 0.5) * size`, de-duplicated and
+sorted, clamped below `size`; pinned for sizes 6 400, 1 000 003, `Int.MAX_VALUE` and 65 (55 distinct)
+and identical on JVM, JS and native (the same test passes on all three). `First` left out: it saves
+nothing over the window and nobody would choose it.
+
+Reference cases (JVM), estimate / exact walk:
+
+| Layout (6 400 elements unless noted) | GoldenRatio | EvenlySpaced |
+|---|---|---|
+| uniform (all 100 chars) | 1.00 | 1.00 |
+| 10 % large at the front | 0.95 | 1.07 |
+| 10 % large at the back | 0.95 | 0.95 |
+| every 10th large | 1.31 | 7.77 |
+| every 7th large | 0.90 | 1.08 |
+| every 64th large | 1.32 | 1.97 |
+| every 100th large (the stride's worst case) | 1.13 | 24.10 |
+| large exactly on the 64 golden positions (golden's worst case) | 24.10 | 1.13 |
+| `Holder(shared, id)`, one 10 000-char string shared by all (a bare list of references to it: 28.9) | 7.58 | 7.58 |
+| set of 1 000, large in the last 100 | 0.95 | 0.95 |
+| map of 5 000 entries | 0.97 | 0.97 |
+
+**Default: GoldenRatio** - at least as good on the non-periodic cases and clearly better on the periodic
+ones; its own worst case needs a layout that matches its irrational positions, the stride's worst case
+is any period dividing the stride.
+
+Mutants: default back to EvenlySpaced → the periodic test red; the pick ignored in the indexed path →
+the EvenlySpaced test red; ignored in the stepping pass → survived at first (no test covered that path
+with EvenlySpaced), a set test added → red.
+
+Decided by the rules, without asking: `First` omitted; the clamp `size - 1` kept although the
+arithmetic stays below `size` up to `Int.MAX_VALUE` (pinned); de-duplication makes the sample smaller
+just above 64 elements (65 → 55 distinct), each then weighs size / distinct.
+
+Evidence: `--rerun` cache jvm **217** / js **187** / native **184**, slumber **1249** / vault **287**, 0 failures; cache JVM suite under CPU load (load average 16-22): **10 runs, 0 failures**.
+
+### Estimator review round 1 — 2026-11-14
+
+Both passes NOT CLEAN, on the same MAJOR (beyond the cap everything was charged 32 B × weight), plus 13
+MINORs. Every scenario was first written as a test and run on the code as it stood; "did not survive"
+means that test was green before any change (it stays, as a guard against the named mutant). Fixes:
+d4379b22 (MAJOR), 7c379495 (MINORs and texts).
+
+**MAJOR — fixed in two of the three planned steps** (d4379b22). Estimate / exact walk (JVM probe):
+
+| Value | before | step 1: leaves before the cap | step 2: + breadth first |
+|---|---|---|---|
+| a: 100 × 100 × 100 strings (74 MB) | 0.04 | 1.00 | 1.00 |
+| b: `Holder(blob 50 MB, 200 × 200 cells)`, blob first | 0.09 | 1.00 | 1.00 |
+| b: the same, table first | 0.98 | 1.00 | 1.00 |
+| `Doc(raw 10 MB, tree of 9 841 nodes)` | 0.05 | 1.00 | 1.00 |
+| 100 orders × 100 lines × 5 objects | 0.50 | 1.00 | 1.00 |
+| 100 orders × 100 lines × 15 objects | 0.17 | 0.50 | **0.63** |
+| tree of 9 841 data-class nodes (29 524 objects with labels and nulls) | 0.51 | 1.00 | 1.00 |
+| strings 10k / 1 000 maps of 10 / map of 5 000 | 1.00 / 1.00 / 0.97 | same | same |
+| 6 400 strings, 10 % large: front / back / every 10th / every 100th | 0.95 / 0.95 / 1.31 / 1.13 | same | same |
+| 6 400 `Holder(shared 10k string, id)` | 7.58 | 7.58 | 7.58 |
+| set of 1 000, large in the last 100 | 0.95 | 0.95 | 0.95 |
+
+No reference case got worse. Step 3 (a cut element charged its siblings' average) not taken: scenario
+a is at 1.00; the KDoc carries scenario a as the worked example, the rule of thumb (`min(n, 64) * k`
+below `maxObjects`) and the direction: **the cap errs low**.
+
+- The cap now counts only objects queued or visited; a string or primitive array is sized from its
+  length wherever it is reached and never counts. The queue holds at most `maxObjects` entries.
+- **Found while measuring, never committed:** `total += shallowSize(...)` read `total` before
+  `shallowSize` charged the leaves it handed on, and the write dropped them (estimates 0.03-0.14).
+  Now a local first; mutant M4 below turns 16 tests red.
+- **Added, not asked for — the work bound.** With leaves no longer capped, scenario a sized 250 047
+  strings (corrected in round 3, was 262 144: 100 elements give 63 distinct positions, not 64), 67 ms
+  warm, the identity set's hashing most of it. The set now takes at most
+  `2 * maxObjects` objects; after that every object counts as new (a shared one may count again: errs
+  high). Scenario a: 16 ms warm. The work is bounded by the configuration: at most `maxObjects`
+  visits, each handing on at most `sampleSize` elements (a map twice that) or one object's fields.
+- Timings (JVM, warm): strings 10k 0.02-0.03 ms, 100k 0.1 ms, response-shaped 0.2 ms, scenario a
+  16 ms, b 1.8 ms.
+- Tests (common, all three platforms): a blob behind a table that uses up the cap, in four orders; 111
+  lists with 1 000 strings exact under a cap of 200 (HEAD: 12 392 instead of 66 656); breadth first,
+  a shallow big string beside a 1 000-deep chain, both orders; the bounded identity set, exact values.
+  All four red on HEAD. Mutants: M1 LIFO instead of FIFO → the breadth-first test; M2 leaves charged
+  flat past the cap → survived the first version of the blob test (the blob was reached before the
+  cap was full), reshaped (the blob two lists deep) → red; M3 no tracking budget → the identity test;
+  M4 the lost update → 16 tests.
+
+**MINORs**
+
+| Finding | Outcome | Test | Mutant → red |
+|---|---|---|---|
+| Per-object guard | CONFIRMED (whole estimate 32 B). Each object's walk is guarded: charged flat, what it handed on before stays. Shape chosen: internal `ObjectSizeEstimatorImpl.estimateCounted` → `CountedEstimate(bytes, failures, failureClass)`; `MaxMemoryUsageBehaviour` uses it when its estimator is an `ObjectSizeEstimatorImpl` and counts through a new `FastCache.recordFailures(kind, class, count)`; the line reads `FastCache size estimate (part charged flat) failed N time(s): <class>`. The estimator stays stateless (state lives in one call's `Walk`) | `Boom` test: 50 000 088 exact (was 32); counted test (2 failures, `IllegalStateException`); JVM loop report test | guard narrowed → 3 tests; count dropped → 2; report dropped → the loop test |
+| Outer catch | Now reachable only by a failure outside an object's walk (out of memory); kept as the last resort, counted as one failure. No test can make it red | – | – |
+| Config coercion | CONFIRMED for `sampleSize` (0 → list header only; -5 → `NegativeArraySizeException`, caught, 32 B) and `maxObjects` (0 → 32 B). The window already took `max(window, samples)` - did not survive, now one coerced field. `fallbackSize ≤ 0` CONFIRMED (charged 0). Each fallback in the KDoc | four tests | each coercion removed → its test |
+| Small branch past `size` | CONFIRMED: an iterator longer than `size` was followed to its end (10 000 of 10 000) | counting collection: 3 `next()` | bound dropped → red |
+| `size` read once | CONFIRMED: read twice | the same collection: 1 read | header from `obj.size` again → red |
+| JS own properties | CONFIRMED: all read. Sampled like a list (new internal `fieldsForWalk`; public `getFieldsOf` unchanged). A function-valued own property now counts its reference (before: left out) | 1 000 accessor properties: at most 64 reads | read whole → red |
+| JS typed arrays, `ArrayBuffer`, `DataView`, `Blob` | CONFIRMED: `ArrayBuffer` 16 B, `Uint8Array(1000)` walked as 1 000 properties. Sized from `byteLength` / `size` (new internal `leafSizeOf`); JS `Map` / `Set` charged an empty object, documented and pinned | exact values | `byteLength` ignored → red; `Blob` ignored → red |
+| JS non-Error throws | CONFIRMED: `catch (e: Throwable)` does not catch `throw 'x'` - the JS test run aborted. The property read now catches `dynamic` | exact value | back to `Throwable` → red |
+| Saturation | CONFIRMED: key + value wrapped negative (the estimate itself saturated); a negative custom estimate went into the total. Entry size and total saturate, never below 0; a removal floors at 0 (after saturation the total is no longer the exact sum - documented in the code) | `nCopies` four deep (JVM); custom extremes (common) | each of the four guards removed → red |
+| `window = size` mutant | did not survive as a defect | non-List collection of 1 000 000: at most 1 024 `next()` | `window = size` → red |
+| Last-resort catch mutant | see "Outer catch" | – | – |
+| Recursive walk mutant | did not survive: the 100 000-deep test was only `> 0` | now exact (2 400 016, `maxObjects` 200 000) | recursion → red (stack overflow caught per object, wrong value) |
+| `lastWrite as? PutAction` mutant | did not survive | `[Put k 1]`, then `[Put k 30, Read k 30]` → 30 | `action as? PutAction` → red |
+| Map values, `Array<String>`, custom `fallbackSize`, weight in the cap arm | did not survive | exact small map, sampled map ratio, exact array, fallback through constructor and builder, cap + sampling exact (40 016) | values dropped → 2; array elements dropped; fallback ignored; builder drops it; weight dropped → each red |
+| JS equal strings once, native flat object | did not survive | exact values (`nativeTest` source set new) | native fields as empty → red |
+| Cycle values | did not survive: 88 and 112 on all three platforms | pinned | identity check off → red |
+| Texts | fixed: changelog ("up to 64", golden ratio); KDoc "64 elements are"; the JVM comment; `getFieldsOf` KDoc; the `VisitedSet` follow-up (done: `IdentitySet`); "7.58" names its shape (`Holder`; a bare list of references: 28.9); the "100 000-deep green" evidence line (it proved nothing: `> 0`) | – | – |
+| Surplus | removed: the JVM `field.get` catch (`UnreadableField` is JS-only now; a failing read would land in the per-object guard); the `obj == null` arm (gone with the rewrite: null is a primitive) | – | – |
+
+**For the maintainer (left, as briefed):** an entry whose estimate exceeds the whole budget evicts every
+older entry, then itself. Sampling can inflate one entry by up to size / 64 (5 000 elements with one
+1.3 MB string in the middle → about 100 MB). (Premise corrected in round 3, finding A: the factor
+multiplies per nested sampled level, so it is not bounded by size / 64; decided as D1.) Caffeine evicts an over-weight entry on its own, without
+touching the others. Here that would be: in `MaxMemoryUsageBehaviour.handle`, an entry whose size
+exceeds `maxMemorySize` is evicted alone (spared while a write is pending, like any eviction) and never
+counted into the total - about 10 lines and two tests. The cost: such a value can never be cached, and
+with an inflated estimate that includes values that are really small.
+
+Open on JS, outside the estimator (inferred from the test above, not tested): `catch (e: Throwable)`
+lets a non-Error throw through everywhere in FastCache - a loader, a listener or a custom estimator
+throwing a string would pass the loop's catch. The estimator's own per-object guard catches
+`Throwable` too, so a Kotlin collection whose code throws a string on JS escapes the estimate.
+
+Initialization order: no new field in `FastCache`; `MaxMemoryUsageBehaviour.chargedOnFailure` is
+declared before its `init`; the estimator's coerced settings are plain constructor-time values.
+
+Evidence: `--rerun` cache jvm **238** / js **211** / native **204**, slumber **1249** / vault **287**, 0 failures;
+cache JVM suite under CPU load (load average 17-26): **10 runs, 0 failures**. All 31 mutants above
+restored (byte-compared); one first run of N18 failed to compile and showed the previous run's XML -
+the mutation script now deletes the results before each run, and N18 was redone (red).
+
+### Estimator delta round 2 — 2026-11-14 (reviewer-fable-xhigh, all charters)
+
+NOT CLEAN: 1 MAJOR, 6 MINOR. The second round without a clean one, so the coordinator asks the
+maintainer before another round; the fix is built meanwhile, not merged. Every finding was first
+written as a test and run on the code as it stood. Fix: d16021e4.
+
+**MAJOR — CONFIRMED: once the identity set was full, a back-reference walked the cycle again.** It
+sat in the part of round 1 that was added without being asked (the cap on the set). The reviewer's
+values, checked against the estimator's constants and confirmed by the red runs:
+
+| Test | right value | before the fix |
+|---|---|---|
+| parent of 80 references to one child that points back, `sampleSize = 8`, `maxObjects = 4` | 4 956 = 656 + 10 × (80 + 7 × 50) | 80 116 |
+| six nodes linked both ways, `maxObjects = 6` | 13 256 = 6 × 56 + 12 × 52 + 6 × 2 048 + 2 × 4 (the reviewer's figure; the two nulls at the ends are the 8) | 1 408 |
+| default settings: 64 parents, each with 640 children that point back | the estimate without any budget (15 515 408) | 401 896 608 |
+
+Fixed as recommended: the budget applies to leaves only. A leaf (string or primitive array) is
+tested first and tracked while fewer than `maxObjects` leaves are; a later one is sized without the
+check (a shared one may count again). Every queued object is tracked - at most `maxObjects` are ever
+queued, since the cap counts visited plus queued - so the set holds at most `2 × maxObjects`. Beyond
+the cap an object is charged flat without descent as before; it is looked up (`IdentitySet.contains`,
+new) but not added, so an object already walked is still recognised, and one charged flat before is
+charged again. Both errors from the bound now err high, as the KDoc says; no object is walked twice.
+Scenario a after the change: estimate / exact 1.00, 15 ms best of ten, 28-36 ms for a single warm
+run (JVM; the reference table is unchanged in every row). Mutants: queued objects untracked once
+the leaf budget is full (the defect) → the three tests red (54 516, 1 376, 182 575 008); no lookup
+beyond the cap → the chain test (13 288); every leaf tracked → the shared-string test; no leaf tracked
+→ three tests.
+
+**MINORs**
+
+| # | Finding | Outcome | Test | Mutant → red |
+|---|---|---|---|---|
+| 1 | `visited + queue.size` → `visited` survived | did not survive as a defect; pinned: `List(4) { List(4) { listOf("s$a$b") } }`, `maxObjects = 10` → 982 (= 48 + 4 × 48 + 5 × 78 + 11 × 32; the mutant gives 1 488, as the reviewer said) | exact value | `visited >= maxObjects` → red |
+| 2 | a throwing JS getter charged flat but not counted | CONFIRMED (failures 0). `UnreadableField` is now a class carrying the failure's name; the walk counts it | JS: two throwing getters (an `Error`, a string) → failures 2, exact bytes | count dropped → red |
+| 3a | `Object.getOwnPropertyNames` on a `Proxy` whose `ownKeys` throws `'x'` escaped `estimate()` | CONFIRMED (the JS run aborted: "the string \"no keys\" was thrown"). A new expect/actual `catchingAll(block, onFailure)` (inline; JS catches `dynamic` and wraps a non-`Error` in `ThrownValue`) guards each object's walk, each `push`, the property reads and the last resort | JS: the proxy alone (32, 1 failure, `ThrownValue`) and in a list (116: the list and `"ok"` stand) | visit guard `Throwable`-only → red |
+| 3b | `push(root)` outside the per-object guard: a revoked `Proxy` throws `TypeError` on `instanceof` | CONFIRMED through the mutant: with `push` unguarded, a revoked proxy in a list makes the whole list flat and drops the element after it (84 instead of 182); the red run before the fix aborted before this test. Now `push` is guarded: the element alone is charged flat, the elements beside it stand. The class first came out `null` (a JS error has no Kotlin class name); failure names now come from a new `failureName()` (JS: the error's own `name`): `TypeError`, as the reviewer expected | JS: revoked proxy alone (32, 1, `TypeError`) and in a list (182, not 84) | `push` unguarded → red; `name` dropped → red |
+| 3c | last-resort catch | it is no longer reachable from a value: the root goes through the guarded `push` too. Kept for the walk's own bookkeeping (out of memory); no test can make it red | - | `Throwable`-only → survived, as expected |
+| 3d | the open item: non-Error throws at FastCache's catch sites | CONFIRMED (the JS run aborted on "not an Error"). Closed with `catchingAll` at all four sites (size estimate, refresh loader, loop, eviction listener); a non-`Error` is reported as `ThrownValue` | JS spec `FastCacheNonErrorThrowSpec`: estimator (loop survives; by hand the batch goes on, fallback charged), a behaviour, two listeners (the second still runs), a loader (retried every pass, and its coroutine completes) | each site `Throwable`-only → its test red. The loader site survived the first version (its `finally` still frees the key, so retries go on); the escaped throw leaves the refresh coroutine active for good - the test now waits for the scope to hold only the loop: 4 children instead of 1 → red |
+| 4 | the work bound is not configuration-only on JS | KDoc: listing a JS object's own properties is linear in their number on each visit, and a collection's `size` can be linear (a concurrent queue) | - | - |
+| 5 | "450 ms" before-figure | corrected to 70 ms (JVM, 1 000 maps of 10 entries, the batch's measurement) | - | - |
+| 6 | `ObjectSizeEstimatorPlatform.getFieldsOf` has no caller | listed for the maintainer below; not removed | - | - |
+
+**For the maintainer:** `ObjectSizeEstimatorPlatform.getFieldsOf` (public) has no caller since the
+walk reads fields through `fieldsForWalk`. Remove it, or deprecate it first. Still open, untested:
+`NullableCache.getOrPutAsync` catches `Throwable` around the provider (`NullableCache.kt:131`), so on
+JS a provider throwing a non-`Error` would skip releasing its claim.
+
+**Stayed clean (checked again):** the queue bound (at most `maxObjects` ever queued: the cap counts
+visited plus queued); termination (every queued object is tracked, so each is visited once; a leaf
+has no descent); the leaf bounds (sized from their length, never queued); saturation (estimate and
+`MaxMemoryUsageBehaviour` sizes and total); `FastCache` bookkeeping (failure counts, fallback); the
+initialization order (no new field in `FastCache`; the estimator's new state lives in one call's
+`Walk`); the recomputed test values above.
+
+Evidence: `--rerun` cache jvm **242** / js **222** / native **208**, slumber **1249** / vault **287**,
+0 failures; cache JVM suite under CPU load (load average 10-18): **10 runs, 0 failures**. 16 mutants
+for this round (plus the loader site's second run), all restored; all red except the last-resort
+catch, which nothing can reach now.
+
+### Estimator review round 3 (2026-11-26): two reviewers, opus at max effort, full change set
+
+The maintainer asked for a stronger review to settle and merge the branch, with this framing: "The estimator is an
+estimator. If we cannot make it exact we have to write this into the docs and explain how one can build their own
+estimator." So inexactness alone is no defect; broken KDoc promises, unbounded cost and cache-level effects are.
+
+NOT CLEAN. Merged findings (implementation charter: 3 MAJOR, 7 MINOR; domain and security: 1 MAJOR, 8 MINOR):
+
+- **A, MAJOR (both):** an entry whose estimate exceeds `maxMemorySize` evicts every older entry, then itself
+  (`FastCache.kt:628-652`). Sampling makes it reachable: the factor `n / positions` multiplies per nested sampled
+  level (four nested 1 000-wide lists, 48 052 B exact, estimate 48 954 464 B). Corrects the parked note's premise
+  ("up to size / 64").
+- **B, MAJOR (impl), MINOR (domain):** a weight overflow to +Infinity gives `0 * Inf = NaN`, `roundToLong()` throws,
+  the last-resort catch charges 32 B; the KDoc promises saturation at `Long.MAX_VALUE`. Reopens three ledger entries
+  ("last-resort catch unreachable from a value"): the factual error is the NaN path.
+- **C, MAJOR (impl), MINOR (domain):** "the cap errs low" is false for cut objects smaller than 32 B (empty
+  collection 16): `List(64) { List(64) { ArrayList() } }` with `maxObjects = 100` gives 164 832 vs 99 856 exact.
+- MINORs: see the reviewers' reports, folded into the work list below.
+
+**Decided (maintainer, 2026-11-26):**
+1. Over-budget entry: evicted alone (spared while a write is pending, like any eviction), never counted into
+   `totalSize`; other entries untouched. Caffeine's rule. "yes"
+2. The cap: fix the KDoc text, not the code ("errs low for objects holding more than a header and two references;
+   up to 16 B high for a cut empty collection or one-field object"). "yes"
+3. `ObjectSizeEstimator` becomes a `fun interface`, so a lambda works. "ok"
+
+#### Round 3 fixes (2026-11-26)
+
+Every item was first written as a test and run on the code as it stood (RED runs: `allTests`, all three
+platforms, counted from the XML). A test that was green on that code is a guard; its mutant is named.
+Commits: f6fd58e4 (D1), b5f9ce9b (B, D2, D3, A docs, MINORs 1-3 and 5), 8191a844 (MINORs 4, 6, 7).
+
+| Item | Change | RED before the fix | Mutant, result |
+|---|---|---|---|
+| D1 over-budget entry | `FastCache.kt` `MaxMemoryUsageBehaviour.handle` (:555-612) and `evictAlone` (:618): an entry above `maxMemorySize` releases its old bytes, is evicted alone through `removeSilently(..., ANY_PENDING_ACTION)`, never counted; a spared one is kept in `overBudget` (:536) with its size and evicted when its pending action arrives next pass, without a new estimate; a remove or miss drops it. KDoc of the behaviour and of `Builder.maxMemoryUsage` state the rule and its cost | new `FastCacheOverBudgetEntrySpec` (7 tests): on the old code all three platforms red (JVM 5 of 7 in the second run, 6 in the first; JS and native 6): e.g. two small entries and a 500 at a budget of 100 left `[]` (all evicted), the overwritten entry left `[]`, the spared one counted 500 | no over-budget branch → 6 red; spared entry not kept aside → the spared test (estimated again on the read); old bytes not released → 2; `overBudget.remove` dropped on remove → the removal test (its stale size charged to a later read); `>` → `>=` → the exact-budget test and two existing saturation tests; `overBudget.remove` in the counted branch dropped → **survived**: output-equivalent (a counted entry's size comes from `data` first, and its removal clears the stale size), kept as bookkeeping |
+| D1 side effect | `FastCacheEvictionDeclineSpec` "maxMemoryUsage: a declined eviction does not corrupt totalSize" used one entry above a budget of 1, so by D1 it is no longer counted: reshaped to two entries of 100 at a budget of 150 (each fits), exact totals 200, then 100 | red after the D1 fix, by design | evict releasing the bytes before asking → red |
+| D1 refresh | refresh writing a value above the budget: evicted alone (in the spec above). The first version also refreshed the other keys, which made them newer than the big one at times, so the old rule passed by evicting it first (green on the JVM in the second RED run): now only that key is refreshed | see D1 | see D1 |
+| D2 cap text | `ObjectSizeEstimator.kt` KDoc "A cap" (:38-46): errs low for objects holding more than a header and two references, up to 16 B high (up to 2x) for a cut empty collection, a one-field object, a JPMS-closed type | - (text) | - |
+| D3 `fun interface` | `ObjectSizeEstimator.kt:125`; the KDoc example now passes a lambda. No clash with the companion's `invoke(cfg)`: `ObjectSizeEstimator { obj -> 1L }` and `maxMemoryUsage(100L) { obj -> ... }` resolve to the SAM, `ObjectSizeEstimator()` and `ObjectSizeEstimator(config)` give `ObjectSizeEstimatorImpl` | `ObjectSizeEstimatorImplSpec` "a lambda is an ObjectSizeEstimator ...": with `interface` the test does not compile (the lambda resolves to the companion's `invoke`: "Argument type mismatch ... EstimatorConfig was expected", and for the builder "ObjectSizeEstimator was expected") | `interface` → compile error (that run is the mutant) |
+| B NaN | `ObjectSizeEstimator.kt` `shareOf` (:468) clamps a share at `Double.MAX_VALUE` (both sampling paths, :483, :517); `run()` (:317) maps a NaN total to `Long.MAX_VALUE` (reachable only with negative header sizes: +Infinity and -Infinity summed) | `BoundsSpec`: 300 levels of `List(1_000) { if (it == 500) next else 0 }` gave 32 with 1 failure on all three platforms (now `Long.MAX_VALUE`, 0 failures); the same with distinct strings and `objectHeader = -100` gave -84 (now `Long.MAX_VALUE`, 0 failures); JVM `nCopies(Int.MAX_VALUE, x)` 42 levels added (new) | clamp removed → **survived**: the NaN guard catches what it lets through (same result); NaN guard removed → the negative-header test; both removed → the three saturation tests (JVM nCopies included) |
+| A docs | KDoc "Sampling" (:26-30): the factors `n / positions` multiply per nested sampled level, up to saturation; an entry estimated above the budget is evicted alone. The round 1 parked note now points to finding A | - | - |
+| MINOR 1 | `BoundsSpec`: `List(65) { "s" + (100 + it) }` and the same as a `LinkedHashSet`: 4 176 each (536 + 65 x 56) | green (guard) | `/ sampleSize` in the indexed path → the list test (3 664); in the stepping path → the set test |
+| MINOR 2 | `BoundsSpec` "with the default settings, parents and children ...": pins 15 515 408 instead of comparing the estimator with itself (confirmed by the run) | green (guard) | a collection charged its header only (no references) → red (the self-comparison would stay green) |
+| MINOR 3 | `ImplSpec`: the self-referential list pins 94 (32 + 62; all three platforms); the data-class cycle asserts `failures shouldBe 0` | green (guard) | queued objects not checked against the identity set → the 94 test; JVM identity set by equality → the data-class test (the hashCode recursion ends as a failure charged flat) |
+| MINOR 4 | `jsMain/CatchingAll.kt`: `asThrowable` (:15) checks `e is Throwable` inside its own try, a check that throws gives a `ThrownValue`; `failureName()` (:25) falls back to the fixed name `Throwable` | `ObjectSizeEstimatorJsSpec`, three tests, a getter throwing: a Proxy whose `getPrototypeOf` trap throws, a revoked Proxy, an Error Proxy whose `get` trap throws: each 88 instead of 120 (the whole object charged flat instead of the one property). A first version with a trap rethrowing the proxy itself escaped `estimate()` and hung the JS run (Karma disconnect); replaced by a trap throwing a string | no try around the check → the first two; no try in `failureName` → the third |
+| MINOR 5 | KDoc: "never a whole sibling subtree" corrected in the class KDoc (:38-41) and `Walk` (:285); the JS getter (:53-55); `GoldenRatio` never samples the first 0.66 % and last 1.5 % (6 400: 42 to 6 305), the middle always (:228-231); worked example 63 distinct positions, 1 + 63 + 3 969 lists, 250 047 strings (:67-69; positions and counts recomputed); work bound: hash-table iteration and user code (:64-67). The ticket's round-1 figure 262 144 corrected in place | - (text) | - |
+| MINOR 6 | `ObjectSizeEstimatorJsSpec`: `{ f: function() {}, s: 'x' }` → 82 | green (guard) | `SkippedField` not produced (the function walked) → red |
+| MINOR 7 | `ThrownValue` has no parameter at all now (`commonMain/CatchingAll.kt:10`): with only the `val` dropped, the parameter would be unused | - | - |
+
+All 18 mutants restored from `cp` backups, each byte-compared (`cmp`); 16 red, 2 survived as explained.
+
+Final run, `allTests -x generateDocs`, results deleted before the run, every XML newer than the marker:
+cache jvm **255** / js **238** / native **220**, 0 failures (round 2: 242 / 222 / 208; new: 12 common
+tests, 1 JVM, 4 JS). Dependent modules (jvmTest, XML newer than the marker): slumber **1268** / vault
+**287**, 0 failures (round 2: slumber 1249; the difference is not from this change set, which adds no slumber test).
+
+#### Round 4 (2026-11-26): review CLEAN on both charters, MINORs applied
+
+0 CRITICAL, 0 MAJOR. The coordinator's five MINORs, each applied; RED runs on 2b3c58a4 (`allTests`, all three
+platforms, from the XML). Commits: 949d5301 (items 1-3), b885baf1 (item 4), this ticket commit (item 5).
+
+| # | MINOR | Disposition | Change | RED before | Mutant, result |
+|---|---|---|---|---|---|
+| 1 | D1 as decided: only a pending WRITE spares an over-budget entry | FIXED | `FastCache.kt` `evictAlone` (:610) uses `SparedBy.PENDING_PUT` (exists: `pendingKeys[key] == true`, the write-based expiry's rule). `overBudget` and its bookkeeping deleted: a pending put always arrives next pass and is sized anew (`lastWrite` is a put), so no stored size is needed; no path found that still needs it. KDoc :157-160 and :489-492: evicted alone at the next pass, a read does not spare it, only a newer write | new test "a pending read does not spare an entry above the budget": `[a, big]` instead of `[a]` on all three platforms. The spared, removal and clear tests now spare by a pending put (green before: a pending put spared under both rules) | back to `ANY_PENDING_ACTION` → the read test red. This supersedes round 3's `overBudget` rows (its two mutants are gone with it) |
+| 2 | big-to-small overwrite of a spared over-budget entry | FIXED (test) | `FastCacheOverBudgetEntrySpec` "a spared entry above the budget, overwritten with a small value ...": budget 100, a=10, big=500 spared by a pending put of big=40: totals 10, then 50, keys `{a, big}` | green (guard) | the spared entry kept in `data` with its size, uncounted (the equivalent of `currentSize = knownSize` without `overBudget`) → this test and three more red |
+| 3 | JS: `e is CancellationException` can throw | FIXED | new internal expect/actual `isCancellation(e)` (`commonMain/CatchingAll.kt:16`; JVM and native a plain `is`; JS :37 in its own try, `false` when the check throws), used at the refresh loader (:908) and the loop (:985) | `FastCacheNonErrorThrowSpec`, two tests with a Proxy whose `getPrototypeOf` answers `Error.prototype` once and throws from then on, each in a scope with its own `CoroutineExceptionHandler` (so the old code fails fast, no Karma hang): the loop died (expiry never ran, the 5 s `eventually` failed), the loader's throw reached the scope's handler 3 times instead of 0 | JS actual without the try → both red; the loop site back to `is` → the loop test; the loader site back to `is` → the loader test |
+| 4 | negative or forged part sizes | FIXED | `ObjectSizeEstimator.kt` `Walk.charge` (:341): each part's own charge at least 0, in `push` and `visit`. The total is then never NaN (every term is at least 0, every weight finite), so the round 3 NaN guard is **removed**: unreachable, and its mutant could not die (**wrong on JS, corrected in the round 4 check below**: a size that is no number made a NaN weight); the share clamp is now what keeps a deep sampled value from failing. KDoc :57-58. JS `leafSizeOf` adds through `saturatedPlus` (`jsMain/ObjectSizeEstimatorPlatform.kt:52, :55, :64`) | `BoundsSpec`: a list of `"ok"`, a collection and a map claiming -1 000 000 000 elements gave -23 999 999 876 instead of 92 (all platforms); JS: an `ArrayBuffer` forged with `byteLength` Infinity (and 2^63) and a `Blob` with `size` Infinity gave `Long.MIN_VALUE` instead of `Long.MAX_VALUE`. The negative-header test still gives `Long.MAX_VALUE` | no clamp in `charge` → the negative-size test and the negative-header test; the JS add unsaturated → the forged test; the share clamp removed → the three saturation tests (round 3: it survived behind the NaN guard) |
+| 5 | ULTRA-00326 | DONE | "To add": the over-budget rule (never cached, inflated estimates included, only a pending write spares it), the lambda form, the estimator called once for the key and once for the value as `Any?`; "False after ULTRA-00159": JS numbers 1 byte (`eviction.astro:114`, `llms/cache.md:109`) | - | - |
+
+All 8 mutants restored from `cp` backups and byte-compared; all red.
+
+Final run on b885baf1 (`allTests -x generateDocs`, results deleted before, no stale XML): cache jvm **258** / js
+**244** / native **223**, 0 failures (round 3: 255 / 238 / 220; new: 3 common, 3 JS). Slumber **1268** / vault
+**287**, 0 failures.
+
+#### Round 4 check (2026-11-26): CLEAN, two MINORs applied
+
+0 CRITICAL, 0 MAJOR on 949d5301, b885baf1, 3f0e9229. RED run on 3f0e9229. Commit: ea95b841.
+
+| # | MINOR | Disposition | Change | RED before | Mutant, result |
+|---|---|---|---|---|---|
+| 1 | the NaN-guard removal does not hold on JS: a `Proxy` over an array passes `is Array<*>`, its `length` answers `undefined`, sampling gives a NaN share (`coerceAtMost` lets NaN through), the total NaN, `roundToLong` throws, the last resort charges 32 | CONFIRMED, FIXED | `ObjectSizeEstimator.kt` `countOf` (:479): the size of an array, collection or map must be a count (`check(size >= 0)`; for a JS `undefined` both `>=` and `<` are false), else the part fails: charged flat and counted, the rest stands. One rule for both lies, so a negative size now fails too (round 4 charged it 0): the negative-size test moves from 92 / 0 failures to 156 / 2 failures (`IllegalStateException`). `shareOf` (:493) saturates through `<=`, so a NaN share would saturate as well. KDoc :57-59, comment :316-318 | jsTest "an array proxy whose length is no number ...": `listOf("ok", p)` 32 instead of 116 (= 32 + 52 + 32, 1 failure); `listOf("x".repeat(1_000_000), p)` the same; the negative-size test 92 instead of 156 on all three platforms. A probe (not kept): a `Proxy` over an `Int8Array` with `length` undefined is charged 24, no NaN | `check` removed → both tests red; `shareOf` back to `coerceAtMost` → **survived**: `countOf` keeps a NaN share from arising (the `<=` form is kept, as asked, as the second line) |
+| 2 | KDoc: `SparedBy.PENDING_PUT`, `removeSilently` (KDoc and the comment in it) and the `FastCacheEvictionDeclineSpec` header did not name the over-budget eviction | FIXED | `FastCache.kt` :1047-1051, :1250-1251, :1270-1271; `FastCacheEvictionDeclineSpec.kt:13-15` | - (text) | - |
+
+Final run (`allTests -x generateDocs`, results deleted before, no stale XML): cache jvm **258** / js **245** / native
+**223**, 0 failures (round 4: 258 / 244 / 223; one JS test new, the negative-size test changed in place).
+
 ## Changelog text
 
-For the coordinator to put into `CHANGELOG.md`. Signature changes: only the new
-`FastCache.Builder.timeSource(TimeSource)`. Dependency change: `ultra:cache` no longer exports
-`ultra:datetime`. The behaviour changes below have **no compile signal**, so each is listed.
+For the coordinator to put into `CHANGELOG.md`. Signature changes: the new
+`FastCache.Builder.timeSource(TimeSource)`, the new overload `maxMemoryUsage(maxMemorySize, estimator,
+fallbackSize)`, `MaxMemoryUsageBehaviour.fallbackSize` and `DEFAULT_FALLBACK_SIZE`, four new `EstimatorConfig` fields
+and the enum `ObjectSizeEstimatorImpl.SamplePick` (source compatible; binary incompatible for the
+config's constructor and `copy`); `ObjectSizeEstimator` becomes a `fun interface` (source and binary
+compatible).
+Dependency change: `ultra:cache` no longer exports `ultra:datetime`. The behaviour changes below have
+**no compile signal**, so each is listed.
 
 ```
 ### ultra:cache
@@ -864,7 +1194,7 @@ For the coordinator to put into `CHANGELOG.md`. Signature changes: only the new
   reaches the scope's handler (Errors included); a CancellationException thrown by user code is
   treated as a failure. Each eviction listener runs on its own: a throwing one no longer skips the
   others. A size estimator throwing for one entry no longer leaves the memory budget off: that
-  entry counts as its previous size, 0 when new.
+  entry keeps its previous size, or is charged the fallback (default 1 024 bytes) when new - never 0.
 - Failures are counted and printed once per kind and processing pass, with the count and the
   exception's class only (no key, no message), outside the cache's lock.
 - refreshAfterWrite: a refresh replaces only the value it started from (by identity; for booleans,
@@ -884,8 +1214,48 @@ For the coordinator to put into `CHANGELOG.md`. Signature changes: only the new
   start it, and a value computed while the caller was cancelled is discarded; clear() is no longer
   undone by a running provider; a cancelled caller waiting on another caller's provider no longer
   spins.
+- The default ObjectSizeEstimator has a bounded cost: an identity set instead of a linear scan; a
+  collection, map or array (and a JS object's properties) of more than 64 elements is sampled at up
+  to 64 fixed positions, following the golden ratio by default (the same value always gets the same
+  estimate; collections without index access over their first 1 024 elements), and the rest charged
+  by the samples' average; at most 10 000 objects are visited, breadth first, any further one charged
+  flat - strings and primitive arrays are always sized from their length and do not count; the
+  identity set holds at most twice maxObjects objects (every object walked, and the first maxObjects
+  strings and primitive arrays): a string or array reached after those, or an object beyond the cap
+  reached twice, may count again - that errs high, and no object is ever walked twice. The walk is
+  iterative and never throws: an object whose walk fails is charged flat and the rest stands; sampled
+  weights past what a Double holds saturate at Long.MAX_VALUE (such an estimate was charged 32 bytes);
+  no part is charged below 0: a collection, map or array whose size is no count (negative, or on JS
+  no number) is charged flat and counted as a failure.
+  EstimatorConfig.samplePick = SamplePick.GoldenRatio by default; EvenlySpaced, a fixed stride, is
+  the alternative. Odd settings fall back (sampleSize and maxObjects below 1 count as 1, a window
+  below the sample size as the sample size). Estimates change for large values (measured accuracy and
+  limits in the KDoc). One estimate of 10 000 strings: JVM 17 ms -> 0.03 ms, JS 450 ms -> 0.2 ms,
+  native 3.7 s -> 0.7 ms. EstimatorConfig gains sampleSize, sampleWindow, maxObjects and samplePick
+  (source compatible; binary incompatible for its constructor and copy).
+- maxMemoryUsage: an entry whose own size exceeds maxMemorySize is evicted alone at the next pass and
+  never counted; the other entries stay (as in Caffeine; it used to evict every older entry first, then
+  itself). A read does not spare it, only a newer pending write, which is sized anew. Such a value is
+  never cached, also a small one whose estimate is inflated: sampling errors multiply per nested
+  sampled level.
+- ObjectSizeEstimator is a fun interface, so a lambda works: maxMemoryUsage(bytes) { obj -> ... }.
+  ObjectSizeEstimator() and ObjectSizeEstimator(config) still give the default estimator.
+- maxMemoryUsage: entry sizes and the total saturate at Long.MAX_VALUE and are never negative (a
+  huge value no longer wraps the total negative and switches eviction off); a fallbackSize of zero
+  or below counts as the default; parts of a value the default estimator could not walk are counted
+  in the loop's failure line ("size estimate (part charged flat)").
+- JS: every number is charged 8 bytes (was 1). An ArrayBuffer, a typed array or a DataView is
+  charged its byte length, a Blob its size; a JS Map or Set is charged an empty object. A getter that
+  throws, or a Proxy that refuses to be inspected, is charged flat and counted - also when it throws
+  a value that is no Error. An own property holding a function now counts its reference. A forged
+  byteLength or Blob size past what a Long holds saturates instead of wrapping negative.
+- JS: a size estimator, behaviour, eviction listener or refresh loader throwing a value that is no
+  Error (throw 'x') no longer ends the processing loop; it is counted like any failure, as
+  "ThrownValue". The same for a thrown Proxy whose type checks throw.
 - JVM ObjectSizeEstimator: field lookup memoized per class; an inner class is no longer charged its
-  outer instance. KDoc: the estimator's cost is quadratic in the objects of a value (measured).
+  outer instance.
+- maxMemoryUsage estimates an entry when it is written; reads reuse that size (a value changed in
+  place after its put keeps its old size) and still count as an access for the eviction order.
 - KDoc: Cache.getOrPut is not atomic; Cache.get returns null for a key cached as null.
 ```
 
@@ -900,10 +1270,10 @@ For the coordinator to put into `CHANGELOG.md`. Signature changes: only the new
       `NullableCache` cycles; the estimator's limits and cost, and how to plug in an own estimator.
 - [ ] ULTRA-00321: should a background refresh count as an access? (maintainer: "I guess it should
       not count as access").
-- [ ] Estimator: the plan in round 3 waits for the maintainer's confirmation.
-- [ ] `VisitedSet` is now O(n²) by identity scan. Correct, but an identity-keyed set
-      (`IdentityHashMap` / JS `Set` / native fallback) needs an expect/actual — deferred with the
-      estimator design question.
+- [x] Estimator: the plan of round 3, built (estimator batch); waits for its review gate.
+- [x] Estimator sampling: golden ratio is the default, the stride configurable (sampling pick section).
+- [x] `VisitedSet` was O(n²) by identity scan: replaced by the expect/actual `IdentitySet` in the
+      estimator batch (6ef83702).
 - [x] Deferred mechanical, because they touch code the design fixes will rewrite: statistics/`totalSize`
       memory visibility (F9), `getOrPut`'s missing `ReadAction` (F13), JVM `Class -> Field[]`
       memoization (C9), the blanket `catch (_: Throwable)` in JVM `getFieldsOf` (C6). F9, C9, C6 in
@@ -927,3 +1297,12 @@ For the coordinator to put into `CHANGELOG.md`. Signature changes: only the new
   waiting for confirmation.
 - 2026-11-14: review round 4 (delta): both passes CLEAN; the MINOR batch applied. The estimator plan
   is approved (constant-time lookups); it starts after the merge.
+- 2026-11-14: estimator review round 1: both passes NOT CLEAN (the same MAJOR, 13 MINORs). The MAJOR
+  fixed (leaves sized past the cap, breadth first, bounded identity set; d4379b22), the MINORs fixed
+  or pinned (7c379495). Awaiting the delta review.
+- 2026-11-14: estimator delta round 2 (reviewer-fable-xhigh): NOT CLEAN, 1 MAJOR (a cycle walked again
+  once the identity set was full) and 6 MINORs, all fixed or pinned (d16021e4). Second round without
+  a clean one: the coordinator asks the maintainer before the next round.
+- 2026-11-26: estimator review round 3 (two opus reviewers): NOT CLEAN; maintainer decisions D1-D3; all
+  fixes and MINORs built (Round 3 fixes). Awaiting the review gate.
+- 2026-11-26: review round 4 on the fixes: CLEAN on both charters; its five MINORs applied (Round 4).

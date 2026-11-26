@@ -1,5 +1,6 @@
 package io.peekandpoke.ultra.cache
 
+import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.EstimatorConfig
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 
@@ -22,6 +23,15 @@ actual object ObjectSizeEstimatorPlatform {
      */
     actual fun getFieldsOf(obj: Any): List<Any?>? = fieldsByClass.get(obj.javaClass).map { it.get(obj) }
 
+    internal actual fun fieldsForWalk(obj: Any): WalkFields? {
+        val fields = fieldsByClass.get(obj.javaClass)
+
+        return WalkFields(fields.size) { fields[it].get(obj) }
+    }
+
+    /** Nothing beyond the common strings and primitive arrays. */
+    internal actual fun leafSizeOf(obj: Any, cfg: EstimatorConfig): Long? = null
+
     private fun readableFieldsOf(type: Class<*>): List<Field> {
         val out = ArrayList<Field>()
         var cls: Class<*>? = type
@@ -31,8 +41,8 @@ actual object ObjectSizeEstimatorPlatform {
             for (f in cls.declaredFields) {
                 if (Modifier.isStatic(f.modifiers) || f.isOuterInstance()) continue
 
-                // Reports a JPMS refusal instead of throwing it, so nothing needs catching here or in
-                // getFieldsOf - where a blanket catch used to hide real errors as well.
+                // Reports a JPMS refusal instead of throwing it; a field it opened reads without
+                // throwing, so the reads above catch nothing.
                 if (f.trySetAccessible()) {
                     out.add(f)
                 }
