@@ -197,14 +197,23 @@ class MonkoDriver(
     }
 
     class FindQueryBuilder internal constructor() {
-        internal var filter: Bson? = null
-            private set
+        private val filters = mutableListOf<Bson>()
+
+        /** All [filter] calls as one: null without any, the filter itself for one, a flat `$and` for several. */
+        internal val filter: Bson?
+            get() = when (filters.size) {
+                0 -> null
+                1 -> filters.single()
+                else -> Filters.and(filters.toList())
+            }
+
         private var sort: Bson? = null
         private var limit: Int? = null
         private var skip: Int? = null
 
+        /** Adds a condition; repeated calls combine with AND. */
         fun filter(filter: Bson) {
-            this.filter = filter
+            filters.add(filter)
         }
 
         fun sort(sort: Bson) {

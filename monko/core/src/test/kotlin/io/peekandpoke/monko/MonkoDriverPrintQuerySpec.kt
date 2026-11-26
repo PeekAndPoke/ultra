@@ -64,6 +64,22 @@ class MonkoDriverPrintQuerySpec : FreeSpec() {
             result.vars shouldBe mapOf("p1" to 1, "p2" to 2)
         }
 
+        "two filter() calls record one \$and, with every value bound" {
+            val result = printed {
+                filter(Filters.eq("_type", "session"))
+                filter(Filters.eq("token", TOKEN))
+            }
+
+            withClue(result.query) {
+                result.query shouldNotContain TOKEN
+                BsonDocument.parse(result.query)["filter"] shouldBe BsonDocument.parse(
+                    """{"${'$'}and": [{"_type": "@p1:string"}, {"token": "@p2:string"}]}"""
+                )
+            }
+
+            result.vars shouldBe mapOf("p1" to "session", "p2" to TOKEN)
+        }
+
         "every kind of value is bound, not only strings -- a PIN is a number" {
             val id = ObjectId()
 

@@ -54,6 +54,35 @@ class MonkoDriverFindQueryBuilderSpec : FreeSpec() {
                     printed shouldContain "name"
                     printed shouldContain "age"
                 }
+
+                "a single call keeps its filter as given, without an \$and around it" {
+                    val builder = MonkoDriver.FindQueryBuilder()
+                    builder.filter(Filters.eq("name", "Alice"))
+
+                    builder.filter?.toBsonDocument() shouldBe Filters.eq("name", "Alice").toBsonDocument()
+                }
+
+                "a second call combines with the first through \$and" {
+                    val builder = MonkoDriver.FindQueryBuilder()
+                    builder.filter(Filters.eq("name", "Alice"))
+                    builder.filter(Filters.gt("age", 18))
+
+                    builder.filter?.toBsonDocument() shouldBe
+                        Filters.and(Filters.eq("name", "Alice"), Filters.gt("age", 18)).toBsonDocument()
+                }
+
+                "three calls make one flat \$and, in call order" {
+                    val builder = MonkoDriver.FindQueryBuilder()
+                    builder.filter(Filters.eq("name", "Alice"))
+                    builder.filter(Filters.gt("age", 18))
+                    builder.filter(Filters.eq("city", "Berlin"))
+
+                    builder.filter?.toBsonDocument() shouldBe Filters.and(
+                        Filters.eq("name", "Alice"),
+                        Filters.gt("age", 18),
+                        Filters.eq("city", "Berlin"),
+                    ).toBsonDocument()
+                }
             }
 
             "sort" - {

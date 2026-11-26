@@ -24,8 +24,9 @@ import {Code} from 'astro:components';
     limit(20)
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>Each of <code>filter</code>, <code>sort</code>, <code>limit</code> and <code>skip</code> sets one value: a
-        second <code>filter()</code> call replaces the first. Combine conditions with <code>and()</code>.</p>
+    <p>Repeated <code>filter()</code> calls combine with AND, so a condition can be added step by step, for example
+        inside an <code>if</code>. <code>sort</code>, <code>limit</code> and <code>skip</code> each hold one value: a
+        second call replaces the first.</p>
 
     <h2>Comparison operators</h2>
 

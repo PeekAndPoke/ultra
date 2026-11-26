@@ -264,8 +264,8 @@ val results = repo.find { r ->
 }
 ```
 
-Each of `filter`, `sort`, `limit` and `skip` sets one value: a second `filter()` call replaces the first. Combine
-conditions with `and()`.
+Repeated `filter()` calls combine with AND, so a condition can be added step by step, for example inside an `if`.
+`sort`, `limit` and `skip` each hold one value: a second call replaces the first.
 
 ## Comparison operators
 
