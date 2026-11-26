@@ -2,7 +2,6 @@ package io.peekandpoke.ultra.cache
 
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -213,27 +212,37 @@ class FastCacheEvictionDeclineSpec : StringSpec() {
 
         "maxMemoryUsage: a declined eviction does not corrupt totalSize" {
             val rig = Rig()
-            val behaviour = FastCache.MaxMemoryUsageBehaviour<String, String>(maxMemorySize = 1)
+            // every key and value costs 50: an entry 100, two of them over a budget of 150. Each entry
+            // fits on its own - one above the whole budget is evicted alone and never counted
+            val behaviour = FastCache.MaxMemoryUsageBehaviour<String, String>(
+                maxMemorySize = 150,
+                estimator = ObjectSizeEstimator { 50L },
+            )
 
             rig.cache.put("a", "1")
-            rig.drained(1)
-            rig.cache.get("a")
-
-            // handle() books the entry's size, then evictAllNecessary trips over the budget and
-            // asks - and is declined because of the pending read
-            behaviour.process(rig.cache, FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"))))
-
-            // The entry survived (declined), so its bytes are still in the cache and must still be
-            // counted. Decrementing before asking reported 0 for a cache that holds the entry.
-            rig.cache.keys.contains("a") shouldBe true
-            behaviour.totalSize shouldBeGreaterThan 0L
-
-            // After the pending read drains, the retry must evict and only THEN release the bytes
+            rig.cache.put("b", "2")
             rig.drained(2)
+            rig.cache.get("a")
+            rig.cache.get("b")
+
+            // handle() books both sizes, then evictAllNecessary trips over the budget and asks - and
+            // is declined for both because of the pending reads
+            behaviour.process(
+                rig.cache,
+                FastCache.ActionUpdates(listOf(FastCache.PutAction("a", "1"), FastCache.PutAction("b", "2"))),
+            )
+
+            // Both survived (declined), so their bytes are still in the cache and must still be
+            // counted. Decrementing before asking reported 0 for a cache that holds the entries.
+            rig.cache.keys shouldBe setOf("a", "b")
+            behaviour.totalSize shouldBe 200L
+
+            // After the pending reads drain, the retry must evict one and only THEN release its bytes
+            rig.drained(4)
             behaviour.process(rig.cache, FastCache.ActionUpdates(emptyList()))
 
-            rig.cache.keys.contains("a") shouldBe false
-            behaviour.totalSize shouldBe 0L
+            rig.cache.size shouldBe 1
+            behaviour.totalSize shouldBe 100L
         }
 
         "maxEntries: process() returns when every candidate is declined, and retries next pass" {
