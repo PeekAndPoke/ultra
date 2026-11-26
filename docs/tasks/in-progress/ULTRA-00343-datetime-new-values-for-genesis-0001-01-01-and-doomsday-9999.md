@@ -627,6 +627,31 @@ MINORs of that review (the count-1 case lists one date, not none; `numDaysInMont
   sets it today.
 - Dates BC as text: ULTRA-00347, a separate ticket in the same work package, directly after this one.
 
+## Decided (maintainer, 2026-11-26): the batch B and C plan questions
+
+Plan drafted 2026-11-26 (coordinator's planner, read on master e2196fba). The maintainer's answers, verbatim where
+quoted:
+
+- **Guiding rule (with 4 and 9):** "the behaviour must be equivalent across all types for the same operations /
+  predicates"; "Exception to the rule always makes it hard to learn things."
+1. `Partial` gets conversions that keep a null end null (`atZone`, `toInstantRange`, `asOpenRange` /
+   `asClosedRange`); no arithmetic (`plus`, `minus`, `mergeWith`, `cutAway`, `toZonedTimeRange`) on `Partial`. In B.
+2. The open and closed date `Partial`s do not query each other directly; callers convert with `asOpenRange`. "we can
+   think about adding shortcuts as extension methods" (later, not in B or C).
+3. Fix closed `intersects` on a shared boundary day ([01-01..01-05] vs [01-05..01-09] is false today). In B, RED first.
+4. `isAdjacentTo` requires both ranges valid, as slots do since 0.119.0. In C. Plus the guiding rule above.
+5. Delete the sentinels and the two-ended `hasStart` / `hasEnd` / `isOpen` / `isNotOpen` outright: "no backward compat
+   needed".
+6. `numberOfDays` is capped at `Int.MAX_VALUE`, with KDoc.
+7. `Partial.empty` equals `forever`; keep both names, say so in the KDoc.
+8. A karango e2e and a monko spec pin the documented open-range query ("range contains t"), mutation-checked, no
+   query helper. In C.
+9. `MpLocalTimeSlot.Partial` ALSO gets nullable defaults, like the other `Partial`s: "The behaviour has to match
+   across types for user comfort." Implications to be checked before building.
+10. `numberOfDays`, `numberOfNights`, `numDaysInMonth`: plain getters instead of `by lazy`. In C.
+- Also accepted (2026-11-26): `numberOfDays` on two-ended ranges becomes calendar-exact (end epoch day minus start
+  epoch day, +1 for closed ranges, 0 when invalid).
+
 ## Batch A: slots are finite (plan as built, 2026-11-14)
 
 Built on `wt/datetime`, at master `f750497f`, as confirmed with the maintainer. Batches B (queries on `Partial`) and
@@ -809,3 +834,5 @@ its own against the release. It corrects the Unreleased entries of ULTRA-00341 t
   entry "the TypeScript runtime has `MpLocalTimeSlot`" names no constant and stays).
 - Line 20 (ULTRA-00215) "by 25 h or by `Duration.INFINITE` now yields no slots" stays true.
 - 2026-11-15: IN PROGRESS.
+- 2026-11-26: batch B and C plan drafted; the maintainer answered its ten questions (section above). Next: the
+  implications of item 9 and a cross-type equivalence check, then build B and C in a fresh worktree.
