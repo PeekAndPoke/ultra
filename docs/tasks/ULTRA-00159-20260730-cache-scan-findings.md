@@ -1122,7 +1122,7 @@ All 18 mutants restored from `cp` backups, each byte-compared (`cmp`); 16 red, 2
 Final run, `allTests -x generateDocs`, results deleted before the run, every XML newer than the marker:
 cache jvm **255** / js **238** / native **220**, 0 failures (round 2: 242 / 222 / 208; new: 12 common
 tests, 1 JVM, 4 JS). Dependent modules (jvmTest, XML newer than the marker): slumber **1268** / vault
-**287**, 0 failures (slumber was 1249 before the master merge).
+**287**, 0 failures (round 2: slumber 1249; the difference is not from this change set, which adds no slumber test).
 
 ## Changelog text
 
