@@ -37,7 +37,12 @@ cache.get("session")  // resets the 5-minute timer
     <Aside>Eviction is processed in the background loop, not on the calling thread. The TTL counts from the loop pass
         that sees the access, so an entry can be served up to its TTL plus two loop periods (default: 50ms each).
         TTLs run on a monotonic clock: a change of the system time neither expires an entry early nor keeps it longer.
+        Time the machine spends suspended may not count; <code>timeSource(...)</code> in the builder swaps the clock
+        for tests.
     </Aside>
+
+    <p>Odd values never throw: a zero or negative TTL expires the entry at the next pass, a positive one below 1 ms
+        counts as 1 ms, and <code>Duration.INFINITE</code> never expires. A loop delay below 1 ms runs as 1 ms.</p>
 
     <h2>Expire after write</h2>
 
@@ -56,6 +61,9 @@ cache.get("token")  // timer keeps ticking from the original put
 
 // Only a new put resets the TTL
 cache.put("token", "xyz789")  // timer resets now`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>A key read in every pass still expires on time: only a pending write spares an entry from write-based
+        expiry.</p>
 
     <p>Use <code>expireAfterWrite</code> when the data has a known staleness window regardless of how often
         it's read — API tokens, DNS lookups, config values fetched from a remote service, exchange rates.</p>
@@ -83,38 +91,209 @@ cache.put("token", "xyz789")  // timer resets now`} lang="kotlin" theme="vitesse
 
     <h2>Max memory usage</h2>
 
-    <p>Caps the total estimated memory usage. Uses an <code>ObjectSizeEstimator</code> to recursively measure object
-        graphs. When the budget is exceeded, LRU eviction kicks in:</p>
+    <p>Caps the sum of the estimated sizes of all entries. When the budget is exceeded, the least recently accessed
+        entries are evicted first (LRU):</p>
 
-    <Code code={`import io.peekandpoke.ultra.cache.ObjectSizeEstimator
-
-val estimator = ObjectSizeEstimator()
-
-val cache = fastCache<String, MyData> {
-    maxMemoryUsage(
-        maxMemorySize = 50L * 1024 * 1024,  // 50 MB
-        estimator = estimator,
-    )
+    <Code code={`val cache = fastCache<String, MyData> {
+    maxMemoryUsage(50L * 1024 * 1024)  // 50 MB budget, default estimator
 }`} lang="kotlin" theme="vitesse-dark"/>
 
-    <p>The estimator walks the object graph recursively, accounting for:</p>
+    <p>An entry is sized when it is written: the estimator runs once for the key and once for the value, on the
+        maintenance loop. Reads reuse that size, so a value changed in place keeps the size it had at its put.</p>
+
+    <p><strong>An entry larger than the whole budget</strong> is evicted alone at the next pass and never counted; the
+        other entries stay. A read does not spare it, only a newer pending write, which is sized anew. The cost: such a
+        value is never cached, also a small one whose estimate is inflated (see sampling below).</p>
+
+    <h3>The default estimator</h3>
+
+    <p><code>ObjectSizeEstimator()</code> walks the value and counts primitives by size; a string as header,
+        reference, array header and 2 bytes per char; an array as header plus its elements; a collection as header
+        plus one reference per element (a map two), plus what the elements hold; any other object as header plus one
+        reference per field, plus what the fields hold. Fields come from reflection on the JVM and from own properties
+        on JS. Native has no reflection: any other object is charged a flat 32 bytes, whatever it holds. An object
+        reached twice within one estimate is counted once.</p>
+
+    <p>Its cost is bounded by its configuration, not by the value:</p>
 
     <ul>
-        <li>Object headers (16 bytes on 64-bit HotSpot)</li>
-        <li>Primitive fields (1–8 bytes each)</li>
-        <li>String content (header + char array)</li>
-        <li>Collections and maps (header + pointers + elements)</li>
-        <li>Nested objects (recursive traversal with cycle detection)</li>
+        <li><strong>Breadth first, with a cap.</strong> At most 10 000 objects are visited (<code>maxObjects</code>).
+            Strings and primitive arrays are sized from their length and do not count. Past the cap, any other object
+            is charged a flat header and two references (32 bytes) without looking inside.
+        </li>
+        <li><strong>Sampling.</strong> A collection, map, array or object with more than 64 elements or fields
+            (<code>sampleSize</code>) is sampled at up to 64 fixed positions, and the rest is charged by their average.
+            A collection without index access (a set, a linked list, a map) is sampled over its first 1 024 elements
+            only (<code>sampleWindow</code>). The positions follow the golden ratio by default, never random, so the
+            same value always gets the same estimate.
+        </li>
+        <li><strong>Never throws.</strong> The walk is iterative. A part whose walk fails is charged flat and counted
+            in the loop's failure line (<code>FastCache size estimate (part charged flat) failed N time(s)</code>).
+            Sizes saturate at <code>Long.MAX_VALUE</code> and are never negative.
+        </li>
     </ul>
 
-    <p>On native there is no reflection: any other object than a string, array, collection or map is charged a flat
-        32 bytes, whatever it holds.</p>
+    <p>One estimate is at most 10 000 visits, each handing on at most 64 elements (a map: 64 keys and 64 values), with
+        at most 1 024 iterator steps per collection. Measured on the JVM: 10 000 strings 0.03 ms, a million strings in
+        nested lists 15 to 35 ms. Not covered by that bound: listing a JS object's own properties, a <code>size</code>
+        that is linear (a concurrent queue), iterating a hash map or set over its empty slots (a once huge
+        <code>HashMap</code> costs its capacity), and user code in a <code>size</code>, <code>get</code>,
+        <code>iterator</code> or getter (a lazy ORM collection may load, or throw). Estimating runs outside the cache's
+        lock, once per written key and pass.</p>
 
-    <Aside>Memory estimation is exactly that, an estimate, and how far off it is depends on the platform. JS charges
-        every number 1 byte; the JVM under-counts maps several-fold and charges a type whose fields JPMS keeps closed
-        (<code>Instant</code>, <code>UUID</code>, <code>BigDecimal</code>) 16 bytes. Treat the budget as a pressure
-        signal, not a bound, or pass your own <code>ObjectSizeEstimator</code>.
+    <h3>It is an estimate</h3>
+
+    <p>Exact sizes would mean walking everything, on every write. The default trades accuracy for that bound:</p>
+
+    <div class="not-prose my-8 overflow-x-auto">
+        <table class="w-full text-sm text-left">
+            <thead>
+            <tr class="border-b border-white/10">
+                <th class="py-2 pr-4 text-white font-semibold">Where</th>
+                <th class="py-2 pr-4 text-white font-semibold">Errs</th>
+                <th class="py-2 text-white font-semibold">Why</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-400">
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">Sampling</td>
+                <td class="py-2 pr-4">either way</td>
+                <td class="py-2">Each sample counts about <code>n / 64</code> times: a large element is over-counted
+                    when sampled, missed when not. Nested sampled levels multiply (three levels of 1 000: up to about
+                    3 800 times). A set, map or linked list is not seen past its first 1 024 elements.
+                </td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">Shared objects</td>
+                <td class="py-2 pr-4">high</td>
+                <td class="py-2">Reached through sampled elements, one counts with their weight (6 400 holders of one
+                    string: 7.6 times). Key and value, and different entries, are sized separately: what they share
+                    counts in each.
+                </td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">The cap</td>
+                <td class="py-2 pr-4">low</td>
+                <td class="py-2">An object past it is charged 32 bytes, whatever it holds (100 orders of 100 lines of
+                    15 objects: 0.63). A cut empty collection or one-field object is up to 16 bytes high.
+                </td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">Reachability</td>
+                <td class="py-2 pr-4">high</td>
+                <td class="py-2">Everything reachable counts, up to the cap: a reference to a service or a coroutine
+                    <code>Job</code> is charged for all behind it.
+                </td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">JVM</td>
+                <td class="py-2 pr-4">low</td>
+                <td class="py-2">A map entry is about 48 bytes, 16 are charged; a boxed element its raw size; a type
+                    JPMS keeps closed (<code>Instant</code>, <code>UUID</code>, <code>BigDecimal</code>) an empty
+                    object.
+                </td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">JVM</td>
+                <td class="py-2 pr-4">high</td>
+                <td class="py-2">The defaults assume 8-byte references and 16-byte headers (HotSpot with compressed
+                    references: 4 and 12) and 2 bytes per char (a Latin-1 string stores 1).
+                </td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">JS</td>
+                <td class="py-2 pr-4">mixed</td>
+                <td class="py-2">Every number 8 bytes. Equal strings count once (no string identity). A JS
+                    <code>Map</code> or <code>Set</code> is charged an empty object; typed arrays and
+                    <code>ArrayBuffer</code> their byte length. Reading properties runs getters and
+                    <code>Proxy</code> traps.
+                </td>
+            </tr>
+            <tr class="border-b border-white/5">
+                <td class="py-2 pr-4">Native</td>
+                <td class="py-2 pr-4">either way</td>
+                <td class="py-2">Any object other than a string, array, collection or map: a flat 32 bytes.</td>
+            </tr>
+            <tr>
+                <td class="py-2 pr-4">Writes only</td>
+                <td class="py-2 pr-4">either way</td>
+                <td class="py-2">A value changed in place keeps its old size until it is put again.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <Aside>„It is called FastCache, not ExactCache." With the default estimator, <code>maxMemoryUsage</code> is
+        <strong>not a memory bound for data an attacker shapes</strong>: the sample positions are fixed, so a value can
+        be built to be estimated far too high (it is never cached) or far too low (large elements where no sample
+        looks, or past a set's first 1 024). Use it as a pressure signal, or bring your own estimator.
     </Aside>
+
+    <h3>Build your own estimator</h3>
+
+    <p><code>ObjectSizeEstimator</code> is a <code>fun interface</code>, so a lambda will do. For data from outside,
+        size it from what the application already knows (a payload's length, the byte count of the serialized form)
+        and cap the count with <code>maxEntries</code> as well:</p>
+
+    <Code code={`class Rendered(val html: String, val byteCount: Int)
+
+val cache = fastCache<String, Rendered> {
+    maxEntries(10_000)
+    maxMemoryUsage(64L * 1024 * 1024) { obj ->
+        when (obj) {
+            is Rendered -> 64L + obj.byteCount       // the value: a size we already know
+            is String -> 40L + 2L * obj.length       // the key
+            else -> 0L                               // null
+        }
+    }
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>The contract of <code>fun estimate(obj: Any?): Long</code>:</p>
+
+    <ul>
+        <li>It is called separately for the key and for the value, each as <code>Any?</code>, so it must handle
+            <code>null</code>. The entry's size is the sum.
+        </li>
+        <li>Only on writes (a read of an entry not sized yet is the exception), on the cache's maintenance loop,
+            outside the cache's lock. Keep it cheap: a slow estimate holds up the whole maintenance pass.
+        </li>
+        <li>Thread-safe, if one instance is shared by several caches: their loops can run at the same time.</li>
+        <li>It may throw: the failure is counted in the loop's failure line, a new entry is charged
+            <code>fallbackSize</code> (default 1 024 bytes), an existing one keeps its size. A negative result counts
+            as 0.
+        </li>
+    </ul>
+
+    <p>Other ways in: <code>maxMemoryUsage(bytes, estimator, fallbackSize)</code> sets the fallback (zero or below
+        counts as the default), and <code>addBehaviour(FastCache.MaxMemoryUsageBehaviour(bytes, estimator,
+        fallbackSize))</code> adds the behaviour directly. There is no weigher that sees key and value together, and
+        the default (<code>ObjectSizeEstimatorImpl</code>) is final; a lambda that delegates to it loses the per-part
+        failure count.</p>
+
+    <p>Or tune the default. Larger samples and a larger cap buy accuracy with time:</p>
+
+    <Code code={`import io.peekandpoke.ultra.cache.ObjectSizeEstimator
+import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.EstimatorConfig
+import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.SamplePick
+
+val estimator = ObjectSizeEstimator(
+    EstimatorConfig(
+        objectHeader = 12L,     // default 16
+        arrayHeader = 16L,      // default 24
+        pointerSize = 4L,       // default 8 (HotSpot, compressed references)
+        sampleSize = 64,        // elements sampled per collection
+        sampleWindow = 1_024,   // window for collections without index access
+        maxObjects = 10_000,    // objects visited per estimate
+        samplePick = SamplePick.GoldenRatio,  // or EvenlySpaced, a fixed stride
+    )
+)
+
+val cache = fastCache<String, MyData> {
+    maxMemoryUsage(50L * 1024 * 1024, estimator)
+}`} lang="kotlin" theme="vitesse-dark"/>
+
+    <p>Odd settings fall back: a <code>sampleSize</code> or <code>maxObjects</code> below 1 counts as 1, a
+        <code>sampleWindow</code> below the sample size as the sample size.</p>
 
     <h2>Combining behaviors</h2>
 

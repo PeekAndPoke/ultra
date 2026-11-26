@@ -68,7 +68,11 @@ cache.put("user:42", initialProfile)
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <p>Without <code>hardTtl</code>, stale entries are served indefinitely as long as a refresh is in-flight or
-        pending. With it, you get a backstop.</p>
+        pending. With it, you get a backstop, and a key read in every pass still expires on time: only a write spares
+        it.</p>
+
+    <p>Odd values fall back instead of throwing: a zero or negative <code>ttl</code> expires entries at the next pass,
+        unrefreshed, and so does a <code>hardTtl</code> that is not above <code>ttl</code>, at <code>hardTtl</code>.</p>
 
     <h2>Deduplication</h2>
 
@@ -78,17 +82,21 @@ cache.put("user:42", initialProfile)
         the write timestamp resets and the entry is fresh again.</p>
 
     <p>A refresh replaces only the value it started from. If the entry was written, removed or evicted while the
-        loader ran, the loaded value is dropped without notice. The comparison is by identity: writing back the very
-        instance the refresh started from still lets the refresh replace it.</p>
+        loader ran, the loaded value is dropped without notice. The comparison is by identity: when the application
+        writes back the very instance the refresh started from, the refresh still replaces it, and readers get the
+        loaded value until the next write or refresh. For booleans, enum constants, small boxed numbers, interned
+        strings and JS primitives, "the very instance" is any equal value.</p>
 
     <p>The stored result counts like any put: as an access for <code>expireAfterAccess</code> and the LRU order of
-        <code>maxEntries</code> and <code>maxMemoryUsage</code>, and as a put in the statistics.</p>
+        <code>maxEntries</code> and <code>maxMemoryUsage</code>, and as a put in the statistics. Whether a refresh
+        should count as an access is an open question, so this may change.</p>
 
     <h2>Error handling</h2>
 
     <p>If the loader throws, the refresh is considered failed and the stale value keeps being served. The key is
-        marked as eligible for retry on the next processing loop iteration (~50ms later). This means a transient failure (network blip, temporary
-        API error) will self-heal on the next loop cycle.</p>
+        retried on every loop pass (~50ms) until the loader succeeds or the hard TTL evicts the entry, so a transient
+        failure (network blip, temporary API error) heals on the next pass. Failures are counted and printed once per
+        pass, with the exception's class only: <code>FastCache refresh failed N time(s): IOException</code>.</p>
 
     <Code code={`var attempt = 0
 
