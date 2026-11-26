@@ -34,15 +34,18 @@ cache.get("session")  // resets the 5-minute timer
 
 // After 5 minutes of no access, the entry is evicted`} lang="kotlin" theme="vitesse-dark"/>
 
-    <Aside>Eviction is processed in the background loop, not on the calling thread. The TTL counts from the loop pass
-        that sees the access, so an entry can be served up to its TTL plus two loop periods (default: 50ms each).
+    <Aside>Eviction is processed in the background loop, not on the calling thread. A TTL counts from the loop pass
+        that sees the access (or, for <code>expireAfterWrite</code> and the refresh's <code>hardTtl</code>, the
+        write), so an entry can be served up to its TTL plus two loop periods (default: 50ms each).
         TTLs run on a monotonic clock: a change of the system time neither expires an entry early nor keeps it longer.
         Time the machine spends suspended may not count; <code>timeSource(...)</code> in the builder swaps the clock
         for tests.
     </Aside>
 
     <p>Odd values never throw: a zero or negative TTL expires the entry at the next pass, a positive one below 1 ms
-        counts as 1 ms, and <code>Duration.INFINITE</code> never expires. A loop delay below 1 ms runs as 1 ms.</p>
+        counts as 1 ms, and <code>Duration.INFINITE</code> never expires. A loop delay below 1 ms runs as 1 ms. Size
+        limits are different: <code>maxEntries</code> or <code>maxMemoryUsage</code> below 1 throws
+        <code>IllegalArgumentException</code> when the builder adds the behaviour.</p>
 
     <h2>Expire after write</h2>
 
@@ -112,7 +115,9 @@ cache.put("token", "xyz789")  // timer resets now`} lang="kotlin" theme="vitesse
         plus one reference per element (a map two), plus what the elements hold; any other object as header plus one
         reference per field, plus what the fields hold. Fields come from reflection on the JVM and from own properties
         on JS. Native has no reflection: any other object is charged a flat 32 bytes, whatever it holds. An object
-        reached twice within one estimate is counted once.</p>
+        reached twice within one estimate is counted once, with two exceptions that err high: past the cap, an object
+        not walked before is charged flat each time it is reached, and strings and primitive arrays after the first
+        10 000 are sized without the identity check.</p>
 
     <p>Its cost is bounded by its configuration, not by the value:</p>
 
@@ -167,8 +172,9 @@ cache.put("token", "xyz789")  // timer resets now`} lang="kotlin" theme="vitesse
                 <td class="py-2 pr-4">Shared objects</td>
                 <td class="py-2 pr-4">high</td>
                 <td class="py-2">Reached through sampled elements, one counts with their weight (6 400 holders of one
-                    string: 7.6 times). Key and value, and different entries, are sized separately: what they share
-                    counts in each.
+                    string: 7.6 times). Past the cap, and for strings and primitive arrays after the first 10 000, a
+                    shared one may count again. Key and value, and different entries, are sized separately: what they
+                    share counts in each.
                 </td>
             </tr>
             <tr class="border-b border-white/5">
@@ -204,8 +210,9 @@ cache.put("token", "xyz789")  // timer resets now`} lang="kotlin" theme="vitesse
                 <td class="py-2 pr-4">JS</td>
                 <td class="py-2 pr-4">mixed</td>
                 <td class="py-2">Every number 8 bytes. Equal strings count once (no string identity). A JS
-                    <code>Map</code> or <code>Set</code> is charged an empty object; typed arrays and
-                    <code>ArrayBuffer</code> their byte length. Reading properties runs getters and
+                    <code>Map</code> or <code>Set</code> is charged an empty object. An <code>ArrayBuffer</code>, a
+                    typed array or a <code>DataView</code> is an array header plus its byte length, a
+                    <code>Blob</code> an object header plus its size. Reading properties runs getters and
                     <code>Proxy</code> traps.
                 </td>
             </tr>
@@ -223,10 +230,11 @@ cache.put("token", "xyz789")  // timer resets now`} lang="kotlin" theme="vitesse
         </table>
     </div>
 
-    <Aside>„It is called FastCache, not ExactCache." With the default estimator, <code>maxMemoryUsage</code> is
-        <strong>not a memory bound for data an attacker shapes</strong>: the sample positions are fixed, so a value can
-        be built to be estimated far too high (it is never cached) or far too low (large elements where no sample
-        looks, or past a set's first 1 024). Use it as a pressure signal, or bring your own estimator.
+    <Aside>With the default estimator, <code>maxMemoryUsage</code> is <strong>not a memory bound for data an attacker
+        shapes</strong>: the sample positions are fixed, so a value can be built to be estimated far too high (above
+        the whole budget it is never cached; below it, it is cached and crowds out other entries) or far too low
+        (large elements where no sample looks, or past a set's first 1 024). Use it as a pressure signal, or bring
+        your own estimator.
     </Aside>
 
     <h3>Build your own estimator</h3>
@@ -278,9 +286,9 @@ import io.peekandpoke.ultra.cache.ObjectSizeEstimatorImpl.SamplePick
 
 val estimator = ObjectSizeEstimator(
     EstimatorConfig(
-        objectHeader = 12L,     // default 16
-        arrayHeader = 16L,      // default 24
-        pointerSize = 4L,       // default 8 (HotSpot, compressed references)
+        objectHeader = 12L,     // 12: HotSpot with compressed references; default 16
+        arrayHeader = 16L,      // 16: HotSpot with compressed references; default 24
+        pointerSize = 4L,       // 4: HotSpot with compressed references; default 8
         sampleSize = 64,        // elements sampled per collection
         sampleWindow = 1_024,   // window for collections without index access
         maxObjects = 10_000,    // objects visited per estimate

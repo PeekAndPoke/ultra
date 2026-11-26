@@ -62,6 +62,20 @@ KDoc's measured values, not re-measured.
 | tuning `EstimatorConfig` (all seven fields, `SamplePick`), odd settings | `eviction.astro:273-296` | :178-189 |
 | JS numbers 8 B (was "1 byte"); "recursively" and "is an interface" removed | `eviction.astro` table, JS row | JS row |
 
+Line numbers in the table above are as of bb3485e5. The truth review of bb3485e5 was CLEAN (0 CRITICAL, 0 MAJOR, all
+examples compile); its eight MINORs, each checked against the code, applied:
+
+| # | MINOR | Page | Mirror |
+|---|---|---|---|
+| 1 | a loader `CancellationException` (also `withTimeout`'s) is retried, not counted (`FastCache.kt:908`) | `refresh.astro:96-101` | :238-241 |
+| 2 | invented quote dropped from the attacker Aside | `eviction.astro:233-238` | - |
+| 3 | "far too high": never cached only above the whole budget; below it cached, crowding out others | `eviction.astro:235-236` | :157-159 |
+| 4 | "counted once" exceptions: past the cap charged flat each time (`ObjectSizeEstimator.kt:373`), leaves after the first `maxObjects` unchecked (:362-365); also in the "Shared objects" row | `eviction.astro:118-120`, :172-178 | :127-129, :148 |
+| 5 | JS: `ArrayBuffer`, typed array, `DataView` array header plus byte length, `Blob` object header plus size | `eviction.astro:213-215` | :153 |
+| 6 | tuning comments read the right way round | `eviction.astro:289-291` | - |
+| 7 | `Rendered` defined in the mirror's example | - | :167 |
+| 8 | `maxEntries`/`maxMemoryUsage` below 1 throw (`FastCache.kt:424, :537`); TTL plus two loop periods also for write TTL and hard TTL; loop delay snippet in the mirror; refresh retries end when the entry is gone by any eviction or `remove()` (`FastCache.kt:836-839`) | `eviction.astro:37-48`, `refresh.astro:97-99`, :114 | :61-72, :239 |
+
 Not written: the ULTRA-00159 follow-up items outside this list (`clear()` is not an eviction, `NullableCache` cycles).
 
 ## Acceptance
@@ -75,3 +89,4 @@ Not written: the ULTRA-00159 follow-up items outside this list (`clear()` is not
   settled; the new documentation it asks for is still open.
 - 2026-11-26: pages (`eviction.astro`, `refresh.astro`) and the mirror written against the code: estimator
   section, own estimator, refresh semantics, TTL fallbacks; build green. IN PROGRESS until the parallel code review settles.
+- 2026-11-26: truth review of bb3485e5 CLEAN; its eight MINORs applied to pages and mirror; build green.

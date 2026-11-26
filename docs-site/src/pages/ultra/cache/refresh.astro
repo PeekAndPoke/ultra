@@ -94,9 +94,11 @@ cache.put("user:42", initialProfile)
     <h2>Error handling</h2>
 
     <p>If the loader throws, the refresh is considered failed and the stale value keeps being served. The key is
-        retried on every loop pass (~50ms) until the loader succeeds or the hard TTL evicts the entry, so a transient
-        failure (network blip, temporary API error) heals on the next pass. Failures are counted and printed once per
-        pass, with the exception's class only: <code>FastCache refresh failed N time(s): IOException</code>.</p>
+        retried on every loop pass (~50ms) until the loader succeeds or the entry is gone (the hard TTL, another
+        behaviour's eviction, a <code>remove()</code>), so a transient failure (network blip, temporary API error)
+        heals on the next pass. Failures are counted and printed once per pass, with the exception's class only:
+        <code>FastCache refresh failed N time(s): IOException</code>. A <code>CancellationException</code> (also
+        <code>withTimeout</code>'s) is retried but not counted.</p>
 
     <Code code={`var attempt = 0
 
@@ -109,7 +111,7 @@ val cache = fastCache<String, String> {
 }`} lang="kotlin" theme="vitesse-dark"/>
 
     <Aside>There is no built-in exponential backoff. If you need it, implement it in your loader function.
-        The cache just retries on every loop iteration until the loader succeeds or the hard TTL evicts the entry.
+        The cache just retries on every loop iteration until the loader succeeds or the entry is gone.
     </Aside>
 
     <h2>Combining with other behaviours</h2>
