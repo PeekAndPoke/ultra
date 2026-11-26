@@ -188,4 +188,23 @@ class ObjectSizeEstimatorJsSpec : StringSpec({
         estimator.estimate(twoToThe63) shouldBe Long.MAX_VALUE
         estimator.estimate(js("Object.create(Blob.prototype, { size: { value: Infinity } })")) shouldBe Long.MAX_VALUE
     }
+
+    "an array proxy whose length is no number fails as that part only; the rest stands" {
+        // Array.isArray sees through the proxy, so it is walked as an array; its length is undefined
+        fun proxy(): dynamic = js("new Proxy([], { get: function() { return undefined; } })")
+
+        val withOk = ObjectSizeEstimatorImpl().estimateCounted(listOf<Any?>("ok", proxy()))
+
+        // the list (16 + 2 * 8), "ok" (52), the proxy flat (32)
+        withOk.bytes shouldBe 32L + 52L + 32L
+        withOk.failures shouldBe 1
+        withOk.failureClass shouldBe "IllegalStateException"
+
+        val withLarge = ObjectSizeEstimatorImpl().estimateCounted(listOf<Any?>("x".repeat(1_000_000), proxy()))
+
+        // the list, a string of a million chars (16 + 8 + 24 + 2 000 000), the proxy flat
+        withLarge.bytes shouldBe 32L + 2_000_048L + 32L
+        withLarge.failures shouldBe 1
+    }
+
 })

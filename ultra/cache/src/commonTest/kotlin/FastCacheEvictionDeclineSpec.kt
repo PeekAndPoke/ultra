@@ -12,7 +12,8 @@ import kotlin.time.Duration.Companion.seconds
  *
  * `removeSilently` spares a key that was touched after the batch the behaviour decided on was taken:
  * for the access-ordered behaviours (expireAfterAccess, maxEntries, maxMemoryUsage) any pending
- * action, for write-based expiry (expireAfterWrite, the refresh hard TTL) only a pending put (M1).
+ * action, for write-based expiry (expireAfterWrite, the refresh hard TTL) and for maxMemoryUsage's
+ * entry above the whole budget only a pending put (M1, ULTRA-00159 D1).
  * A spared key stays tracked and is retried next pass (F3: dropping it left the entry unwatched). A
  * key that is already gone is not "spared": the behaviour drops it and does not evict a live entry
  * in its place.

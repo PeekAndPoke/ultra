@@ -316,12 +316,13 @@ class ObjectSizeEstimatorBoundsSpec : StringSpec() {
             counted.failures shouldBe 0
         }
 
-        "a collection or a map claiming a negative size is charged nothing for itself, never a negative amount" {
+        "a collection or a map claiming a negative size fails as that part only, never a negative amount" {
             val counted = ObjectSizeEstimatorImpl().estimateCounted(listOf("ok", NegativeCollection(), NegativeMap()))
 
-            // the list (16 + 3 * 8) and "ok" (52); the two that claim -1 000 000 000 elements: 0 each
-            counted.bytes shouldBe 40L + 52L
-            counted.failures shouldBe 0
+            // the list (16 + 3 * 8) and "ok" (52); the two that claim -1 000 000 000 elements flat (32)
+            counted.bytes shouldBe 40L + 52L + 2 * 32L
+            counted.failures shouldBe 2
+            counted.failureClass shouldBe "IllegalStateException"
         }
 
         "sampling: large elements at the back of a list are seen" {

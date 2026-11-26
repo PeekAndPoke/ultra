@@ -54,8 +54,9 @@ import kotlin.math.roundToLong
  *   estimate stands; a JS property whose getter throws is charged flat by itself, its object
  *   walked. [FastCache.MaxMemoryUsageBehaviour] reports how many in the loop's failure line. An
  *   estimate never throws - on JS not even for a thrown value that is no `Error`, or a `Proxy` that
- *   refuses to be inspected - and saturates at `Long.MAX_VALUE`. No part is charged below 0, not
- *   even a collection claiming a negative size.
+ *   refuses to be inspected - and saturates at `Long.MAX_VALUE`. No part is charged below 0: a
+ *   collection, map or array whose size is no count (negative, or on JS no number at all: a `Proxy`
+ *   answering `length`) fails, charged flat and counted.
  * - **Odd settings fall back, never throw:** a `sampleSize` below 1 counts as 1, a `sampleWindow`
  *   below the sample size as the sample size, a `maxObjects` below 1 as 1.
  *
@@ -313,7 +314,8 @@ class ObjectSizeEstimatorImpl(
             }
 
             // roundToLong saturates: a weight past what a Long holds gives Long.MAX_VALUE. The total is
-            // never NaN: every term is at least 0 (see charge) and every weight finite (see shareOf).
+            // never NaN: every term is at least 0 (see charge), every size a count (see countOf) and
+            // every weight finite (see shareOf).
             return CountedEstimate(total.roundToLong(), failures, failureClass)
         }
 
@@ -426,13 +428,15 @@ class ObjectSizeEstimatorImpl(
     /** The size of [obj] itself; pushes what it references to [walk], sampled where large. */
     private fun shallowSize(obj: Any, weight: Double, walk: Walk): Long = when (obj) {
         is Array<*> -> {
-            pushIndexed(obj.size, weight, walk) { obj[it] }
-            cfg.arrayHeader + obj.size.toLong() * cfg.pointerSize
+            val size = countOf(obj.size)
+
+            pushIndexed(size, weight, walk) { obj[it] }
+            cfg.arrayHeader + size.toLong() * cfg.pointerSize
         }
 
         is Collection<*> -> {
             // read once: a size can be costly (a concurrent queue counts its nodes) or change meanwhile
-            val size = obj.size
+            val size = countOf(obj.size)
 
             if (obj is List<*> && obj is RandomAccess) {
                 pushIndexed(size, weight, walk) { obj[it] }
@@ -443,7 +447,7 @@ class ObjectSizeEstimatorImpl(
         }
 
         is Map<*, *> -> {
-            val size = obj.size
+            val size = countOf(obj.size)
 
             pushIterated(size, weight, walk, obj.entries.iterator()) { entry, w ->
                 walk.push(entry.key, w)
@@ -468,12 +472,29 @@ class ObjectSizeEstimatorImpl(
     }
 
     /**
+     * [size] when it is a count; else it throws, and the walk charges the part flat and counts it. A
+     * negative size made the estimate negative; on JS a size can be no number at all (a `Proxy` over
+     * an array answers `length` with `undefined`), and sampling with it made the total NaN.
+     */
+    private fun countOf(size: Int): Int {
+        // `size >= 0`, not `size < 0`: for a JS undefined both are false
+        check(size >= 0) { "not a size: $size" }
+
+        return size
+    }
+
+    /**
      * What each of [samples] sampled elements out of [size] counts for, inside an element counting
      * [weight]: finite, at most `Double.MAX_VALUE`. A weight of +Infinity made an element charged 0 now
-     * (queued, or seen) cost `0 * Infinity`, NaN, and the estimate failed instead of saturating.
+     * (queued, or seen) cost `0 * Infinity`, NaN, and the estimate failed instead of saturating. A NaN
+     * share (no longer reachable: [countOf]) saturates too: it fails the `<=`, where `coerceAtMost`
+     * passed it through.
      */
-    private fun shareOf(weight: Double, size: Int, samples: Int): Double =
-        (weight * size / samples).coerceAtMost(Double.MAX_VALUE)
+    private fun shareOf(weight: Double, size: Int, samples: Int): Double {
+        val share = weight * size / samples
+
+        return if (share <= Double.MAX_VALUE) share else Double.MAX_VALUE
+    }
 
     /**
      * Pushes the elements of an indexed list or array: all of them up to [EstimatorConfig.sampleSize],

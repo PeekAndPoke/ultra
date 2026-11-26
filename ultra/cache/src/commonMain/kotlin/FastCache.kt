@@ -1045,7 +1045,9 @@ class FastCache<K, V> internal constructor(
 
         /**
          * For write-based expiry: a read does not reset a write TTL, so only a pending put spares the
-         * entry. Sparing reads let a key read in every pass outlive its TTL for good.
+         * entry. Sparing reads let a key read in every pass outlive its TTL for good. Also for
+         * maxMemoryUsage's entry above the whole budget: it never fits, in use or not; a pending put
+         * is sized anew.
          */
         PENDING_PUT,
     }
@@ -1246,7 +1248,7 @@ class FastCache<K, V> internal constructor(
     /**
      * Evicts [key] on behalf of a behaviour, unless it was touched since the current batch was taken
      * in a way that [sparedBy] counts: any action for the access-ordered behaviours, only a put for
-     * write-based expiry.
+     * write-based expiry and for maxMemoryUsage's entry above the whole budget.
      *
      * Reports what happened: [Eviction.REMOVED], [Eviction.SPARED], or [Eviction.ABSENT] when the key
      * is not cached any more. Callers must not drop their own tracking for a SPARED key, or the entry
@@ -1265,7 +1267,8 @@ class FastCache<K, V> internal constructor(
         }
 
         // A pending action means the entry was used or rewritten after the batch the caller decided
-        // on was taken - unless the caller expires by write time, where only a rewrite counts.
+        // on was taken - unless the caller expires by write time or evicts an entry above the whole
+        // memory budget, where only a rewrite counts.
         val spared = when (sparedBy) {
             SparedBy.ANY_PENDING_ACTION -> pendingKeys.containsKey(key)
             SparedBy.PENDING_PUT -> pendingKeys[key] == true
