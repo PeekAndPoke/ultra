@@ -1065,6 +1065,32 @@ Evidence: `--rerun` cache jvm **242** / js **222** / native **208**, slumber **1
 for this round (plus the loader site's second run), all restored; all red except the last-resort
 catch, which nothing can reach now.
 
+### Estimator review round 3 (2026-11-26): two reviewers, opus at max effort, full change set
+
+The maintainer asked for a stronger review to settle and merge the branch, with this framing: "The estimator is an
+estimator. If we cannot make it exact we have to write this into the docs and explain how one can build their own
+estimator." So inexactness alone is no defect; broken KDoc promises, unbounded cost and cache-level effects are.
+
+NOT CLEAN. Merged findings (implementation charter: 3 MAJOR, 7 MINOR; domain and security: 1 MAJOR, 8 MINOR):
+
+- **A, MAJOR (both):** an entry whose estimate exceeds `maxMemorySize` evicts every older entry, then itself
+  (`FastCache.kt:628-652`). Sampling makes it reachable: the factor `n / positions` multiplies per nested sampled
+  level (four nested 1 000-wide lists, 48 052 B exact, estimate 48 954 464 B). Corrects the parked note's premise
+  ("up to size / 64").
+- **B, MAJOR (impl), MINOR (domain):** a weight overflow to +Infinity gives `0 * Inf = NaN`, `roundToLong()` throws,
+  the last-resort catch charges 32 B; the KDoc promises saturation at `Long.MAX_VALUE`. Reopens three ledger entries
+  ("last-resort catch unreachable from a value"): the factual error is the NaN path.
+- **C, MAJOR (impl), MINOR (domain):** "the cap errs low" is false for cut objects smaller than 32 B (empty
+  collection 16): `List(64) { List(64) { ArrayList() } }` with `maxObjects = 100` gives 164 832 vs 99 856 exact.
+- MINORs: see the reviewers' reports, folded into the work list below.
+
+**Decided (maintainer, 2026-11-26):**
+1. Over-budget entry: evicted alone (spared while a write is pending, like any eviction), never counted into
+   `totalSize`; other entries untouched. Caffeine's rule. "yes"
+2. The cap: fix the KDoc text, not the code ("errs low for objects holding more than a header and two references;
+   up to 16 B high for a cut empty collection or one-field object"). "yes"
+3. `ObjectSizeEstimator` becomes a `fun interface`, so a lambda works. "ok"
+
 ## Changelog text
 
 For the coordinator to put into `CHANGELOG.md`. Signature changes: the new
