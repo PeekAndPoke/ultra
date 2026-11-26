@@ -1,6 +1,6 @@
 # ULTRA-00321: Cache: a background refresh must not count as an access (expireAfterAccess, LRU)
 
-> **Status (2026-11-14): DESIGNED.**
+> **Status (2026-11-26): IN PROGRESS.** Decided by the maintainer (section below).
 >
 > **Part of:** ULTRA-00255 (Ultra libraries epic)
 
@@ -21,6 +21,16 @@ The maintainer (2026-11-14): "I guess it should not count as access."
 - Whether a refresh may still renew `expireAfterWrite` (it is a write) or whether the hard TTL of the refresh
   behaviour is the only bound.
 
+## Decided (maintainer, 2026-11-26)
+
+Asked one at a time, with an example each:
+
+1. **A refresh is no access** ("Refresh is no access"). Only a caller's `get` / `getOrPut` / `has` counts as an
+   access. A background refresh renews neither `expireAfterAccess` nor the LRU position. The refresh's write still
+   counts as a put in the statistics.
+2. **A refresh renews the write TTL** ("Refresh renews write TTL"). A refresh stores a new value, so it renews
+   `expireAfterWrite` and the refresh's own hard TTL, as a caller's put does (as in Caffeine).
+
 ## The work
 
 - Tests first: a refreshed but unread key expires after `expireAfterAccess`; a refreshed but unread key is evicted
@@ -36,3 +46,5 @@ The maintainer (2026-11-14): "I guess it should not count as access."
 ## History
 
 - 2026-11-14: created on the maintainer's word ("yes followup ticket").
+- 2026-11-26: both questions decided by the maintainer; implementation started on `wt/cache-refresh`.
+- 2026-11-26: IN PROGRESS.
